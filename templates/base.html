@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Sachin Workflow Manager{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            500: '#22d3ee',
+                            600: '#0891b2'
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+    <script>
+        (function () {
+            const savedTheme = localStorage.getItem('swm-theme');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', initialTheme);
+        })();
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    {% block head_extras %}{% endblock %}
+</head>
+<body class="min-h-screen">
+    <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle light/dark theme">
+        <i class="fa-solid fa-moon"></i>
+    </button>
+    {% block content %}{% endblock %}
+    {% block scripts %}{% endblock %}
+    <script>
+        (function () {
+            const themeToggle = document.getElementById('themeToggle');
+            if (!themeToggle) return;
+
+            const icon = themeToggle.querySelector('i');
+
+            function updateThemeIcon(theme) {
+                if (!icon) return;
+                icon.className = theme === 'dark' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+            }
+
+            function getTheme() {
+                return document.documentElement.getAttribute('data-theme') || 'dark';
+            }
+
+            updateThemeIcon(getTheme());
+
+            themeToggle.addEventListener('click', () => {
+                const nextTheme = getTheme() === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', nextTheme);
+                localStorage.setItem('swm-theme', nextTheme);
+                updateThemeIcon(nextTheme);
+            });
+        })();
+    </script>
+</body>
+</html>

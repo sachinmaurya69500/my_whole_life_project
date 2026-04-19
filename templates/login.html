@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Login | Sachin Workflow Manager{% endblock %}
+
+{% block content %}
+<main class="min-h-screen grid place-items-center px-4">
+    <section class="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/80 p-8 shadow-2xl backdrop-blur">
+        <div class="text-center mb-8">
+            <div class="mx-auto mb-4 grid place-items-center h-14 w-14 rounded-xl bg-cyan-500/20 text-cyan-300 text-2xl">
+                <i class="fa-solid fa-diagram-project"></i>
+            </div>
+            <h1 class="text-2xl font-bold">Sachin Workflow Manager</h1>
+            <p class="text-slate-400 text-sm mt-2">Sign in to manage your daily and long-term workflows.</p>
+        </div>
+
+        <form id="loginForm" class="space-y-4">
+            <div>
+                <label for="email" class="block text-sm font-medium mb-1">Email</label>
+                <input id="email" name="email" type="email" placeholder="sachin@example.com" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500" required />
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium mb-1">Password</label>
+                <input id="password" name="password" type="password" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500" required />
+            </div>
+            <button type="submit" class="w-full rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-semibold py-2.5 transition">
+                <i class="fa-solid fa-right-to-bracket mr-2"></i>Login
+            </button>
+            <p id="loginError" class="text-rose-400 text-sm hidden"></p>
+        </form>
+
+        <p class="text-xs text-slate-500 mt-6 text-center">Use your registered email and password.</p>
+    </section>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const form = document.getElementById('loginForm');
+    const errorEl = document.getElementById('loginError');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorEl.classList.add('hidden');
+
+        const payload = {
+            email: form.email.value.trim(),
+            password: form.password.value
+        };
+
+        try {
+            const res = await fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || 'Login failed');
+            }
+            window.location.href = '/home';
+        } catch (err) {
+            errorEl.textContent = err.message;
+            errorEl.classList.remove('hidden');
+        }
+    });
+</script>
+{% endblock %}

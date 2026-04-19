@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+
+{% block title %}Project Details | {{ app_name }}{% endblock %}
+
+{% block content %}
+<main class="min-h-screen p-4 md:p-8">
+	<div class="max-w-5xl mx-auto space-y-6">
+		<div class="flex flex-wrap items-center justify-between gap-3">
+			<div>
+				<p class="text-xs uppercase tracking-wide text-slate-400">Project Workspace</p>
+				<h1 id="projectTitleHeading" class="text-2xl md:text-3xl font-bold">Project Details</h1>
+			</div>
+			<div class="flex gap-2">
+				<a href="/home" class="rounded-lg border border-slate-700 px-4 py-2 text-sm hover:bg-slate-800 transition">
+					<i class="fa-solid fa-arrow-left mr-2"></i>Back
+				</a>
+				<button id="logoutBtn" class="rounded-lg border border-slate-700 px-4 py-2 text-sm hover:bg-slate-800 transition">
+					<i class="fa-solid fa-right-from-bracket mr-2"></i>Logout
+				</button>
+			</div>
+		</div>
+
+		<section class="panel">
+			<h2 class="panel-title">Project Snapshot</h2>
+			<div class="grid gap-4 md:grid-cols-[260px_1fr]">
+				<div>
+					<img id="projectImage" src="https://via.placeholder.com/520x320?text=Project+Photo" alt="Project Photo" class="h-56 w-full rounded-xl object-cover border border-slate-700 bg-slate-900" />
+					<label for="projectPhotoInput" class="mt-3 block text-sm text-slate-300">Project Photo (single)</label>
+					<input id="projectPhotoInput" type="file" accept="image/*" class="mt-2 block w-full text-sm text-slate-300" />
+					<button id="uploadProjectPhotoBtn" class="mt-3 rounded-lg border border-slate-700 px-3 py-2 text-sm hover:bg-slate-800 transition">Upload Project Photo</button>
+				</div>
+				<div class="space-y-2 text-sm text-slate-300">
+					<p><span class="text-slate-400">Type:</span> <span id="projectTypeText">-</span></p>
+					<p><span class="text-slate-400">Status:</span> <span id="projectStatusText">-</span></p>
+					<p><span class="text-slate-400">Progress:</span> <span id="projectProgressText">0%</span></p>
+					<p><span class="text-slate-400">Due Date:</span> <span id="projectDueDateText">-</span></p>
+					<p><span class="text-slate-400">Updated:</span> <span id="projectUpdatedText">-</span></p>
+					<p class="pt-2 text-slate-400">Photo is stored in MongoDB GridFS, and only one project photo is retained.</p>
+				</div>
+			</div>
+		</section>
+
+		<section class="panel">
+			<h2 class="panel-title">Project Full Details</h2>
+			<form id="projectForm" class="space-y-4">
+				<div class="grid gap-4 md:grid-cols-2">
+					<div>
+						<label for="projectTitle" class="block text-sm mb-1">Title</label>
+						<input id="projectTitle" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" required />
+					</div>
+					<div>
+						<label for="projectType" class="block text-sm mb-1">Type</label>
+						<select id="projectType" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2">
+							<option>Daily</option>
+							<option>Long-term</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="grid gap-4 md:grid-cols-3">
+					<div>
+						<label for="projectProgress" class="block text-sm mb-1">Progress</label>
+						<div class="flex items-center gap-3">
+							<input id="projectProgress" type="range" min="0" max="100" value="0" class="w-full" />
+							<span id="projectProgressValue" class="text-sm text-slate-300 min-w-12 text-right">0%</span>
+						</div>
+					</div>
+					<div>
+						<label for="projectStatus" class="block text-sm mb-1">Status</label>
+						<select id="projectStatus" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2">
+							<option>Not Started</option>
+							<option>In Progress</option>
+							<option>Completed</option>
+						</select>
+					</div>
+					<div>
+						<label for="projectDueDate" class="block text-sm mb-1">Due Date</label>
+						<input id="projectDueDate" type="date" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" />
+					</div>
+				</div>
+
+				<div>
+					<label for="projectDescription" class="block text-sm mb-1">Description</label>
+					<textarea id="projectDescription" rows="3" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"></textarea>
+				</div>
+
+				<div>
+					<label for="projectNotes" class="block text-sm mb-1">Notes</label>
+					<textarea id="projectNotes" rows="3" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"></textarea>
+				</div>
+
+				<div>
+					<label for="projectCode" class="block text-sm mb-1">Code Snippet</label>
+					<textarea id="projectCode" rows="8" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-sm" placeholder="Add your project code here..."></textarea>
+				</div>
+
+				<div>
+					<label for="projectMore" class="block text-sm mb-1">Additional Details (resources, tasks, ideas, links, etc.)</label>
+					<textarea id="projectMore" rows="5" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"></textarea>
+				</div>
+
+				<div class="flex justify-end">
+					<button type="submit" class="rounded-lg bg-cyan-500 text-slate-950 px-4 py-2 font-semibold hover:bg-cyan-400 transition">Save Project Details</button>
+				</div>
+			</form>
+		</section>
+	</div>
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+	const workflowId = {{ workflow_id|tojson }};
+	const el = {
+		logoutBtn: document.getElementById('logoutBtn'),
+		form: document.getElementById('projectForm'),
+		heading: document.getElementById('projectTitleHeading'),
+		image: document.getElementById('projectImage'),
+		uploadPhotoInput: document.getElementById('projectPhotoInput'),
+		uploadPhotoBtn: document.getElementById('uploadProjectPhotoBtn'),
+		title: document.getElementById('projectTitle'),
+		type: document.getElementById('projectType'),
+		progress: document.getElementById('projectProgress'),
+		progressValue: document.getElementById('projectProgressValue'),
+		status: document.getElementById('projectStatus'),
+		dueDate: document.getElementById('projectDueDate'),
+		description: document.getElementById('projectDescription'),
+		notes: document.getElementById('projectNotes'),
+		code: document.getElementById('projectCode'),
+		more: document.getElementById('projectMore'),
+		typeText: document.getElementById('projectTypeText'),
+		statusText: document.getElementById('projectStatusText'),
+		progressText: document.getElementById('projectProgressText'),
+		dueDateText: document.getElementById('projectDueDateText'),
+		updatedText: document.getElementById('projectUpdatedText'),
+	};
+
+	function showToast(message, kind = 'ok') {
+		let toast = document.getElementById('globalToast');
+		if (!toast) {
+			toast = document.createElement('div');
+			toast.id = 'globalToast';
+			toast.className = 'fixed bottom-4 right-4 z-[70] px-4 py-2 rounded-lg text-sm shadow-xl transition';
+			document.body.appendChild(toast);
+		}
+		toast.textContent = message;
+		toast.classList.remove('bg-rose-500', 'bg-emerald-500', 'opacity-0');
+		toast.classList.add(kind === 'error' ? 'bg-rose-500' : 'bg-emerald-500');
+		toast.classList.add('opacity-100');
+		setTimeout(() => toast.classList.add('opacity-0'), 2200);
+	}
+
+	async function api(path, options = {}) {
+		const res = await fetch(path, options);
+		const data = await res.json().catch(() => ({}));
+		if (!res.ok) {
+			if (res.status === 401) {
+				window.location.href = '/login';
+				return;
+			}
+			throw new Error(data.error || data.message || 'Request failed');
+		}
+		return data;
+	}
+
+	function fillSnapshot(data) {
+		el.typeText.textContent = data.type || '-';
+		el.statusText.textContent = data.status || '-';
+		el.progressText.textContent = `${Number(data.progress || 0)}%`;
+		el.dueDateText.textContent = data.due_date || 'No due date';
+		el.updatedText.textContent = data.updated_at ? new Date(data.updated_at).toLocaleString() : '-';
+		const photoUrl = data.photo_urls && data.photo_urls.length ? data.photo_urls[0] : 'https://via.placeholder.com/520x320?text=Project+Photo';
+		el.image.src = photoUrl;
+	}
+
+	function fillForm(data) {
+		el.heading.textContent = data.title || 'Project Details';
+		el.title.value = data.title || '';
+		el.type.value = data.type || 'Daily';
+		el.progress.value = Number(data.progress || 0);
+		el.progressValue.textContent = `${Number(data.progress || 0)}%`;
+		el.status.value = data.status || 'Not Started';
+		el.dueDate.value = data.due_date || '';
+		el.description.value = data.description || '';
+		el.notes.value = data.notes || '';
+		el.code.value = data.code_snippet || '';
+		el.more.value = data.additional_details || '';
+	}
+
+	async function loadProject() {
+		const data = await api(`/api/workflows/${workflowId}`);
+		fillSnapshot(data);
+		fillForm(data);
+	}
+
+	el.progress.addEventListener('input', () => {
+		el.progressValue.textContent = `${el.progress.value}%`;
+	});
+
+	el.form.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		await api(`/api/workflows/${workflowId}`, {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				title: el.title.value.trim(),
+				type: el.type.value,
+				progress: Number(el.progress.value || 0),
+				status: el.status.value,
+				due_date: el.dueDate.value,
+				description: el.description.value.trim(),
+				notes: el.notes.value.trim(),
+				code_snippet: el.code.value,
+				additional_details: el.more.value,
+			}),
+		});
+		showToast('Project details updated');
+		await loadProject();
+	});
+
+	el.uploadPhotoBtn.addEventListener('click', async () => {
+		const file = el.uploadPhotoInput.files[0];
+		if (!file) {
+			showToast('Please select a photo first', 'error');
+			return;
+		}
+		const fd = new FormData();
+		fd.append('photo', file);
+		await api(`/api/workflows/${workflowId}/photos`, {
+			method: 'POST',
+			body: fd,
+		});
+		showToast('Project photo updated');
+		el.uploadPhotoInput.value = '';
+		await loadProject();
+	});
+
+	el.logoutBtn.addEventListener('click', async () => {
+		await api('/logout', { method: 'POST' });
+		window.location.href = '/login';
+	});
+
+	loadProject().catch((err) => showToast(err.message, 'error'));
+</script>
+{% endblock %}

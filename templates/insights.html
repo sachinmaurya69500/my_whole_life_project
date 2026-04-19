@@ -1,0 +1,381 @@
+{% extends 'base.html' %}
+
+{% block title %}Insights | {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="flex min-h-screen">
+	<aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-40 w-72 sidebar-panel p-5 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+		<div class="flex items-center gap-3 mb-8">
+			<div class="h-11 w-11 rounded-xl bg-cyan-500/20 text-cyan-300 grid place-items-center">
+				<i class="fa-solid fa-diagram-project text-xl"></i>
+			</div>
+			<div>
+				<p class="text-xs uppercase tracking-wide text-slate-400">Workspace</p>
+				<h1 class="font-semibold text-lg">Workflow Manager</h1>
+			</div>
+		</div>
+
+		<nav class="space-y-2">
+			<a href="/home" class="block rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 transition">
+				<i class="fa-solid fa-chart-line mr-2"></i>Dashboard
+			</a>
+			<div class="rounded-lg bg-cyan-500/20 border border-cyan-500/40 px-3 py-2 text-sm text-cyan-200">
+				<i class="fa-solid fa-chart-column mr-2"></i>Insights
+			</div>
+		</nav>
+
+		<div class="mt-8 p-4 rounded-xl border border-slate-800 bg-slate-900/60">
+			<p class="text-sm text-slate-300">Track project progress trends daily across both Daily and Long-term workflows.</p>
+		</div>
+
+		<a href="/forgot-password" class="mt-8 block w-full rounded-lg border border-slate-700 py-2 text-sm text-center hover:bg-slate-800 transition">
+			<i class="fa-solid fa-key mr-2"></i>Forgot Password
+		</a>
+
+		<button id="logoutBtn" class="mt-3 w-full rounded-lg border border-slate-700 py-2 text-sm hover:bg-slate-800 transition">
+			<i class="fa-solid fa-right-from-bracket mr-2"></i>Logout
+		</button>
+	</aside>
+
+	<div id="mobileBackdrop" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden"></div>
+
+	<main class="flex-1 p-4 md:p-8 md:pl-10 overflow-x-hidden space-y-6">
+		<header class="flex items-center justify-between">
+			<div class="flex items-center gap-3">
+				<button id="menuToggle" class="md:hidden h-10 w-10 rounded-lg border border-slate-700">
+					<i class="fa-solid fa-bars"></i>
+				</button>
+				<div>
+					<h2 class="text-2xl font-bold">Insights</h2>
+					<p class="text-slate-400 text-sm">Data visualizations of project progress by project and by day.</p>
+				</div>
+			</div>
+		</header>
+
+		<section class="grid gap-6 lg:grid-cols-2">
+			<div class="panel">
+				<h3 class="panel-title">Progress By Project</h3>
+				<p class="text-sm text-slate-400">Each bar color is uniquely assigned to one project so you can quickly identify it across the chart and this legend.</p>
+				<div id="projectColorLegend" class="mt-4 mb-5 grid gap-2 sm:grid-cols-2"></div>
+				<canvas id="projectProgressChart" height="140"></canvas>
+			</div>
+			<div class="panel">
+				<h3 class="panel-title">Status Distribution</h3>
+				<canvas id="statusChart" height="140"></canvas>
+			</div>
+		</section>
+
+		<section class="panel">
+			<h3 class="panel-title">Daily Progress Trend</h3>
+			<canvas id="dailyTrendChart" height="120"></canvas>
+		</section>
+
+		<section class="panel overflow-x-auto">
+			<h3 class="panel-title">Project Progress Table (Daily Basis)</h3>
+			<table class="w-full min-w-[760px] text-sm">
+				<thead>
+					<tr class="text-left text-slate-400 border-b border-slate-800">
+						<th class="py-3 pr-2">Project</th>
+						<th class="py-3 pr-2">Type</th>
+						<th class="py-3 pr-2">Day</th>
+						<th class="py-3 pr-2">Progress</th>
+						<th class="py-3 pr-2">Status</th>
+					</tr>
+				</thead>
+				<tbody id="insightTableBody"></tbody>
+			</table>
+		</section>
+	</main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+	const menuToggle = document.getElementById('menuToggle');
+	const sidebar = document.getElementById('sidebar');
+	const mobileBackdrop = document.getElementById('mobileBackdrop');
+	const logoutBtn = document.getElementById('logoutBtn');
+	const insightTableBody = document.getElementById('insightTableBody');
+	const projectColorLegend = document.getElementById('projectColorLegend');
+	let insightsPayload = null;
+	let projectProgressChart = null;
+	let statusDistributionChart = null;
+	let dailyProgressTrendChart = null;
+
+	menuToggle.addEventListener('click', () => {
+		sidebar.classList.toggle('-translate-x-full');
+		mobileBackdrop.classList.toggle('hidden');
+	});
+
+	mobileBackdrop.addEventListener('click', () => {
+		sidebar.classList.add('-translate-x-full');
+		mobileBackdrop.classList.add('hidden');
+	});
+
+	logoutBtn.addEventListener('click', async () => {
+		await fetch('/logout', { method: 'POST' });
+		window.location.href = '/login';
+	});
+
+	function escapeHtml(value) {
+		return String(value || '')
+			.replaceAll('&', '&amp;')
+			.replaceAll('<', '&lt;')
+			.replaceAll('>', '&gt;')
+			.replaceAll('"', '&quot;')
+			.replaceAll("'", '&#39;');
+	}
+
+	function renderTable(projects) {
+		if (!projects.length) {
+			insightTableBody.innerHTML = '<tr><td colspan="5" class="py-4 text-slate-400">No data available.</td></tr>';
+			return;
+		}
+
+		insightTableBody.innerHTML = '';
+		projects.forEach((p) => {
+			const tr = document.createElement('tr');
+			tr.className = 'border-b border-slate-800';
+			tr.innerHTML = `
+				<td class="py-3 pr-2">${escapeHtml(p.title)}</td>
+				<td class="py-3 pr-2">${escapeHtml(p.type)}</td>
+				<td class="py-3 pr-2">${escapeHtml(p.day || 'N/A')}</td>
+				<td class="py-3 pr-2">${p.progress}%</td>
+				<td class="py-3 pr-2">${escapeHtml(p.status)}</td>
+			`;
+			insightTableBody.appendChild(tr);
+		});
+	}
+
+	function buildProjectPalette(count) {
+		const fillColors = [];
+		const borderColors = [];
+		for (let idx = 0; idx < count; idx++) {
+			const hue = Math.round((idx * 137.508) % 360);
+			fillColors.push(`hsla(${hue}, 82%, 58%, 0.78)`);
+			borderColors.push(`hsla(${hue}, 76%, 40%, 1)`);
+		}
+		return { fillColors, borderColors };
+	}
+
+	function getChartTheme() {
+		const style = getComputedStyle(document.documentElement);
+		const pick = (name, fallback) => (style.getPropertyValue(name).trim() || fallback);
+		return {
+			cyanRgb: pick('--chart-cyan-rgb', '34, 211, 238'),
+			amberRgb: pick('--chart-amber-rgb', '251, 191, 36'),
+			neutralRgb: pick('--chart-neutral-rgb', '148, 163, 184'),
+			axisRgb: pick('--chart-axis-rgb', '148, 163, 184'),
+			gridRgb: pick('--chart-grid-rgb', '71, 85, 105'),
+			legendRgb: pick('--chart-legend-rgb', '226, 232, 240'),
+			surfaceRgb: pick('--chart-surface-rgb', '15, 23, 42'),
+		};
+	}
+
+	function renderProjectColorLegend(projects, colors) {
+		if (!projects.length) {
+			projectColorLegend.innerHTML = '<p class="text-sm text-slate-400">No projects available for color details.</p>';
+			return;
+		}
+
+		projectColorLegend.innerHTML = '';
+		projects.forEach((project, idx) => {
+			const item = document.createElement('div');
+			item.className = 'rounded-lg border border-slate-700 bg-slate-900/50 px-3 py-2 flex items-center gap-3';
+			item.innerHTML = `
+				<span class="h-4 w-4 rounded-sm border border-slate-600" style="background:${colors[idx]}"></span>
+				<div class="min-w-0">
+					<p class="text-sm text-slate-200 truncate">${escapeHtml(project.title)}</p>
+					<p class="text-xs text-slate-400">${escapeHtml(project.type)} | ${project.progress}%</p>
+				</div>
+			`;
+			projectColorLegend.appendChild(item);
+		});
+	}
+
+	function buildCharts(data) {
+		const projects = data.projects || [];
+		const statusCounts = data.status_counts || {};
+		const trend = data.daily_trend || { labels: [], daily: [], long_term: [], all: [] };
+		const theme = getChartTheme();
+
+		const projectLabels = projects.map((p) => p.title);
+		const projectProgress = projects.map((p) => p.progress);
+		const palette = buildProjectPalette(projects.length);
+		const projectColors = palette.fillColors;
+		const projectBorderColors = palette.borderColors;
+		renderProjectColorLegend(projects, projectColors);
+
+		if (projectProgressChart) projectProgressChart.destroy();
+		if (statusDistributionChart) statusDistributionChart.destroy();
+		if (dailyProgressTrendChart) dailyProgressTrendChart.destroy();
+
+		projectProgressChart = new Chart(document.getElementById('projectProgressChart'), {
+			type: 'bar',
+			data: {
+				labels: projectLabels,
+				datasets: [{
+					label: 'Progress %',
+					data: projectProgress,
+					backgroundColor: projectColors,
+					borderColor: projectBorderColors,
+					borderWidth: 1,
+				}]
+			},
+			options: {
+				responsive: true,
+				plugins: { legend: { display: false } },
+				scales: {
+					x: {
+						ticks: { display: false },
+						grid: { display: false },
+					},
+					y: {
+						beginAtZero: true,
+						max: 100,
+						ticks: { color: `rgba(${theme.axisRgb}, 1)` },
+						grid: { color: `rgba(${theme.gridRgb}, 0.3)` },
+					},
+				}
+			}
+		});
+
+		statusDistributionChart = new Chart(document.getElementById('statusChart'), {
+			type: 'doughnut',
+			data: {
+				labels: ['Not Started', 'In Progress', 'Completed'],
+				datasets: [{
+					data: [statusCounts['Not Started'] || 0, statusCounts['In Progress'] || 0, statusCounts['Completed'] || 0],
+					backgroundColor: [
+						`rgba(${theme.amberRgb}, 0.78)`,
+						`rgba(${theme.cyanRgb}, 0.78)`,
+						'rgba(16, 185, 129, 0.75)'
+					],
+					borderColor: `rgba(${theme.surfaceRgb}, 1)`,
+					borderWidth: 2,
+				}]
+			},
+			options: {
+				responsive: true,
+				plugins: {
+					legend: {
+						labels: { color: `rgba(${theme.legendRgb}, 1)` },
+					},
+				},
+			}
+		});
+
+		const dailyTrendCanvas = document.getElementById('dailyTrendChart');
+		const dailyTrendCtx = dailyTrendCanvas.getContext('2d');
+		const dailyGradient = dailyTrendCtx.createLinearGradient(0, 0, 0, dailyTrendCanvas.height || 220);
+		dailyGradient.addColorStop(0, `rgba(${theme.cyanRgb}, 0.2)`);
+		dailyGradient.addColorStop(1, `rgba(${theme.cyanRgb}, 0.03)`);
+		const longTermGradient = dailyTrendCtx.createLinearGradient(0, 0, 0, dailyTrendCanvas.height || 220);
+		longTermGradient.addColorStop(0, `rgba(${theme.amberRgb}, 0.18)`);
+		longTermGradient.addColorStop(1, `rgba(${theme.amberRgb}, 0.03)`);
+
+		dailyProgressTrendChart = new Chart(dailyTrendCanvas, {
+			type: 'line',
+			data: {
+				labels: trend.labels,
+				datasets: [
+					{
+						label: 'Daily Projects Avg %',
+						data: trend.daily,
+						borderColor: `rgba(${theme.cyanRgb}, 1)`,
+						backgroundColor: dailyGradient,
+						borderWidth: 3,
+						pointRadius: 3,
+						pointHoverRadius: 6,
+						pointBackgroundColor: `rgba(${theme.cyanRgb}, 1)`,
+						pointBorderColor: `rgba(${theme.surfaceRgb}, 1)`,
+						pointBorderWidth: 2,
+						tension: 0.38,
+						fill: true,
+					},
+					{
+						label: 'Long-term Projects Avg %',
+						data: trend.long_term,
+						borderColor: `rgba(${theme.amberRgb}, 1)`,
+						backgroundColor: longTermGradient,
+						borderWidth: 3,
+						pointRadius: 3,
+						pointHoverRadius: 6,
+						pointBackgroundColor: `rgba(${theme.amberRgb}, 1)`,
+						pointBorderColor: `rgba(${theme.surfaceRgb}, 1)`,
+						pointBorderWidth: 2,
+						tension: 0.38,
+						fill: true,
+					},
+					{
+						label: 'All Projects Avg %',
+						data: trend.all,
+						borderColor: `rgba(${theme.neutralRgb}, 1)`,
+						backgroundColor: `rgba(${theme.neutralRgb}, 0.12)`,
+						borderWidth: 2,
+						pointRadius: 2,
+						pointHoverRadius: 5,
+						tension: 0.35,
+						fill: false,
+						borderDash: [6, 6],
+					}
+				]
+			},
+			options: {
+				responsive: true,
+				interaction: {
+					mode: 'index',
+					intersect: false,
+				},
+				plugins: {
+					legend: {
+						labels: {
+							color: `rgba(${theme.legendRgb}, 0.98)`,
+							boxWidth: 14,
+							boxHeight: 14,
+							usePointStyle: true,
+						},
+					},
+				},
+				scales: {
+					x: {
+						ticks: { color: `rgba(${theme.axisRgb}, 1)` },
+						grid: { color: `rgba(${theme.gridRgb}, 0.25)` },
+					},
+					y: {
+						beginAtZero: true,
+						max: 100,
+						ticks: { color: `rgba(${theme.axisRgb}, 1)` },
+						grid: { color: `rgba(${theme.gridRgb}, 0.25)` },
+					},
+				},
+			}
+		});
+	}
+
+	async function loadInsights() {
+		try {
+			const res = await fetch('/api/insights');
+			const data = await res.json();
+			if (!res.ok) {
+				throw new Error(data.error || 'Failed to load insights');
+			}
+			insightsPayload = data;
+			renderTable(data.projects || []);
+			buildCharts(data);
+		} catch (err) {
+			insightTableBody.innerHTML = `<tr><td colspan="5" class="py-4 text-rose-400">${escapeHtml(err.message)}</td></tr>`;
+		}
+	}
+
+	const themeObserver = new MutationObserver(() => {
+		if (insightsPayload) {
+			buildCharts(insightsPayload);
+		}
+	});
+	themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+	loadInsights();
+</script>
+{% endblock %}
