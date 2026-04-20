@@ -102,7 +102,8 @@ def page_login_required(fn):
 def workflow_to_json(doc):
 	photos = doc.get("photo_file_ids", [])[:1]
 	updated_at = doc.get("updated_at")
-	version = int(updated_at.timestamp()) if updated_at else 0
+	# Millisecond version avoids stale browser cache on rapid consecutive updates.
+	version = int(updated_at.timestamp() * 1000) if updated_at else 0
 	return {
 		"_id": str(doc.get("_id")),
 		"title": doc.get("title", ""),

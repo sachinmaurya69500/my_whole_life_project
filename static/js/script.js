@@ -179,33 +179,16 @@ function renderCards(targetEl, workflows) {
 		node.querySelector('.progress-fill').style.width = `${wf.progress}%`;
 		node.querySelector('.notes').textContent = wf.notes ? `Notes: ${wf.notes}` : 'Notes: -';
 
-		const photoGrid = node.querySelector('.photo-grid');
-		if (wf.photo_urls.length) {
-			wf.photo_urls.forEach((url, idx) => {
-				const imgWrap = document.createElement('div');
-				imgWrap.className = 'relative group';
-				imgWrap.innerHTML = `
-					<img src="${url}" alt="Workflow photo ${idx + 1}" class="h-20 w-full rounded-lg object-cover border border-slate-700" />
-					<button data-photo-id="${wf.photo_ids[idx]}" class="delete-photo-btn absolute top-1 right-1 h-6 w-6 grid place-items-center rounded-md bg-black/50 text-xs opacity-0 group-hover:opacity-100 transition"><i class="fa-solid fa-xmark"></i></button>
-				`;
-				photoGrid.appendChild(imgWrap);
-			});
-		}
+		const projectThumb = node.querySelector('.project-thumb');
+		projectThumb.src = (wf.photo_urls && wf.photo_urls.length)
+			? wf.photo_urls[0]
+			: 'https://via.placeholder.com/520x320?text=Project+Photo';
 
 		node.querySelector('.delete-btn').addEventListener('click', async () => {
 			if (!confirm(`Delete workflow "${wf.title}"?`)) return;
 			await api(`/api/workflows/${wf._id}`, { method: 'DELETE' });
 			showToast('Workflow deleted');
 			await loadAll();
-		});
-
-		node.querySelectorAll('.delete-photo-btn').forEach((btn) => {
-			btn.addEventListener('click', async () => {
-				const photoId = btn.dataset.photoId;
-				await api(`/api/workflows/${wf._id}/photos/${photoId}`, { method: 'DELETE' });
-				showToast('Photo deleted');
-				await loadAll();
-			});
 		});
 
 		targetEl.appendChild(node);

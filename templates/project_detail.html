@@ -243,15 +243,20 @@
 			showToast('Please select a photo first', 'error');
 			return;
 		}
-		const fd = new FormData();
-		fd.append('photo', file);
-		await api(`/api/workflows/${workflowId}/photos`, {
-			method: 'POST',
-			body: fd,
-		});
-		showToast('Project photo updated');
-		el.uploadPhotoInput.value = '';
-		await loadProject();
+		try {
+			const fd = new FormData();
+			fd.append('photo', file);
+			const updatedProject = await api(`/api/workflows/${workflowId}/photos`, {
+				method: 'POST',
+				body: fd,
+			});
+			fillSnapshot(updatedProject);
+			fillForm(updatedProject);
+			showToast('Project photo updated');
+			el.uploadPhotoInput.value = '';
+		} catch (err) {
+			showToast(err.message, 'error');
+		}
 	});
 
 	el.logoutBtn.addEventListener('click', async () => {
