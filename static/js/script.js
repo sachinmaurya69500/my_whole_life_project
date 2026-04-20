@@ -192,7 +192,6 @@ function renderCards(targetEl, workflows) {
 			});
 		}
 
-		node.querySelector('.edit-btn').addEventListener('click', () => openModal(wf));
 		node.querySelector('.delete-btn').addEventListener('click', async () => {
 			if (!confirm(`Delete workflow "${wf.title}"?`)) return;
 			await api(`/api/workflows/${wf._id}`, { method: 'DELETE' });

@@ -200,7 +200,7 @@
 	}
 
 	async function loadProject() {
-		const data = await api(`/api/workflows/${workflowId}`);
+		const data = await api(`/api/workflows/${workflowId}?t=${Date.now()}`);
 		fillSnapshot(data);
 		fillForm(data);
 	}
@@ -211,24 +211,30 @@
 
 	el.form.addEventListener('submit', async (e) => {
 		e.preventDefault();
-		await api(`/api/workflows/${workflowId}`, {
-			method: 'PUT',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				title: el.title.value.trim(),
-				type: el.type.value,
-				progress: Number(el.progress.value || 0),
-				status: el.status.value,
-				start_date: el.startDate.value,
-				due_date: el.dueDate.value,
-				description: el.description.value.trim(),
-				notes: el.notes.value.trim(),
-				code_snippet: el.code.value,
-				additional_details: el.more.value,
-			}),
-		});
-		showToast('Project details updated');
-		await loadProject();
+		try {
+			const updatedProject = await api(`/api/workflows/${workflowId}`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					title: el.title.value.trim(),
+					type: el.type.value,
+					progress: Number(el.progress.value || 0),
+					status: el.status.value,
+					start_date: el.startDate.value,
+					due_date: el.dueDate.value,
+					description: el.description.value.trim(),
+					notes: el.notes.value.trim(),
+					code_snippet: el.code.value,
+					additional_details: el.more.value,
+				}),
+			});
+
+			fillSnapshot(updatedProject);
+			fillForm(updatedProject);
+			showToast('Project details updated');
+		} catch (err) {
+			showToast(err.message, 'error');
+		}
 	});
 
 	el.uploadPhotoBtn.addEventListener('click', async () => {
