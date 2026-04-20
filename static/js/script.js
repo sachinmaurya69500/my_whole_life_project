@@ -164,12 +164,10 @@ function renderCards(targetEl, workflows) {
 
 	workflows.forEach((wf) => {
 		const node = el.cardTemplate.content.cloneNode(true);
-		const titleEl = node.querySelector('.title');
-		titleEl.textContent = wf.title;
-		titleEl.classList.add('cursor-pointer', 'hover:text-cyan-300', 'transition');
-		titleEl.addEventListener('click', () => {
-			window.location.href = `/project/${wf._id}`;
-		});
+		const titleLinkEl = node.querySelector('.title-link');
+		titleLinkEl.textContent = wf.title;
+		titleLinkEl.href = `/project/${wf._id}`;
+		titleLinkEl.setAttribute('aria-label', `Open project details for ${wf.title}`);
 
 		const statusChip = node.querySelector('.status-chip');
 		statusChip.textContent = wf.status;

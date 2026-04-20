@@ -131,16 +131,28 @@
 		progress: document.getElementById('projectProgress'),
 		progressValue: document.getElementById('projectProgressValue'),
 		status: document.getElementById('projectStatus'),
-			startDate: document.getElementById('projectStartDate'),
-			dueDate: document.getElementById('projectDueDate'),
-			description: document.getElementById('projectDescription'),
-			notes: document.getElementById('projectNotes'),
-			code: document.getElementById('projectCode'),
-			more: document.getElementById('projectMore'),
-			typeText: document.getElementById('projectTypeText'),
-			statusText: document.getElementById('projectStatusText'),
-			progressText: document.getElementById('projectProgressText'),
-			startDateText: document.getElementById('projectStartDateText'),
+		startDate: document.getElementById('projectStartDate'),
+		dueDate: document.getElementById('projectDueDate'),
+		description: document.getElementById('projectDescription'),
+		notes: document.getElementById('projectNotes'),
+		code: document.getElementById('projectCode'),
+		more: document.getElementById('projectMore'),
+		typeText: document.getElementById('projectTypeText'),
+		statusText: document.getElementById('projectStatusText'),
+		progressText: document.getElementById('projectProgressText'),
+		startDateText: document.getElementById('projectStartDateText'),
+		dueDateText: document.getElementById('projectDueDateText'),
+		updatedText: document.getElementById('projectUpdatedText'),
+	};
+
+	function showToast(message, kind = 'ok') {
+		let toast = document.getElementById('globalToast');
+		if (!toast) {
+			toast = document.createElement('div');
+			toast.id = 'globalToast';
+			toast.className = 'fixed bottom-4 right-4 z-[60] px-4 py-2 rounded-lg text-sm shadow-xl transition';
+			document.body.appendChild(toast);
+		}
 		toast.textContent = message;
 		toast.classList.remove('bg-rose-500', 'bg-emerald-500', 'opacity-0');
 		toast.classList.add(kind === 'error' ? 'bg-rose-500' : 'bg-emerald-500');
