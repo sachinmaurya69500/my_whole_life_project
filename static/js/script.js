@@ -58,12 +58,6 @@ const el = {
 	menuToggle: document.getElementById('menuToggle'),
 	sidebar: document.getElementById('sidebar'),
 	mobileBackdrop: document.getElementById('mobileBackdrop'),
-	readOnlyModal: document.getElementById('readOnlyProjectsModal'),
-	readOnlyTitle: document.getElementById('readOnlyTitle'),
-	readOnlyBackdrop: document.getElementById('readOnlyBackdrop'),
-	readOnlyTableBody: document.getElementById('readOnlyTableBody'),
-	closeReadOnlyBtn: document.getElementById('closeReadOnlyBtn'),
-	closeReadOnlyFromBottomBtn: document.getElementById('closeReadOnlyFromBottomBtn'),
 };
 
 function showToast(message, kind = 'ok') {
@@ -137,54 +131,6 @@ function openModal(editWorkflow = null) {
 function closeModal() {
 	el.modal.classList.add('hidden');
 	resetWorkflowForm();
-}
-
-function openReadOnlyProjectsModal(currentProject) {
-	el.readOnlyTitle.textContent = `Related Projects for: ${escapeHtml(currentProject.title)}`;
-	el.readOnlyModal.classList.remove('hidden');
-	renderReadOnlyProjectsTable(currentProject);
-}
-
-function closeReadOnlyProjectsModal() {
-	el.readOnlyModal.classList.add('hidden');
-}
-
-function renderReadOnlyProjectsTable(currentProject) {
-	el.readOnlyTableBody.innerHTML = '';
-	
-	// Get all daily and long-term projects except the current one
-	const relatedProjects = state.workflows.filter(
-		(w) => (w.type === 'Daily' || w.type === 'Long-term') && w._id !== currentProject._id
-	);
-
-	if (!relatedProjects.length) {
-		el.readOnlyTableBody.innerHTML = '<tr><td colspan="6" class="py-4 text-slate-400">No related projects found.</td></tr>';
-		return;
-	}
-
-	relatedProjects.forEach((project) => {
-		const tr = document.createElement('tr');
-		tr.className = 'border-b border-slate-800';
-		tr.innerHTML = `
-			<td class="py-3 pr-2 text-slate-200">${escapeHtml(project.title)}</td>
-			<td class="py-3 pr-2 text-slate-400">${escapeHtml(project.type)}</td>
-			<td class="py-3 pr-2 text-slate-300">${project.start_date || 'No date'}</td>
-			<td class="py-3 pr-2 text-slate-300">${project.due_date || 'No date'}</td>
-			<td class="py-3 pr-2">
-				<span class="status-chip ${statusClass(project.status)}">${project.status}</span>
-			</td>
-			<td class="py-3 pr-2">
-				<button class="edit-project-btn rounded-lg border border-cyan-700 text-cyan-300 px-3 py-1.5 text-xs hover:bg-cyan-900/30"><i class="fa-solid fa-pen mr-1"></i>Edit</button>
-			</td>
-		`;
-
-		const editBtn = tr.querySelector('.edit-project-btn');
-		editBtn.addEventListener('click', () => {
-			window.location.href = `/project/${project._id}`;
-		});
-
-		el.readOnlyTableBody.appendChild(tr);
-	});
 }
 
 function setActiveSection(sectionKey) {
@@ -332,7 +278,7 @@ function renderManageTable(workflows) {
 		});
 
 		tr.querySelector('.edit-row-btn').addEventListener('click', () => {
-			openReadOnlyProjectsModal(wf);
+			window.location.href = `/project/${wf._id}`;
 		});
 		tr.querySelector('.delete-row-btn').addEventListener('click', async () => {
 			if (!confirm(`Delete workflow "${wf.title}"?`)) return;
@@ -464,10 +410,6 @@ el.openAddModalBtn.addEventListener('click', () => openModal());
 el.closeModalBtn.addEventListener('click', closeModal);
 el.cancelModalBtn.addEventListener('click', closeModal);
 el.modalBackdrop.addEventListener('click', closeModal);
-
-el.closeReadOnlyBtn.addEventListener('click', closeReadOnlyProjectsModal);
-el.closeReadOnlyFromBottomBtn.addEventListener('click', closeReadOnlyProjectsModal);
-el.readOnlyBackdrop.addEventListener('click', closeReadOnlyProjectsModal);
 
 el.workflowForm.addEventListener('submit', async (e) => {
 	e.preventDefault();
