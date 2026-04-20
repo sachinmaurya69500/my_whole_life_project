@@ -110,6 +110,7 @@ def workflow_to_json(doc):
 		"description": doc.get("description", ""),
 		"progress": int(doc.get("progress", 0)),
 		"status": doc.get("status", "Not Started"),
+		"start_date": doc.get("start_date").date().isoformat() if doc.get("start_date") else "",
 		"due_date": doc.get("due_date").date().isoformat() if doc.get("due_date") else "",
 		"notes": doc.get("notes", ""),
 		"code_snippet": doc.get("code_snippet", ""),
@@ -205,6 +206,7 @@ def ensure_seed_data():
 				"description": "Review goals and set top 3 priorities.",
 				"progress": 85,
 				"status": "In Progress",
+				"start_date": parse_iso_or_none("2026-04-01"),
 				"due_date": parse_iso_or_none("2026-04-20"),
 				"notes": "Keep it under 20 minutes.",
 			},
@@ -214,6 +216,7 @@ def ensure_seed_data():
 				"description": "45-minute strength session followed by mobility.",
 				"progress": 60,
 				"status": "In Progress",
+				"start_date": parse_iso_or_none("2026-02-15"),
 				"due_date": parse_iso_or_none("2026-04-20"),
 				"notes": "Track consistency in weekly sheet.",
 			},
@@ -223,6 +226,7 @@ def ensure_seed_data():
 				"description": "Solve 2 medium coding problems.",
 				"progress": 40,
 				"status": "Not Started",
+				"start_date": parse_iso_or_none("2026-04-15"),
 				"due_date": parse_iso_or_none("2026-04-20"),
 				"notes": "Focus on arrays and hashing this week.",
 			},
@@ -232,6 +236,7 @@ def ensure_seed_data():
 				"description": "Read from current productivity book.",
 				"progress": 100,
 				"status": "Completed",
+				"start_date": parse_iso_or_none("2026-03-01"),
 				"due_date": parse_iso_or_none("2026-04-19"),
 				"notes": "Capture 2 actionable insights.",
 			},
@@ -241,6 +246,7 @@ def ensure_seed_data():
 				"description": "Build modern portfolio with project case studies.",
 				"progress": 55,
 				"status": "In Progress",
+				"start_date": parse_iso_or_none("2026-04-01"),
 				"due_date": parse_iso_or_none("2026-06-15"),
 				"notes": "Finalize hero section and project detail pages.",
 			},
@@ -250,6 +256,7 @@ def ensure_seed_data():
 				"description": "Complete advanced Flask + MongoDB workflows.",
 				"progress": 35,
 				"status": "In Progress",
+				"start_date": parse_iso_or_none("2026-02-01"),
 				"due_date": parse_iso_or_none("2026-07-01"),
 				"notes": "Build at least 3 production-style mini apps.",
 			},
@@ -259,6 +266,7 @@ def ensure_seed_data():
 				"description": "Publish weekly coding tutorials.",
 				"progress": 20,
 				"status": "Not Started",
+				"start_date": parse_iso_or_none("2026-05-01"),
 				"due_date": parse_iso_or_none("2026-08-30"),
 				"notes": "Plan first 5 scripts in advance.",
 			},
@@ -268,6 +276,7 @@ def ensure_seed_data():
 				"description": "Track monthly investment and emergency fund.",
 				"progress": 70,
 				"status": "In Progress",
+				"start_date": parse_iso_or_none("2026-01-15"),
 				"due_date": parse_iso_or_none("2026-12-31"),
 				"notes": "Automate monthly summary reminders.",
 			},
@@ -277,6 +286,7 @@ def ensure_seed_data():
 				"description": "Attend 2 dev events per month.",
 				"progress": 50,
 				"status": "In Progress",
+				"start_date": parse_iso_or_none("2026-03-01"),
 				"due_date": parse_iso_or_none("2026-09-30"),
 				"notes": "Connect with mentors and peers.",
 			},
@@ -288,6 +298,7 @@ def ensure_seed_data():
 				{
 					**item,
 					"photo_file_ids": [],
+					"start_date": item.get("start_date"),
 					"created_at": now,
 					"updated_at": now,
 				}
@@ -659,6 +670,7 @@ def create_workflow():
 	notes = (data.get("notes") or "").strip()
 	status = (data.get("status") or "Not Started").strip()
 	progress = int(data.get("progress") or 0)
+	start_date = parse_iso_or_none(data.get("start_date") or "")
 	due_date = parse_iso_or_none(data.get("due_date") or "")
 
 	if not title:
@@ -677,6 +689,7 @@ def create_workflow():
 		"description": description,
 		"progress": progress,
 		"status": status,
+		"start_date": start_date,
 		"due_date": due_date,
 		"notes": notes,
 		"code_snippet": (data.get("code_snippet") or "").strip(),
@@ -752,6 +765,9 @@ def update_workflow(workflow_id):
 		if progress < 0 or progress > 100:
 			return jsonify({"error": "Progress must be between 0 and 100"}), 400
 		update_payload["progress"] = progress
+
+	if "start_date" in data:
+		update_payload["start_date"] = parse_iso_or_none(data.get("start_date") or "")
 
 	if "due_date" in data:
 		update_payload["due_date"] = parse_iso_or_none(data.get("due_date") or "")

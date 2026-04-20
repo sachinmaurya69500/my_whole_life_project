@@ -33,6 +33,7 @@
 					<p><span class="text-slate-400">Type:</span> <span id="projectTypeText">-</span></p>
 					<p><span class="text-slate-400">Status:</span> <span id="projectStatusText">-</span></p>
 					<p><span class="text-slate-400">Progress:</span> <span id="projectProgressText">0%</span></p>
+					<p><span class="text-slate-400">Start Date:</span> <span id="projectStartDateText">-</span></p>
 					<p><span class="text-slate-400">Due Date:</span> <span id="projectDueDateText">-</span></p>
 					<p><span class="text-slate-400">Updated:</span> <span id="projectUpdatedText">-</span></p>
 					<p class="pt-2 text-slate-400">Photo is stored in MongoDB GridFS, and only one project photo is retained.</p>
@@ -73,6 +74,13 @@
 							<option>Completed</option>
 						</select>
 					</div>
+					<div>
+						<label for="projectStartDate" class="block text-sm mb-1">Start Date</label>
+						<input id="projectStartDate" type="date" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" />
+					</div>
+				</div>
+
+				<div class="grid gap-4 md:grid-cols-2">
 					<div>
 						<label for="projectDueDate" class="block text-sm mb-1">Due Date</label>
 						<input id="projectDueDate" type="date" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" />
@@ -123,26 +131,16 @@
 		progress: document.getElementById('projectProgress'),
 		progressValue: document.getElementById('projectProgressValue'),
 		status: document.getElementById('projectStatus'),
-		dueDate: document.getElementById('projectDueDate'),
-		description: document.getElementById('projectDescription'),
-		notes: document.getElementById('projectNotes'),
-		code: document.getElementById('projectCode'),
-		more: document.getElementById('projectMore'),
-		typeText: document.getElementById('projectTypeText'),
-		statusText: document.getElementById('projectStatusText'),
-		progressText: document.getElementById('projectProgressText'),
-		dueDateText: document.getElementById('projectDueDateText'),
-		updatedText: document.getElementById('projectUpdatedText'),
-	};
-
-	function showToast(message, kind = 'ok') {
-		let toast = document.getElementById('globalToast');
-		if (!toast) {
-			toast = document.createElement('div');
-			toast.id = 'globalToast';
-			toast.className = 'fixed bottom-4 right-4 z-[70] px-4 py-2 rounded-lg text-sm shadow-xl transition';
-			document.body.appendChild(toast);
-		}
+			startDate: document.getElementById('projectStartDate'),
+			dueDate: document.getElementById('projectDueDate'),
+			description: document.getElementById('projectDescription'),
+			notes: document.getElementById('projectNotes'),
+			code: document.getElementById('projectCode'),
+			more: document.getElementById('projectMore'),
+			typeText: document.getElementById('projectTypeText'),
+			statusText: document.getElementById('projectStatusText'),
+			progressText: document.getElementById('projectProgressText'),
+			startDateText: document.getElementById('projectStartDateText'),
 		toast.textContent = message;
 		toast.classList.remove('bg-rose-500', 'bg-emerald-500', 'opacity-0');
 		toast.classList.add(kind === 'error' ? 'bg-rose-500' : 'bg-emerald-500');
@@ -167,6 +165,7 @@
 		el.typeText.textContent = data.type || '-';
 		el.statusText.textContent = data.status || '-';
 		el.progressText.textContent = `${Number(data.progress || 0)}%`;
+		el.startDateText.textContent = data.start_date || 'No start date';
 		el.dueDateText.textContent = data.due_date || 'No due date';
 		el.updatedText.textContent = data.updated_at ? new Date(data.updated_at).toLocaleString() : '-';
 		const photoUrl = data.photo_urls && data.photo_urls.length ? data.photo_urls[0] : 'https://via.placeholder.com/520x320?text=Project+Photo';
@@ -180,6 +179,7 @@
 		el.progress.value = Number(data.progress || 0);
 		el.progressValue.textContent = `${Number(data.progress || 0)}%`;
 		el.status.value = data.status || 'Not Started';
+		el.startDate.value = data.start_date || '';
 		el.dueDate.value = data.due_date || '';
 		el.description.value = data.description || '';
 		el.notes.value = data.notes || '';
@@ -207,6 +207,7 @@
 				type: el.type.value,
 				progress: Number(el.progress.value || 0),
 				status: el.status.value,
+				start_date: el.startDate.value,
 				due_date: el.dueDate.value,
 				description: el.description.value.trim(),
 				notes: el.notes.value.trim(),

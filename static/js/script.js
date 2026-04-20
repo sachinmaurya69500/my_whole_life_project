@@ -38,6 +38,7 @@ const el = {
 	wfProgress: document.getElementById('wfProgress'),
 	wfProgressValue: document.getElementById('wfProgressValue'),
 	wfStatus: document.getElementById('wfStatus'),
+	wfStartDate: document.getElementById('wfStartDate'),
 	wfDueDate: document.getElementById('wfDueDate'),
 	wfNotes: document.getElementById('wfNotes'),
 	wfPhotos: document.getElementById('wfPhotos'),
@@ -117,6 +118,7 @@ function openModal(editWorkflow = null) {
 		el.wfProgress.value = editWorkflow.progress;
 		el.wfProgressValue.textContent = `${editWorkflow.progress}%`;
 		el.wfStatus.value = editWorkflow.status;
+		el.wfStartDate.value = editWorkflow.start_date || '';
 		el.wfDueDate.value = editWorkflow.due_date || '';
 		el.wfNotes.value = editWorkflow.notes;
 	} else {
@@ -418,6 +420,7 @@ el.workflowForm.addEventListener('submit', async (e) => {
 		description: el.wfDescription.value.trim(),
 		progress: Number(el.wfProgress.value || 0),
 		status: el.wfStatus.value,
+		start_date: el.wfStartDate.value,
 		due_date: el.wfDueDate.value,
 		notes: el.wfNotes.value.trim(),
 	};
