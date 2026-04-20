@@ -158,8 +158,8 @@
 
 <div id="workflowModal" class="fixed inset-0 z-50 hidden">
 	<div class="absolute inset-0 bg-black/60" id="modalBackdrop"></div>
-	<div class="relative min-h-screen grid place-items-center p-4">
-		<div class="w-full max-w-2xl panel border-slate-700">
+	<div class="relative min-h-screen grid place-items-center p-4 overflow-y-auto">
+		<div class="w-full max-w-2xl panel border-slate-700 max-h-[calc(100vh-2rem)] overflow-y-auto">
 			<div class="flex items-center justify-between mb-4">
 				<h3 id="modalTitle" class="text-xl font-semibold">Add New Workflow</h3>
 				<button id="closeModalBtn" class="h-9 w-9 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-xmark"></i></button>
