@@ -174,8 +174,7 @@ def _call_gemini_chat_with_model(messages, model, system_instruction):
 		{
 			"systemInstruction": {"parts": [{"text": system_instruction}]},
 			"contents": messages,
-			"temperature": 0.3,
-			"generationConfig": {"maxOutputTokens": 500},
+			"generationConfig": {"maxOutputTokens": 500, "temperature": 0.3},
 		}
 	).encode("utf-8")
 
