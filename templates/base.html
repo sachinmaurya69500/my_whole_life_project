@@ -36,7 +36,37 @@
         <i class="fa-solid fa-moon"></i>
     </button>
     {% block content %}{% endblock %}
+
+    <button
+        id="assistantLauncher"
+        class="assistant-launcher"
+        type="button"
+        aria-label="Open Gemini Assistant"
+        aria-expanded="false"
+        title="Open Gemini Assistant"
+    >
+        <span class="assistant-launcher-core"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+    </button>
+
+    <section id="assistantPanel" class="assistant-panel hidden" aria-label="Gemini Assistant" aria-hidden="true">
+        <header class="assistant-panel-header">
+            <div>
+                <h3>Gemini Assistant</h3>
+                <p>Future-focused help for your workflow</p>
+            </div>
+            <button id="assistantClose" type="button" class="assistant-close" aria-label="Close assistant">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </header>
+        <div id="assistantMessages" class="assistant-messages"></div>
+        <form id="assistantForm" class="assistant-form">
+            <input id="assistantInput" type="text" maxlength="1500" aria-label="Assistant message input" placeholder="Ask Gemini to prioritize, plan, or unblock your next step..." />
+            <button id="assistantSend" type="submit">Send</button>
+        </form>
+    </section>
+
     {% block scripts %}{% endblock %}
+    <script src="{{ url_for('static', filename='js/assistant-widget.js') }}"></script>
     <script>
         (function () {
             const themeToggle = document.getElementById('themeToggle');
