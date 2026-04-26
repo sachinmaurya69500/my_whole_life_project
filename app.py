@@ -50,6 +50,15 @@ def to_object_id(value):
 		return None
 
 
+def gemini_api_key_value():
+	return (os.getenv("GEMINI_API_KEY") or "").strip()
+
+
+def gemini_api_key_ready():
+	api_key = gemini_api_key_value()
+	return bool(api_key) and api_key != "your_gemini_api_key_here"
+
+
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "change-me-in-production")
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=7)
@@ -229,8 +238,8 @@ def _extract_gemini_content(response_data):
 
 
 def _call_gemini_chat_with_model(messages, model, system_instruction):
-	api_key = os.getenv("GEMINI_API_KEY", "").strip()
-	if not api_key:
+	api_key = gemini_api_key_value()
+	if not gemini_api_key_ready():
 		raise RuntimeError("GEMINI_API_KEY is not configured on the server")
 
 	payload = json.dumps(
@@ -833,7 +842,7 @@ def insights_data():
 
 @app.route("/api/ai-chat/status", methods=["GET"])
 def ai_chat_status():
-	api_key_configured = bool((os.getenv("GEMINI_API_KEY") or "").strip())
+	api_key_configured = gemini_api_key_ready()
 	authenticated = bool(session.get("user_id"))
 
 	return jsonify(
