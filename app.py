@@ -855,12 +855,21 @@ def ai_chat_status():
 	)
 
 
-@app.route("/api/ai-chat", methods=["POST"])
+@app.route("/api/ai-chat", methods=["GET", "POST"])
 @login_required
 def ai_chat():
 	user_id = to_object_id(session["user_id"])
 	if not user_id:
 		return jsonify({"error": "Unauthorized"}), 401
+
+	if request.method == "GET":
+		return jsonify(
+			{
+				"message": "Use POST with JSON {\"message\": \"...\"} to chat with Gemini.",
+				"endpoint": "/api/ai-chat",
+				"provider": "gemini",
+			}
+		)
 
 	payload = request.get_json(silent=True) or {}
 	user_message = (payload.get("message") or "").strip()
