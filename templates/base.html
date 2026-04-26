@@ -41,9 +41,9 @@
         id="assistantLauncher"
         class="assistant-launcher"
         type="button"
-        aria-label="Open Gemini Assistant"
+        aria-label="Open Assistant"
         aria-expanded="false"
-        title="Open Gemini Assistant"
+        title="Open Assistant"
     >
         <span class="assistant-launcher-core" aria-hidden="true">
             <span class="assistant-orbit orbit-one"></span>
@@ -52,12 +52,11 @@
         </span>
     </button>
 
-    <section id="assistantPanel" class="assistant-panel hidden" aria-label="Gemini Assistant" aria-hidden="true">
+    <section id="assistantPanel" class="assistant-panel hidden" aria-label="Assistant" aria-hidden="true">
         <header class="assistant-panel-header">
             <div>
-                <h3>Gemini Assistant</h3>
-                <p>Future-focused help for your workflow</p>
-                <div id="assistantApiStatus" class="assistant-api-status checking" aria-live="polite">Checking API...</div>
+                <h3>MongoDB Assistant</h3>
+                <p>Simple chatbot connected to your database</p>
             </div>
             <div class="assistant-header-actions">
                 <button type="button" id="newChatBtn" class="assistant-header-btn" aria-label="Start new chat" title="Start new conversation">
@@ -92,7 +91,7 @@
         <div id="chatTab" class="assistant-tab-content active">
             <div id="assistantMessages" class="assistant-messages"></div>
             <form id="assistantForm" class="assistant-form">
-                <input id="assistantInput" type="text" maxlength="1500" aria-label="Assistant message input" placeholder="Ask Gemini to prioritize, plan, or unblock your next step..." />
+                <input id="assistantInput" type="text" maxlength="1500" aria-label="Assistant message input" placeholder="Ask about your projects, progress, or recent chats..." />
                 <button id="assistantSend" type="submit">Send</button>
             </form>
         </div>
@@ -201,7 +200,7 @@
                         <option value="">Loading projects...</option>
                     </select>
                 </label>
-                <label>Your Advice (💡 This will help Gemini give better suggestions)
+                <label>Your Advice (💡 This will help the assistant give better suggestions)
                     <textarea id="adviceText" maxlength="500" placeholder="e.g., I work best in the morning. Breaking this into smaller daily tasks helps. Focus on quality over quantity." rows="3" aria-label="Advice for this project"></textarea>
                 </label>
                 <button type="submit" class="project-form-btn">Save Advice</button>
