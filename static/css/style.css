@@ -591,3 +591,224 @@ html[data-theme='light'] .bg-slate-900\/60,
 html[data-theme='light'] .bg-slate-900\/80 {
 	background-color: rgba(255, 255, 255, 0.92) !important;
 }
+
+/* Assistant Tabs */
+.assistant-tabs {
+	display: flex;
+	gap: 0.25rem;
+	padding: 0.75rem;
+	border-bottom: 1px solid rgba(226, 232, 240, 0.1);
+	background: rgba(15, 23, 42, 0.8);
+	overflow-x: auto;
+	scroll-behavior: smooth;
+}
+
+.assistant-tab {
+	flex-shrink: 0;
+	padding: 0.5rem 1rem;
+	border: none;
+	border-bottom: 2px solid transparent;
+	background: transparent;
+	color: rgba(226, 232, 240, 0.7);
+	font-size: 0.875rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s;
+	white-space: nowrap;
+}
+
+.assistant-tab:hover {
+	color: rgba(34, 211, 238, 0.9);
+}
+
+.assistant-tab.active {
+	color: rgba(34, 211, 238, 1);
+	border-bottom-color: rgba(34, 211, 238, 1);
+}
+
+.assistant-tab i {
+	margin-right: 0.4rem;
+}
+
+/* Tab Content */
+.assistant-tab-content {
+	display: none;
+	max-height: 420px;
+	overflow-y: auto;
+	animation: fadeIn 0.2s;
+}
+
+.assistant-tab-content.active {
+	display: block;
+}
+
+@keyframes fadeIn {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+/* Project Forms */
+.project-form {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	padding: 1rem;
+	font-size: 0.875rem;
+}
+
+.project-form label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	color: rgba(226, 232, 240, 0.9);
+	font-weight: 500;
+}
+
+.project-form label .required {
+	color: rgba(239, 68, 68, 0.9);
+}
+
+.project-form input,
+.project-form textarea,
+.project-form select {
+	padding: 0.5rem;
+	border: 1px solid rgba(148, 163, 184, 0.3);
+	border-radius: 0.375rem;
+	background: rgba(30, 41, 59, 0.9);
+	color: rgba(226, 232, 240, 0.95);
+	font-family: inherit;
+	font-size: inherit;
+	transition: all 0.2s;
+}
+
+.project-form input:focus,
+.project-form textarea:focus,
+.project-form select:focus {
+	outline: none;
+	border-color: rgba(34, 211, 238, 0.5);
+	background: rgba(30, 41, 59, 0.95);
+	box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
+}
+
+.project-form select {
+	cursor: pointer;
+}
+
+.project-form textarea {
+	resize: vertical;
+	font-size: 0.8125rem;
+	font-family: inherit;
+}
+
+.project-form-buttons {
+	display: flex;
+	gap: 0.75rem;
+	margin-top: 0.5rem;
+}
+
+.project-form-btn {
+	flex: 1;
+	padding: 0.625rem 1rem;
+	border: none;
+	border-radius: 0.375rem;
+	background: linear-gradient(135deg, rgba(34, 211, 238, 0.9), rgba(8, 145, 178, 0.9));
+	color: white;
+	font-weight: 600;
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.project-form-btn:hover:not(:disabled) {
+	background: linear-gradient(135deg, rgba(34, 211, 238, 1), rgba(8, 145, 178, 1));
+	transform: translateY(-1px);
+	box-shadow: 0 6px 20px rgba(34, 211, 238, 0.3);
+}
+
+.project-form-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.project-form-btn.delete {
+	background: linear-gradient(135deg, rgba(239, 68, 68, 0.8), rgba(185, 28, 28, 0.8));
+}
+
+.project-form-btn.delete:hover:not(:disabled) {
+	background: linear-gradient(135deg, rgba(239, 68, 68, 1), rgba(185, 28, 28, 1));
+	box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+}
+
+.project-message {
+	padding: 0.75rem;
+	border-radius: 0.375rem;
+	font-size: 0.8125rem;
+	text-align: center;
+	display: none;
+	animation: slideIn 0.2s;
+}
+
+.project-message.show {
+	display: block;
+}
+
+.project-message.success {
+	background: rgba(34, 197, 94, 0.15);
+	color: rgba(134, 239, 172, 0.95);
+	border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.project-message.error {
+	background: rgba(239, 68, 68, 0.15);
+	color: rgba(252, 165, 165, 0.95);
+	border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+@keyframes slideIn {
+	from { 
+		opacity: 0;
+		transform: translateY(-4px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+/* Light Theme Overrides for Project Forms */
+html[data-theme='light'] .assistant-tabs {
+	background: rgba(241, 245, 250, 0.95);
+	border-color: rgba(15, 23, 42, 0.1);
+}
+
+html[data-theme='light'] .assistant-tab {
+	color: rgba(15, 23, 42, 0.6);
+}
+
+html[data-theme='light'] .assistant-tab:hover {
+	color: rgba(8, 145, 178, 0.9);
+}
+
+html[data-theme='light'] .assistant-tab.active {
+	color: rgba(8, 145, 178, 1);
+	border-bottom-color: rgba(8, 145, 178, 1);
+}
+
+html[data-theme='light'] .project-form label {
+	color: rgba(15, 23, 42, 0.9);
+}
+
+html[data-theme='light'] .project-form input,
+html[data-theme='light'] .project-form textarea,
+html[data-theme='light'] .project-form select {
+	background: rgba(255, 255, 255, 0.95);
+	color: rgba(15, 23, 42, 0.95);
+	border-color: rgba(148, 163, 184, 0.4);
+}
+
+html[data-theme='light'] .project-form input:focus,
+html[data-theme='light'] .project-form textarea:focus,
+html[data-theme='light'] .project-form select:focus {
+	background: rgba(255, 255, 255, 1);
+	border-color: rgba(8, 145, 178, 0.6);
+	box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+}
