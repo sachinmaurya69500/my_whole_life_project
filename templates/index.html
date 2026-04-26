@@ -76,10 +76,30 @@
 				<article class="stat-card"><p>Avg Progress</p><h3 id="statAvg">0%</h3></article>
 			</div>
 
-			<div class="grid gap-6 lg:grid-cols-1">
+			<div class="grid gap-6 lg:grid-cols-2">
 				<div class="panel">
 					<h3 class="panel-title">Recent Activity</h3>
 					<div id="recentActivity" class="space-y-3"></div>
+				</div>
+
+				<div class="panel">
+					<div class="flex items-center justify-between gap-3 mb-3">
+						<h3 class="panel-title !mb-0">xAI Assistant</h3>
+						<span class="text-xs text-slate-400">Ask about your next best action</span>
+					</div>
+					<div id="chatMessages" class="chat-messages"></div>
+					<form id="chatForm" class="mt-3 flex gap-2">
+						<input
+							id="chatInput"
+							type="text"
+							maxlength="1500"
+							placeholder="Ask the assistant to plan your day, prioritize tasks, or review progress..."
+							class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+						/>
+						<button id="chatSendBtn" type="submit" class="rounded-lg bg-cyan-500 text-slate-950 px-4 py-2 font-semibold hover:bg-cyan-400 transition text-sm">
+							Send
+						</button>
+					</form>
 				</div>
 			</div>
 		</section>

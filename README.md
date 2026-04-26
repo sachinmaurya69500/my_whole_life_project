@@ -10,6 +10,8 @@ Production-style Flask + MongoDB + GridFS workflow management web app.
 - Daily and Long-term project views with progress cards
 - Manage workflows admin table with search and inline quick edits
 - Add/Edit/Delete workflows via REST-style API and fetch()
+- xAI chatbot assistant integrated on dashboard
+- Chat memory persisted per user and auto-loaded on dashboard
 - Multiple workflow photo uploads to GridFS
 - Image serving route: `/image/<file_id>`
 - Seed data: 8+ workflows and default profile image
@@ -53,6 +55,8 @@ MONGO_URI=mongodb+srv://<username>:<password>@<cluster-url>/sachin_workflow_mana
 MONGO_DB_NAME=sachin_workflow_manager
 APP_EMAIL=sachin@example.com
 APP_PASSWORD=123456
+XAI_API_KEY=your_xai_api_key_here
+XAI_MODEL=grok-3-mini
 ```
 
 Notes:
@@ -65,6 +69,8 @@ Login behavior:
 - `APP_EMAIL` is the only allowed login email (single-user mode).
 - The user record is fetched from MongoDB by email.
 - The entered password is verified against a secure password hash stored in MongoDB.
+- `XAI_API_KEY` is required to enable dashboard AI assistant.
+- `XAI_MODEL` is optional (default: `grok-3-mini`).
 
 ## 4) Run the App
 
@@ -93,6 +99,8 @@ Default login:
 - `POST /api/workflows`
 - `PUT /api/workflows/<workflow_id>`
 - `DELETE /api/workflows/<workflow_id>`
+- `POST /api/ai-chat`
+- `GET /api/ai-chat/history`
 - `POST /api/workflows/<workflow_id>/photos`
 - `DELETE /api/workflows/<workflow_id>/photos/<photo_id>`
 - `GET /image/<file_id>`

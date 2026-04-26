@@ -2,6 +2,7 @@ const state = {
 	workflows: [],
 	currentSection: 'dashboard',
 	selectedFiles: [],
+	chatBusy: false,
 };
 
 const el = {
@@ -58,6 +59,10 @@ const el = {
 	menuToggle: document.getElementById('menuToggle'),
 	sidebar: document.getElementById('sidebar'),
 	mobileBackdrop: document.getElementById('mobileBackdrop'),
+	chatForm: document.getElementById('chatForm'),
+	chatInput: document.getElementById('chatInput'),
+	chatSendBtn: document.getElementById('chatSendBtn'),
+	chatMessages: document.getElementById('chatMessages'),
 };
 
 function showToast(message, kind = 'ok') {
@@ -346,7 +351,7 @@ async function loadWorkflows(search = '') {
 }
 
 async function loadAll() {
-	await Promise.all([loadDashboard(), loadWorkflows(), loadProfile()]);
+	await Promise.all([loadDashboard(), loadWorkflows(), loadProfile(), loadChatHistory()]);
 }
 
 function escapeHtml(value) {
@@ -356,6 +361,81 @@ function escapeHtml(value) {
 		.replaceAll('>', '&gt;')
 		.replaceAll('"', '&quot;')
 		.replaceAll("'", '&#39;');
+}
+
+function addChatMessage(role, text, opts = {}) {
+	if (!el.chatMessages) return null;
+	const bubble = document.createElement('div');
+	bubble.className = `chat-bubble ${role === 'user' ? 'user' : 'bot'}`;
+	if (opts.thinking) {
+		bubble.classList.add('chat-thinking');
+	}
+	bubble.textContent = text;
+	el.chatMessages.appendChild(bubble);
+	el.chatMessages.scrollTop = el.chatMessages.scrollHeight;
+	return bubble;
+}
+
+function setChatBusy(isBusy) {
+	state.chatBusy = isBusy;
+	if (!el.chatInput || !el.chatSendBtn) return;
+	el.chatInput.disabled = isBusy;
+	el.chatSendBtn.disabled = isBusy;
+	el.chatSendBtn.textContent = isBusy ? 'Thinking...' : 'Send';
+}
+
+async function loadChatHistory() {
+	if (!el.chatMessages) return;
+	el.chatMessages.innerHTML = '';
+
+	try {
+		const data = await api('/api/ai-chat/history');
+		const messages = Array.isArray(data.messages) ? data.messages : [];
+
+		if (!messages.length) {
+			addChatMessage('bot', 'Hi! I am your xAI assistant. Ask me to prioritize your workflows or plan your next steps.');
+			return;
+		}
+
+		messages.forEach((msg) => {
+			const role = msg.role === 'user' ? 'user' : 'bot';
+			addChatMessage(role, msg.content || '');
+		});
+	} catch (err) {
+		addChatMessage('bot', err.message || 'Unable to load chat history right now.');
+	}
+}
+
+if (el.chatForm) {
+	el.chatForm.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		if (state.chatBusy) return;
+
+		const message = (el.chatInput.value || '').trim();
+		if (!message) return;
+
+		addChatMessage('user', message);
+		el.chatInput.value = '';
+		setChatBusy(true);
+
+		const thinkingBubble = addChatMessage('bot', 'Thinking...', { thinking: true });
+
+		try {
+			const data = await api('/api/ai-chat', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ message }),
+			});
+
+			if (thinkingBubble) thinkingBubble.remove();
+			addChatMessage('bot', data.reply || 'I could not generate a response right now.');
+		} catch (err) {
+			if (thinkingBubble) thinkingBubble.remove();
+			addChatMessage('bot', err.message || 'Something went wrong while contacting AI.');
+		} finally {
+			setChatBusy(false);
+		}
+	});
 }
 
 el.navButtons.forEach((btn) => {

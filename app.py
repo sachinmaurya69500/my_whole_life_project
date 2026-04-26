@@ -1,9 +1,12 @@
 import base64
 import hashlib
+import json
 import os
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from io import BytesIO
+from urllib import error as url_error
+from urllib import request as url_request
 
 from bson import ObjectId
 from dotenv import load_dotenv
@@ -125,6 +128,112 @@ def workflow_to_json(doc):
 
 def normalize_email(value):
 	return (value or "").strip().lower()
+
+
+def build_workflow_context(limit=10):
+	items = list(workflows_col.find({}).sort("updated_at", -1).limit(limit))
+	if not items:
+		return "No workflows available yet."
+
+	lines = []
+	for item in items:
+		lines.append(
+			f"- {item.get('title', 'Untitled')} | type={item.get('type', 'Daily')} | "
+			f"status={item.get('status', 'Not Started')} | progress={int(item.get('progress', 0))}%"
+		)
+	return "\n".join(lines)
+
+
+def call_xai_chat(messages):
+	api_key = os.getenv("XAI_API_KEY", "").strip()
+	if not api_key:
+		raise RuntimeError("XAI_API_KEY is not configured on the server")
+
+	model = os.getenv("XAI_MODEL", "grok-3-mini").strip() or "grok-3-mini"
+	payload = json.dumps(
+		{
+			"model": model,
+			"messages": messages,
+			"temperature": 0.3,
+			"max_tokens": 500,
+		}
+	).encode("utf-8")
+
+	request_obj = url_request.Request(
+		"https://api.x.ai/v1/chat/completions",
+		data=payload,
+		headers={
+			"Authorization": f"Bearer {api_key}",
+			"Content-Type": "application/json",
+		},
+		method="POST",
+	)
+
+	try:
+		with url_request.urlopen(request_obj, timeout=30) as response:
+			response_data = json.loads(response.read().decode("utf-8"))
+	except url_error.HTTPError as exc:
+		error_body = exc.read().decode("utf-8", errors="ignore")
+		raise RuntimeError(f"xAI API request failed: {exc.code} {error_body}") from exc
+	except url_error.URLError as exc:
+		raise RuntimeError("Unable to reach xAI API") from exc
+
+	choices = response_data.get("choices") or []
+	if not choices:
+		raise RuntimeError("xAI API returned an empty response")
+
+	message = choices[0].get("message") or {}
+	content = (message.get("content") or "").strip()
+	if not content:
+		raise RuntimeError("xAI API did not return message content")
+	return content
+
+
+def sanitize_chat_history(raw_history, limit=20):
+	if not isinstance(raw_history, list):
+		return []
+
+	cleaned = []
+	for item in raw_history:
+		if not isinstance(item, dict):
+			continue
+		role = (item.get("role") or "").strip().lower()
+		content = (item.get("content") or "").strip()
+		if role not in {"user", "assistant"}:
+			continue
+		if not content:
+			continue
+		cleaned.append({"role": role, "content": content[:4000]})
+
+	if limit <= 0:
+		return cleaned
+	return cleaned[-limit:]
+
+
+def get_user_chat_history(user_id, limit=20):
+	user = users_col.find_one({"_id": user_id}, {"chat_history": 1})
+	if not user:
+		return []
+	return sanitize_chat_history(user.get("chat_history", []), limit=limit)
+
+
+def store_chat_turn(user_id, user_message, assistant_message, max_messages=40):
+	now_iso = utc_now().isoformat()
+	users_col.update_one(
+		{"_id": user_id},
+		{
+			"$push": {
+				"chat_history": {
+					"$each": [
+						{"role": "user", "content": user_message, "created_at": now_iso},
+						{"role": "assistant", "content": assistant_message, "created_at": now_iso},
+					],
+					"$slice": -max_messages,
+				}
+			},
+			"$set": {"updated_at": utc_now()},
+		},
+	)
 
 
 def cleanup_legacy_data():
@@ -637,6 +746,60 @@ def insights_data():
 			},
 		}
 	)
+
+
+@app.route("/api/ai-chat", methods=["POST"])
+@login_required
+def ai_chat():
+	user_id = to_object_id(session["user_id"])
+	if not user_id:
+		return jsonify({"error": "Unauthorized"}), 401
+
+	payload = request.get_json(silent=True) or {}
+	user_message = (payload.get("message") or "").strip()
+
+	if not user_message:
+		return jsonify({"error": "Message is required"}), 400
+	if len(user_message) > 1500:
+		return jsonify({"error": "Message is too long"}), 400
+
+	workflow_context = build_workflow_context(limit=10)
+	chat_history = get_user_chat_history(user_id, limit=16)
+	system_prompt = (
+		"You are a productivity assistant for Sachin's workflow manager app. "
+		"Give concise, practical advice focused on priorities, scheduling, and execution. "
+		"Use the workflow context when relevant."
+	)
+
+	messages = [
+		{"role": "system", "content": system_prompt},
+		{"role": "system", "content": f"Current workflow context:\n{workflow_context}"},
+	]
+	messages.extend(chat_history)
+	messages.append({"role": "user", "content": user_message})
+
+	try:
+		reply = call_xai_chat(messages)
+	except RuntimeError as exc:
+		message = str(exc)
+		if "XAI_API_KEY" in message:
+			return jsonify({"error": "AI chat is not configured on the server"}), 503
+		return jsonify({"error": "AI service is temporarily unavailable", "details": message}), 502
+
+	store_chat_turn(user_id, user_message, reply)
+
+	return jsonify({"reply": reply})
+
+
+@app.route("/api/ai-chat/history", methods=["GET"])
+@login_required
+def ai_chat_history():
+	user_id = to_object_id(session["user_id"])
+	if not user_id:
+		return jsonify({"error": "Unauthorized"}), 401
+
+	history = get_user_chat_history(user_id, limit=40)
+	return jsonify({"messages": history})
 
 
 @app.route("/api/workflows", methods=["GET"])
