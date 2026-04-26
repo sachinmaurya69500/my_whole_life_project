@@ -10,14 +10,28 @@
 	// Tab elements
 	const tabButtons = document.querySelectorAll('.assistant-tab');
 	const chatTab = document.getElementById('chatTab');
+	const historyTab = document.getElementById('historyTab');
 	const addProjectTab = document.getElementById('addProjectTab');
 	const editProjectTab = document.getElementById('editProjectTab');
+	const adviceTab = document.getElementById('adviceTab');
+
+	// Chat control buttons
+	const newChatBtn = document.getElementById('newChatBtn');
+
+	// History elements
+	const historyList = document.getElementById('historyList');
+	const clearHistoryBtn = document.getElementById('clearHistoryBtn');
 
 	// Form elements
 	const addProjectForm = document.getElementById('addProjectForm');
 	const editProjectForm = document.getElementById('editProjectForm');
 	const editProjectSelect = document.getElementById('editProjectSelect');
 	const deleteProjectBtn = document.getElementById('deleteProjectBtn');
+
+	// Advice elements
+	const adviceForm = document.getElementById('adviceForm');
+	const adviceProjectSelect = document.getElementById('adviceProjectSelect');
+	const adviceText = document.getElementById('adviceText');
 
 	if (!launcher || !panel || !messagesEl || !form || !input || !sendBtn) {
 		return;
@@ -135,7 +149,7 @@
 	// Tab switching
 	function switchTab(tabName) {
 		tabButtons.forEach(btn => btn.classList.remove('active'));
-		[chatTab, addProjectTab, editProjectTab].forEach(tab => tab.classList.remove('active'));
+		[chatTab, historyTab, addProjectTab, editProjectTab, adviceTab].forEach(tab => tab.classList.remove('active'));
 
 		const activeBtn = Array.from(tabButtons).find(btn => btn.getAttribute('data-tab') === tabName);
 		if (activeBtn) activeBtn.classList.add('active');
@@ -143,6 +157,9 @@
 		if (tabName === 'chat') {
 			chatTab.classList.add('active');
 			input.focus();
+		} else if (tabName === 'history') {
+			historyTab.classList.add('active');
+			loadHistoryList();
 		} else if (tabName === 'add-project') {
 			addProjectTab.classList.add('active');
 			document.getElementById('projectTitle').focus();
@@ -150,6 +167,10 @@
 			editProjectTab.classList.add('active');
 			loadProjectsForEdit();
 			document.getElementById('editProjectSelect').focus();
+		} else if (tabName === 'advice') {
+			adviceTab.classList.add('active');
+			loadProjectsForAdvice();
+			adviceProjectSelect.focus();
 		}
 	}
 
@@ -158,6 +179,75 @@
 			const tabName = btn.getAttribute('data-tab');
 			switchTab(tabName);
 		});
+	});
+
+	// New Chat
+	newChatBtn.addEventListener('click', () => {
+		messagesEl.innerHTML = '';
+		historyLoaded = false;
+		input.value = '';
+		input.focus();
+		addMessage('bot', 'Hi, I am your futuristic Gemini copilot. Ask me to plan, prioritize, or unblock your next move.');
+		switchTab('chat');
+	});
+
+	// Load history list in History tab
+	async function loadHistoryList() {
+		historyList.innerHTML = '';
+
+		try {
+			const res = await fetch('/api/ai-chat/history', {
+				method: 'GET',
+				headers: { 'Accept': 'application/json' },
+			});
+			if (!res.ok) throw new Error('Failed to load history');
+			const data = await res.json();
+			const items = Array.isArray(data.messages) ? data.messages : [];
+
+			if (!items.length) {
+				historyList.innerHTML = '<div class="history-empty">No chat history yet. Start a conversation to build history.</div>';
+				return;
+			}
+
+			items.forEach((item, idx) => {
+				const historyItem = document.createElement('div');
+				historyItem.className = 'history-item';
+				const role = item.role === 'user' ? 'You' : 'Assistant';
+				const preview = item.content.substring(0, 100) + (item.content.length > 100 ? '...' : '');
+				
+				historyItem.innerHTML = `
+					<div class="history-item-date">${role} • Message ${items.length - idx}</div>
+					<div class="history-item-text">${preview}</div>
+				`;
+				
+				historyItem.addEventListener('click', () => {
+					switchTab('chat');
+					setTimeout(() => {
+						messagesEl.scrollTop = messagesEl.scrollHeight;
+						input.focus();
+					}, 100);
+				});
+
+				historyList.appendChild(historyItem);
+			});
+		} catch (err) {
+			historyList.innerHTML = `<div class="history-empty">Error loading history: ${err.message}</div>`;
+		}
+	}
+
+	// Clear history
+	clearHistoryBtn.addEventListener('click', async () => {
+		if (!confirm('Are you sure? This will clear all chat history.')) return;
+
+		try {
+			messagesEl.innerHTML = '';
+			historyLoaded = false;
+			addMessage('bot', 'Chat history cleared. Starting fresh!');
+			historyList.innerHTML = '<div class="history-empty">No chat history yet. Start a conversation to build history.</div>';
+			showMessage('adviceMessage', '✓ History cleared', 'success');
+		} catch (err) {
+			console.error('Error clearing history:', err);
+		}
 	});
 
 	// Load projects for edit dropdown
@@ -208,6 +298,77 @@
 			document.getElementById('editProjectNotes').value = proj.notes || '';
 		} catch (err) {
 			showMessage('editProjectMessage', `Error loading project: ${err.message}`, 'error');
+		}
+	});
+
+	// Load projects for advice dropdown
+	async function loadProjectsForAdvice() {
+		try {
+			const res = await fetch('/api/workflows', {
+				method: 'GET',
+				headers: { 'Accept': 'application/json' },
+			});
+			const projects = await res.json();
+
+			adviceProjectSelect.innerHTML = '<option value="">-- Select a project --</option>';
+			projects.forEach(proj => {
+				const option = document.createElement('option');
+				option.value = proj.id;
+				option.textContent = proj.title;
+				adviceProjectSelect.appendChild(option);
+			});
+		} catch (err) {
+			adviceProjectSelect.innerHTML = '<option value="">Error loading projects</option>';
+		}
+	}
+
+	// Load advice when project is selected
+	adviceProjectSelect.addEventListener('change', async (e) => {
+		const projectId = e.target.value;
+		adviceText.value = '';
+		if (!projectId) return;
+
+		try {
+			const res = await fetch(`/api/workflows/${projectId}/advice`, {
+				method: 'GET',
+				headers: { 'Accept': 'application/json' },
+			});
+			if (!res.ok) throw new Error('Failed to load advice');
+			const data = await res.json();
+			adviceText.value = data.advice || '';
+		} catch (err) {
+			showMessage('adviceMessage', `Error loading advice: ${err.message}`, 'error');
+		}
+	});
+
+	// Submit advice form
+	adviceForm.addEventListener('submit', async (e) => {
+		e.preventDefault();
+
+		const projectId = adviceProjectSelect.value;
+		if (!projectId) {
+			showMessage('adviceMessage', 'Please select a project', 'error');
+			return;
+		}
+
+		const advice = adviceText.value.trim();
+
+		try {
+			const res = await fetch(`/api/workflows/${projectId}/advice`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ advice }),
+			});
+
+			if (!res.ok) {
+				const data = await res.json();
+				throw new Error(data.error || 'Failed to save advice');
+			}
+
+			showMessage('adviceMessage', '✓ Advice saved! Gemini will now remember this for smarter suggestions.', 'success');
+			setTimeout(() => adviceText.value = '', 1000);
+		} catch (err) {
+			showMessage('adviceMessage', `Error: ${err.message}`, 'error');
 		}
 	});
 

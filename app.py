@@ -144,6 +144,69 @@ def build_workflow_context(limit=10):
 	return "\n".join(lines)
 
 
+def build_rich_context():
+	"""Build comprehensive website context: profile, stats, workflows, and advice."""
+	user = users_col.find_one({})
+	all_workflows = list(workflows_col.find({}).sort("updated_at", -1))
+	
+	# Build profile section
+	profile = ""
+	if user:
+		profile = f"""USER PROFILE:
+- Name: {user.get('display_name', 'User')}
+- Bio: {user.get('bio', 'Not set')}
+- Location: {user.get('location', 'Not set')}
+"""
+	
+	# Build statistics
+	daily_workflows = [w for w in all_workflows if w.get("type") == "Daily"]
+	long_term_workflows = [w for w in all_workflows if w.get("type") == "Long-term"]
+	
+	completed = [w for w in all_workflows if w.get("status") == "Completed"]
+	in_progress = [w for w in all_workflows if w.get("status") == "In Progress"]
+	not_started = [w for w in all_workflows if w.get("status") == "Not Started"]
+	
+	avg_progress = (
+		sum(int(w.get("progress", 0)) for w in all_workflows) / len(all_workflows)
+		if all_workflows else 0
+	)
+	
+	stats = f"""WORKFLOW STATISTICS:
+- Total Projects: {len(all_workflows)}
+- Daily Projects: {len(daily_workflows)}
+- Long-term Projects: {len(long_term_workflows)}
+- Completed: {len(completed)}
+- In Progress: {len(in_progress)}
+- Not Started: {len(not_started)}
+- Average Progress: {int(avg_progress)}%
+"""
+	
+	# Build detailed workflow list with advice
+	workflows_detail = "CURRENT WORKFLOWS:\n"
+	if all_workflows:
+		for w in all_workflows[:15]:  # Top 15 most recent
+			start = w.get("start_date", "")
+			due = w.get("due_date", "")
+			date_info = ""
+			if start or due:
+				date_info = f" | Dates: {start[:10] if start else '?'} → {due[:10] if due else '?'}"
+			
+			advice_info = ""
+			if w.get("advice"):
+				advice_info = f"\n  💡 Advice: {w.get('advice')}"
+			
+			workflows_detail += (
+				f"\n• {w.get('title', 'Untitled')}\n"
+				f"  Type: {w.get('type', 'Daily')} | Status: {w.get('status', 'Not Started')} | Progress: {int(w.get('progress', 0))}%{date_info}\n"
+				f"  Description: {w.get('description', 'No description')}\n"
+				f"  Notes: {w.get('notes', 'No notes')}{advice_info}"
+			)
+	else:
+		workflows_detail += "No workflows yet."
+	
+	return f"{profile}\n{stats}\n{workflows_detail}"
+
+
 
 def _extract_gemini_content(response_data):
 	candidates = response_data.get("candidates") or []
@@ -783,14 +846,22 @@ def ai_chat():
 	if len(user_message) > 1500:
 		return jsonify({"error": "Message is too long"}), 400
 
-	workflow_context = build_workflow_context(limit=10)
+	rich_context = build_rich_context()
 	chat_history = get_user_chat_history(user_id, limit=16)
+	
 	system_prompt = (
-		"You are a productivity assistant for Sachin's workflow manager app. "
-		"Give concise, practical advice focused on priorities, scheduling, and execution. "
-		"Use the workflow context when relevant."
+		"You are Sachin's personal productivity advisor. Your role is to:\n"
+		"1. ONLY discuss his actual projects and workflows shown in the context below\n"
+		"2. Give specific, actionable advice based on his current status and progress\n"
+		"3. Reference his project details when giving recommendations\n"
+		"4. Ask clarifying questions about blockers or conflicts\n"
+		"5. Keep advice concise and practical\n"
+		"6. Use stored advice in projects as historical context\n"
+		"7. Never give generic productivity tips - always tie to his real projects\n\n"
+		"IMPORTANT: ONLY give advice about projects that exist in his workflow data below. "
+		"Do not make up projects or suggest new ideas - focus only on optimizing what he's already doing.\n"
 	)
-	system_instruction = f"{system_prompt}\n\nCurrent workflow context:\n{workflow_context}"
+	system_instruction = f"{system_prompt}\n{rich_context}"
 
 	messages = []
 	for item in chat_history:
@@ -1089,6 +1160,48 @@ def delete_workflow_photo(workflow_id, photo_id):
 
 	updated = workflows_col.find_one({"_id": obj_id})
 	return jsonify(workflow_to_json(updated))
+
+
+@app.route("/api/workflows/<workflow_id>/advice", methods=["PUT"])
+@login_required
+def update_workflow_advice(workflow_id):
+	obj_id = to_object_id(workflow_id)
+	if not obj_id:
+		return jsonify({"error": "Invalid workflow id"}), 400
+
+	wf = workflows_col.find_one({"_id": obj_id})
+	if not wf:
+		return jsonify({"error": "Workflow not found"}), 404
+
+	data = request.get_json(silent=True) or {}
+	advice = (data.get("advice") or "").strip()
+
+	workflows_col.update_one(
+		{"_id": obj_id},
+		{
+			"$set": {
+				"advice": advice,
+				"updated_at": utc_now(),
+			}
+		},
+	)
+
+	updated = workflows_col.find_one({"_id": obj_id})
+	return jsonify(workflow_to_json(updated))
+
+
+@app.route("/api/workflows/<workflow_id>/advice", methods=["GET"])
+@login_required
+def get_workflow_advice(workflow_id):
+	obj_id = to_object_id(workflow_id)
+	if not obj_id:
+		return jsonify({"error": "Invalid workflow id"}), 400
+
+	wf = workflows_col.find_one({"_id": obj_id})
+	if not wf:
+		return jsonify({"error": "Workflow not found"}), 404
+
+	return jsonify({"advice": wf.get("advice", "")})
 
 
 @app.route("/image/<file_id>")

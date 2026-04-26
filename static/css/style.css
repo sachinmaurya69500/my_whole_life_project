@@ -416,6 +416,32 @@ html[data-theme='light'] .chat-bubble.bot {
 	margin-top: 0.1rem;
 }
 
+.assistant-header-actions {
+	display: flex;
+	gap: 0.5rem;
+	align-items: center;
+}
+
+.assistant-header-btn {
+	padding: 0.4rem 0.5rem;
+	border: 1px solid rgba(148, 163, 184, 0.2);
+	border-radius: 0.375rem;
+	background: rgba(30, 41, 59, 0.8);
+	color: rgba(148, 163, 184, 0.9);
+	cursor: pointer;
+	transition: all 0.2s;
+	font-size: 0.875rem;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.assistant-header-btn:hover {
+	background: rgba(34, 211, 238, 0.15);
+	color: rgba(34, 211, 238, 0.9);
+	border-color: rgba(34, 211, 238, 0.3);
+}
+
 .assistant-close {
 	height: 2rem;
 	width: 2rem;
@@ -772,6 +798,84 @@ html[data-theme='light'] .bg-slate-900\/80 {
 		opacity: 1;
 		transform: translateY(0);
 	}
+}
+
+/* History Styles */
+.history-container {
+	display: flex;
+	flex-direction: column;
+	padding: 1rem;
+	height: 100%;
+}
+
+.history-list {
+	flex: 1;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+}
+
+.history-item {
+	padding: 0.875rem;
+	border: 1px solid rgba(148, 163, 184, 0.2);
+	border-radius: 0.375rem;
+	background: rgba(30, 41, 59, 0.6);
+	cursor: pointer;
+	transition: all 0.2s;
+}
+
+.history-item:hover {
+	background: rgba(34, 211, 238, 0.1);
+	border-color: rgba(34, 211, 238, 0.3);
+}
+
+.history-item-date {
+	font-size: 0.7rem;
+	color: rgba(148, 163, 184, 0.6);
+	margin-bottom: 0.4rem;
+}
+
+.history-item-text {
+	font-size: 0.8rem;
+	color: rgba(226, 232, 240, 0.9);
+	line-height: 1.4;
+	word-break: break-word;
+}
+
+.history-empty {
+	flex: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: rgba(148, 163, 184, 0.6);
+	font-size: 0.875rem;
+	text-align: center;
+	padding: 2rem 1rem;
+}
+
+/* Light Theme for History */
+html[data-theme='light'] .history-item {
+	background: rgba(241, 245, 250, 0.8);
+	border-color: rgba(148, 163, 184, 0.3);
+}
+
+html[data-theme='light'] .history-item:hover {
+	background: rgba(8, 145, 178, 0.08);
+	border-color: rgba(8, 145, 178, 0.3);
+}
+
+html[data-theme='light'] .history-item-date {
+	color: rgba(100, 116, 139, 0.7);
+}
+
+html[data-theme='light'] .history-item-text {
+	color: rgba(15, 23, 42, 0.9);
+}
+
+html[data-theme='light'] .history-empty {
+	color: rgba(100, 116, 139, 0.6);
 }
 
 /* Light Theme Overrides for Project Forms */
