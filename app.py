@@ -144,100 +144,70 @@ def build_workflow_context(limit=10):
 	return "\n".join(lines)
 
 
-def _extract_xai_content(response_data):
-	choices = response_data.get("choices") or []
-	if not choices:
-		raise RuntimeError("xAI API returned an empty response")
 
-	message = choices[0].get("message") or {}
-	content = message.get("content")
+def _extract_gemini_content(response_data):
+	candidates = response_data.get("candidates") or []
+	if not candidates:
+		raise RuntimeError("Gemini API returned an empty response")
 
-	# Some providers return a plain string, while others can return a list of content parts.
-	if isinstance(content, str):
-		content = content.strip()
-	elif isinstance(content, list):
-		parts = []
-		for part in content:
-			if isinstance(part, dict):
-				text = (part.get("text") or "").strip()
-				if text:
-					parts.append(text)
-		content = "\n".join(parts).strip()
-	else:
-		content = ""
+	content = (candidates[0].get("content") or {})
+	parts = content.get("parts") or []
+	texts = []
+	for part in parts:
+		if isinstance(part, dict):
+			text = (part.get("text") or "").strip()
+			if text:
+				texts.append(text)
 
-	if not content:
-		raise RuntimeError("xAI API did not return message content")
-	return content
+	result = "\n".join(texts).strip()
+	if not result:
+		raise RuntimeError("Gemini API did not return message content")
+	return result
 
 
-def _call_xai_chat_with_model(messages, model, timeout_seconds):
-	api_key = os.getenv("XAI_API_KEY", "").strip()
+def _call_gemini_chat_with_model(messages, model, system_instruction):
+	api_key = os.getenv("GEMINI_API_KEY", "").strip()
 	if not api_key:
-		raise RuntimeError("XAI_API_KEY is not configured on the server")
+		raise RuntimeError("GEMINI_API_KEY is not configured on the server")
 
 	payload = json.dumps(
 		{
-			"model": model,
-			"messages": messages,
+			"systemInstruction": {"parts": [{"text": system_instruction}]},
+			"contents": messages,
 			"temperature": 0.3,
-			"max_tokens": 500,
+			"generationConfig": {"maxOutputTokens": 500},
 		}
 	).encode("utf-8")
 
 	request_obj = url_request.Request(
-		"https://api.x.ai/v1/chat/completions",
+		f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}",
 		data=payload,
 		headers={
-			"Authorization": f"Bearer {api_key}",
 			"Content-Type": "application/json",
 		},
 		method="POST",
 	)
 
 	try:
-		with url_request.urlopen(request_obj, timeout=timeout_seconds) as response:
+		with url_request.urlopen(request_obj) as response:
 			response_data = json.loads(response.read().decode("utf-8"))
 	except url_error.HTTPError as exc:
 		error_body = exc.read().decode("utf-8", errors="ignore")
-		raise RuntimeError(f"xAI API request failed: {exc.code} {error_body}") from exc
+		raise RuntimeError(f"Gemini API request failed: {exc.code} {error_body}") from exc
 	except url_error.URLError as exc:
-		raise RuntimeError(f"Unable to reach xAI API: {exc}") from exc
+		raise RuntimeError(f"Unable to reach Gemini API: {exc}") from exc
 
-	return _extract_xai_content(response_data)
+	return _extract_gemini_content(response_data)
 
 
-def call_xai_chat(messages):
-	primary_model = os.getenv("XAI_MODEL", "grok-3-mini").strip() or "grok-3-mini"
-	fallback_model = os.getenv("XAI_FALLBACK_MODEL", "grok-3-mini").strip() or "grok-3-mini"
-	try:
-		timeout_seconds = int(os.getenv("XAI_TIMEOUT_SECONDS", "30") or "30")
-	except ValueError:
-		timeout_seconds = 30
-	timeout_seconds = max(5, min(timeout_seconds, 120))
+def call_gemini_chat(messages, system_instruction):
+	model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash").strip() or "gemini-2.0-flash"
 
-	attempts = [(primary_model, 0), (primary_model, 1)]
-	if fallback_model and fallback_model != primary_model:
-		attempts.append((fallback_model, 0))
-
-	last_error = None
-	for model, retry_no in attempts:
-		try:
-			return _call_xai_chat_with_model(messages, model=model, timeout_seconds=timeout_seconds)
-		except RuntimeError as exc:
-			last_error = str(exc)
-			# Do not retry invalid requests or auth errors.
-			if "xAI API request failed: 400" in last_error:
-				if model != fallback_model and fallback_model:
-					continue
-				raise RuntimeError(last_error) from exc
-			if "xAI API request failed: 401" in last_error or "xAI API request failed: 403" in last_error:
-				raise RuntimeError(last_error) from exc
-			# retry_no only exists for primary model transient retry.
-			if retry_no == 1:
-				continue
-
-	raise RuntimeError(last_error or "xAI API call failed")
+	return _call_gemini_chat_with_model(
+		messages,
+		model=model,
+		system_instruction=system_instruction,
+	)
 
 
 def sanitize_chat_history(raw_history, limit=20):
@@ -821,31 +791,35 @@ def ai_chat():
 		"Give concise, practical advice focused on priorities, scheduling, and execution. "
 		"Use the workflow context when relevant."
 	)
+	system_instruction = f"{system_prompt}\n\nCurrent workflow context:\n{workflow_context}"
 
-	messages = [
-		{"role": "system", "content": system_prompt},
-		{"role": "system", "content": f"Current workflow context:\n{workflow_context}"},
-	]
-	messages.extend(chat_history)
-	messages.append({"role": "user", "content": user_message})
+	messages = []
+	for item in chat_history:
+		messages.append(
+			{
+				"role": "user" if item.get("role") == "user" else "model",
+				"parts": [{"text": item.get("content", "")}],
+			}
+		)
+	messages.append({"role": "user", "parts": [{"text": user_message}]})
 
 	try:
-		reply = call_xai_chat(messages)
+		reply = call_gemini_chat(messages, system_instruction=system_instruction)
 	except RuntimeError as exc:
 		message = str(exc)
-		if "XAI_API_KEY" in message:
-			return jsonify({"error": "AI chat is not configured on the server"}), 503
-		if "xAI API request failed: 400" in message:
+		if "GEMINI_API_KEY" in message:
+			return jsonify({"error": "Gemini chat is not configured on the server"}), 503
+		if "Gemini API request failed: 400" in message:
 			return jsonify(
 				{
-					"error": "Invalid xAI model or request",
+					"error": "Invalid Gemini model or request",
 					"details": message,
 				}
 			), 400
-		if "xAI API request failed: 401" in message or "xAI API request failed: 403" in message:
+		if "Gemini API request failed: 401" in message or "Gemini API request failed: 403" in message:
 			return jsonify(
 				{
-					"error": "xAI authentication/permission error",
+					"error": "Gemini authentication/permission error",
 					"details": message,
 				}
 			), 403

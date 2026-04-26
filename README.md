@@ -10,7 +10,7 @@ Production-style Flask + MongoDB + GridFS workflow management web app.
 - Daily and Long-term project views with progress cards
 - Manage workflows admin table with search and inline quick edits
 - Add/Edit/Delete workflows via REST-style API and fetch()
-- xAI chatbot assistant integrated on dashboard
+- Gemini AI Studio chatbot assistant integrated on dashboard
 - Chat memory persisted per user and auto-loaded on dashboard
 - Multiple workflow photo uploads to GridFS
 - Image serving route: `/image/<file_id>`
@@ -55,10 +55,8 @@ MONGO_URI=mongodb+srv://<username>:<password>@<cluster-url>/sachin_workflow_mana
 MONGO_DB_NAME=sachin_workflow_manager
 APP_EMAIL=sachin@example.com
 APP_PASSWORD=123456
-XAI_API_KEY=your_xai_api_key_here
-XAI_MODEL=grok-3-mini
-XAI_FALLBACK_MODEL=grok-3-mini
-XAI_TIMEOUT_SECONDS=30
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-2.0-flash
 ```
 
 Notes:
@@ -71,10 +69,8 @@ Login behavior:
 - `APP_EMAIL` is the only allowed login email (single-user mode).
 - The user record is fetched from MongoDB by email.
 - The entered password is verified against a secure password hash stored in MongoDB.
-- `XAI_API_KEY` is required to enable dashboard AI assistant.
-- `XAI_MODEL` is optional (default: `grok-3-mini`).
-- `XAI_FALLBACK_MODEL` is used automatically if the primary model fails.
-- `XAI_TIMEOUT_SECONDS` controls xAI request timeout (default: `30`).
+- `GEMINI_API_KEY` is required to enable dashboard AI assistant.
+- `GEMINI_MODEL` is optional (default: `gemini-2.0-flash`).
 
 ## 4) Run the App
 

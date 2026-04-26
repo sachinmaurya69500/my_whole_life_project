@@ -395,7 +395,7 @@ async function loadChatHistory() {
 		const messages = Array.isArray(data.messages) ? data.messages : [];
 
 		if (!messages.length) {
-			addChatMessage('bot', 'Hi! I am your xAI assistant. Ask me to prioritize your workflows or plan your next steps.');
+			addChatMessage('bot', 'Hi! I am your Gemini assistant. Ask me to prioritize your workflows or plan your next steps.');
 			return;
 		}
 
