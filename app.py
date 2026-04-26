@@ -988,6 +988,17 @@ def upload_workflow_photos(workflow_id):
 		},
 	)
 
+	@app.route("/api/ai-chat/status", methods=["GET"])
+	def ai_chat_status():
+		return jsonify(
+			{
+				"provider": "mongodb",
+				"ready": True,
+				"message": "MongoDB chatbot is ready",
+			}
+		)
+
+
 	old_photo_ids = wf.get("photo_file_ids", [])
 	workflows_col.update_one(
 		{"_id": obj_id},
