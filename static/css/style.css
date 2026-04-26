@@ -365,12 +365,39 @@ html[data-theme='light'] .chat-bubble.bot {
 }
 
 .assistant-launcher-core {
+	position: relative;
 	display: grid;
 	place-items: center;
 	height: 100%;
 	width: 100%;
 	color: #082f49;
 	font-size: 1.15rem;
+}
+
+.assistant-launcher-core .fa-robot {
+	position: relative;
+	z-index: 2;
+	filter: drop-shadow(0 0 6px rgba(34, 211, 238, 0.7));
+}
+
+.assistant-orbit {
+	position: absolute;
+	border: 1px solid rgba(224, 242, 254, 0.55);
+	border-radius: 999px;
+	pointer-events: none;
+}
+
+.assistant-orbit.orbit-one {
+	width: 2.55rem;
+	height: 2.55rem;
+	animation: orbitSpin 4.8s linear infinite;
+}
+
+.assistant-orbit.orbit-two {
+	width: 2.05rem;
+	height: 2.05rem;
+	opacity: 0.85;
+	animation: orbitSpinReverse 3.8s linear infinite;
 }
 
 .assistant-panel {
@@ -414,6 +441,57 @@ html[data-theme='light'] .chat-bubble.bot {
 	font-size: 0.75rem;
 	color: #7dd3fc;
 	margin-top: 0.1rem;
+}
+
+.assistant-api-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	margin-top: 0.28rem;
+	font-size: 0.68rem;
+	padding: 0.14rem 0.45rem;
+	border-radius: 999px;
+	border: 1px solid rgba(71, 85, 105, 0.85);
+	background: rgba(15, 23, 42, 0.65);
+	color: #cbd5e1;
+}
+
+.assistant-api-status::before {
+	content: '';
+	width: 0.42rem;
+	height: 0.42rem;
+	border-radius: 999px;
+	background: #94a3b8;
+}
+
+.assistant-api-status.connected {
+	border-color: rgba(16, 185, 129, 0.5);
+	color: #86efac;
+}
+
+.assistant-api-status.connected::before {
+	background: #22c55e;
+	box-shadow: 0 0 6px rgba(34, 197, 94, 0.75);
+}
+
+.assistant-api-status.checking {
+	border-color: rgba(245, 158, 11, 0.55);
+	color: #fcd34d;
+}
+
+.assistant-api-status.checking::before {
+	background: #f59e0b;
+	box-shadow: 0 0 6px rgba(245, 158, 11, 0.7);
+}
+
+.assistant-api-status.disconnected {
+	border-color: rgba(248, 113, 113, 0.5);
+	color: #fca5a5;
+}
+
+.assistant-api-status.disconnected::before {
+	background: #ef4444;
+	box-shadow: 0 0 6px rgba(239, 68, 68, 0.65);
 }
 
 .assistant-header-actions {
@@ -539,6 +617,12 @@ html[data-theme='light'] .assistant-panel-header p {
 	color: #0e7490;
 }
 
+html[data-theme='light'] .assistant-api-status {
+	background: rgba(255, 255, 255, 0.92);
+	border-color: rgba(148, 163, 184, 0.55);
+	color: #334155;
+}
+
 html[data-theme='light'] .assistant-form {
 	background: rgba(248, 250, 252, 0.82);
 }
@@ -565,6 +649,24 @@ html[data-theme='light'] .assistant-bubble.bot {
 	}
 	50% {
 		box-shadow: 0 12px 30px rgba(8, 145, 178, 0.4), 0 0 0 12px rgba(34, 211, 238, 0);
+	}
+}
+
+@keyframes orbitSpin {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes orbitSpinReverse {
+	from {
+		transform: rotate(360deg);
+	}
+	to {
+		transform: rotate(0deg);
 	}
 }
 

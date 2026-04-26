@@ -45,7 +45,11 @@
         aria-expanded="false"
         title="Open Gemini Assistant"
     >
-        <span class="assistant-launcher-core"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+        <span class="assistant-launcher-core" aria-hidden="true">
+            <span class="assistant-orbit orbit-one"></span>
+            <span class="assistant-orbit orbit-two"></span>
+            <i class="fa-solid fa-robot"></i>
+        </span>
     </button>
 
     <section id="assistantPanel" class="assistant-panel hidden" aria-label="Gemini Assistant" aria-hidden="true">
@@ -53,6 +57,7 @@
             <div>
                 <h3>Gemini Assistant</h3>
                 <p>Future-focused help for your workflow</p>
+                <div id="assistantApiStatus" class="assistant-api-status checking" aria-live="polite">Checking API...</div>
             </div>
             <div class="assistant-header-actions">
                 <button type="button" id="newChatBtn" class="assistant-header-btn" aria-label="Start new chat" title="Start new conversation">

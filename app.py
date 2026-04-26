@@ -831,6 +831,21 @@ def insights_data():
 	)
 
 
+@app.route("/api/ai-chat/status", methods=["GET"])
+def ai_chat_status():
+	api_key_configured = bool((os.getenv("GEMINI_API_KEY") or "").strip())
+	authenticated = bool(session.get("user_id"))
+
+	return jsonify(
+		{
+			"provider": "gemini",
+			"api_key_configured": api_key_configured,
+			"authenticated": authenticated,
+			"ready": api_key_configured and authenticated,
+		}
+	)
+
+
 @app.route("/api/ai-chat", methods=["POST"])
 @login_required
 def ai_chat():
