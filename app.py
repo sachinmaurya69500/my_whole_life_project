@@ -144,12 +144,38 @@ def build_workflow_context(limit=10):
 	return "\n".join(lines)
 
 
-def call_xai_chat(messages):
+def _extract_xai_content(response_data):
+	choices = response_data.get("choices") or []
+	if not choices:
+		raise RuntimeError("xAI API returned an empty response")
+
+	message = choices[0].get("message") or {}
+	content = message.get("content")
+
+	# Some providers return a plain string, while others can return a list of content parts.
+	if isinstance(content, str):
+		content = content.strip()
+	elif isinstance(content, list):
+		parts = []
+		for part in content:
+			if isinstance(part, dict):
+				text = (part.get("text") or "").strip()
+				if text:
+					parts.append(text)
+		content = "\n".join(parts).strip()
+	else:
+		content = ""
+
+	if not content:
+		raise RuntimeError("xAI API did not return message content")
+	return content
+
+
+def _call_xai_chat_with_model(messages, model, timeout_seconds):
 	api_key = os.getenv("XAI_API_KEY", "").strip()
 	if not api_key:
 		raise RuntimeError("XAI_API_KEY is not configured on the server")
 
-	model = os.getenv("XAI_MODEL", "grok-3-mini").strip() or "grok-3-mini"
 	payload = json.dumps(
 		{
 			"model": model,
@@ -170,23 +196,48 @@ def call_xai_chat(messages):
 	)
 
 	try:
-		with url_request.urlopen(request_obj, timeout=30) as response:
+		with url_request.urlopen(request_obj, timeout=timeout_seconds) as response:
 			response_data = json.loads(response.read().decode("utf-8"))
 	except url_error.HTTPError as exc:
 		error_body = exc.read().decode("utf-8", errors="ignore")
 		raise RuntimeError(f"xAI API request failed: {exc.code} {error_body}") from exc
 	except url_error.URLError as exc:
-		raise RuntimeError("Unable to reach xAI API") from exc
+		raise RuntimeError(f"Unable to reach xAI API: {exc}") from exc
 
-	choices = response_data.get("choices") or []
-	if not choices:
-		raise RuntimeError("xAI API returned an empty response")
+	return _extract_xai_content(response_data)
 
-	message = choices[0].get("message") or {}
-	content = (message.get("content") or "").strip()
-	if not content:
-		raise RuntimeError("xAI API did not return message content")
-	return content
+
+def call_xai_chat(messages):
+	primary_model = os.getenv("XAI_MODEL", "grok-3-mini").strip() or "grok-3-mini"
+	fallback_model = os.getenv("XAI_FALLBACK_MODEL", "grok-3-mini").strip() or "grok-3-mini"
+	try:
+		timeout_seconds = int(os.getenv("XAI_TIMEOUT_SECONDS", "30") or "30")
+	except ValueError:
+		timeout_seconds = 30
+	timeout_seconds = max(5, min(timeout_seconds, 120))
+
+	attempts = [(primary_model, 0), (primary_model, 1)]
+	if fallback_model and fallback_model != primary_model:
+		attempts.append((fallback_model, 0))
+
+	last_error = None
+	for model, retry_no in attempts:
+		try:
+			return _call_xai_chat_with_model(messages, model=model, timeout_seconds=timeout_seconds)
+		except RuntimeError as exc:
+			last_error = str(exc)
+			# Do not retry invalid requests or auth errors.
+			if "xAI API request failed: 400" in last_error:
+				if model != fallback_model and fallback_model:
+					continue
+				raise RuntimeError(last_error) from exc
+			if "xAI API request failed: 401" in last_error or "xAI API request failed: 403" in last_error:
+				raise RuntimeError(last_error) from exc
+			# retry_no only exists for primary model transient retry.
+			if retry_no == 1:
+				continue
+
+	raise RuntimeError(last_error or "xAI API call failed")
 
 
 def sanitize_chat_history(raw_history, limit=20):
@@ -784,6 +835,20 @@ def ai_chat():
 		message = str(exc)
 		if "XAI_API_KEY" in message:
 			return jsonify({"error": "AI chat is not configured on the server"}), 503
+		if "xAI API request failed: 400" in message:
+			return jsonify(
+				{
+					"error": "Invalid xAI model or request",
+					"details": message,
+				}
+			), 400
+		if "xAI API request failed: 401" in message or "xAI API request failed: 403" in message:
+			return jsonify(
+				{
+					"error": "xAI authentication/permission error",
+					"details": message,
+				}
+			), 403
 		return jsonify({"error": "AI service is temporarily unavailable", "details": message}), 502
 
 	store_chat_turn(user_id, user_message, reply)

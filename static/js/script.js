@@ -88,7 +88,9 @@ async function api(path, options = {}) {
 			window.location.href = '/login';
 			return;
 		}
-		throw new Error(data.error || data.message || 'Request failed');
+		const primary = data.error || data.message || 'Request failed';
+		const details = data.details ? `\n${data.details}` : '';
+		throw new Error(`${primary}${details}`);
 	}
 	return data;
 }

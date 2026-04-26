@@ -57,6 +57,8 @@ APP_EMAIL=sachin@example.com
 APP_PASSWORD=123456
 XAI_API_KEY=your_xai_api_key_here
 XAI_MODEL=grok-3-mini
+XAI_FALLBACK_MODEL=grok-3-mini
+XAI_TIMEOUT_SECONDS=30
 ```
 
 Notes:
@@ -71,6 +73,8 @@ Login behavior:
 - The entered password is verified against a secure password hash stored in MongoDB.
 - `XAI_API_KEY` is required to enable dashboard AI assistant.
 - `XAI_MODEL` is optional (default: `grok-3-mini`).
+- `XAI_FALLBACK_MODEL` is used automatically if the primary model fails.
+- `XAI_TIMEOUT_SECONDS` controls xAI request timeout (default: `30`).
 
 ## 4) Run the App
 
