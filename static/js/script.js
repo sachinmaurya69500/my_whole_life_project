@@ -53,6 +53,7 @@ const el = {
 	profileImage: document.getElementById('profileImage'),
 	topProfileImage: document.getElementById('topProfileImage'),
 	sidebarProfileImage: document.getElementById('sidebarProfileImage'),
+	favicon: document.getElementById('appFavicon'),
 	profilePhotoInput: document.getElementById('profilePhotoInput'),
 	uploadProfileBtn: document.getElementById('uploadProfileBtn'),
 	logoutBtn: document.getElementById('logoutBtn'),
@@ -341,6 +342,9 @@ async function loadProfile() {
 	}
 	if (el.sidebarProfileImage) {
 		el.sidebarProfileImage.src = imageUrl;
+	}
+	if (el.favicon) {
+		el.favicon.href = imageUrl;
 	}
 }
 

@@ -19,13 +19,28 @@
             }
         };
     </script>
-    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}" />
+    <link id="appFavicon" rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='img/profile-placeholder.svg') }}" />
     <script>
         (function () {
             const savedTheme = localStorage.getItem('swm-theme');
             const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
             const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
             document.documentElement.setAttribute('data-theme', initialTheme);
+        })();
+
+        (async function () {
+            const favicon = document.getElementById('appFavicon');
+            if (!favicon) return;
+            try {
+                const res = await fetch('/api/profile', { credentials: 'same-origin' });
+                if (!res.ok) return;
+                const profile = await res.json();
+                if (!profile || !profile.profile_image_url) return;
+                const imageVersion = profile.profile_image_updated_at ? encodeURIComponent(profile.profile_image_updated_at) : Date.now();
+                favicon.href = `${profile.profile_image_url}?v=${imageVersion}`;
+            } catch (_err) {
+                // Keep fallback favicon when profile data is unavailable.
+            }
         })();
     </script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer" />
