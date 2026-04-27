@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="320" viewBox="0 0 520 320" role="img" aria-label="Project placeholder">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#0891b2"/>
+    </linearGradient>
+  </defs>
+  <rect width="520" height="320" rx="28" fill="url(#g)"/>
+  <rect x="72" y="68" width="376" height="184" rx="22" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.18)"/>
+  <path d="M126 190l54-50 42 34 60-74 112 90" fill="none" stroke="rgba(255,255,255,0.8)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="180" cy="122" r="16" fill="rgba(255,255,255,0.9)"/>
+  <text x="260" y="274" text-anchor="middle" fill="rgba(255,255,255,0.9)" font-family="Arial, sans-serif" font-size="24">Project Photo</text>
+</svg>

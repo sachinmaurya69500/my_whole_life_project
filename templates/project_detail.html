@@ -24,7 +24,7 @@
 			<h2 class="panel-title">Project Snapshot</h2>
 			<div class="grid gap-4 md:grid-cols-[260px_1fr]">
 				<div>
-					<img id="projectImage" src="https://via.placeholder.com/520x320?text=Project+Photo" alt="Project Photo" class="h-56 w-full rounded-xl object-cover border border-slate-700 bg-slate-900" />
+					<img id="projectImage" src="{{ url_for('static', filename='img/project-placeholder.svg') }}" alt="Project Photo" class="h-56 w-full rounded-xl object-cover border border-slate-700 bg-slate-900" />
 					<label for="projectPhotoInput" class="mt-3 block text-sm text-slate-300">Project Photo (single)</label>
 					<input id="projectPhotoInput" type="file" accept="image/*" class="mt-2 block w-full text-sm text-slate-300" />
 					<button id="uploadProjectPhotoBtn" class="mt-3 rounded-lg border border-slate-700 px-3 py-2 text-sm hover:bg-slate-800 transition">Upload Project Photo</button>
@@ -180,7 +180,7 @@
 		el.startDateText.textContent = data.start_date || 'No start date';
 		el.dueDateText.textContent = data.due_date || 'No due date';
 		el.updatedText.textContent = data.updated_at ? new Date(data.updated_at).toLocaleString() : '-';
-		const photoUrl = data.photo_urls && data.photo_urls.length ? data.photo_urls[0] : 'https://via.placeholder.com/520x320?text=Project+Photo';
+		const photoUrl = data.photo_urls && data.photo_urls.length ? data.photo_urls[0] : '/static/img/project-placeholder.svg';
 		el.image.src = photoUrl;
 	}
 

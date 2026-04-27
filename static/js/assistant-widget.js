@@ -30,6 +30,7 @@
 	const adviceForm = document.getElementById('adviceForm');
 	const adviceProjectSelect = document.getElementById('adviceProjectSelect');
 	const adviceText = document.getElementById('adviceText');
+	const apiStatusEl = document.getElementById('assistantApiStatus');
 
 	let isOpen = false;
 	let isBusy = false;
@@ -69,6 +70,43 @@
 		el.textContent = text;
 		el.className = `project-message show ${type}`;
 		setTimeout(() => el.classList.remove('show'), 3000);
+	}
+
+	function setApiStatus(state, text) {
+		if (!apiStatusEl) return;
+		apiStatusEl.classList.remove('connected', 'checking', 'disconnected');
+		apiStatusEl.classList.add(state);
+		apiStatusEl.textContent = text;
+	}
+
+	async function checkApiConnection() {
+		setApiStatus('checking', 'Checking API...');
+		try {
+			const res = await fetch('/api/ai-chat/status', {
+				method: 'GET',
+				headers: { Accept: 'application/json' },
+			});
+			const data = await res.json().catch(() => ({}));
+
+			if (!res.ok) {
+				setApiStatus('disconnected', 'API unreachable');
+				return false;
+			}
+			if (!data.api_key_configured) {
+				setApiStatus('disconnected', 'API key missing');
+				return false;
+			}
+			if (!data.authenticated) {
+				setApiStatus('checking', 'Login required');
+				return false;
+			}
+
+			setApiStatus('connected', 'Gemini connected');
+			return true;
+		} catch (err) {
+			setApiStatus('disconnected', 'API unreachable');
+			return false;
+		}
 	}
 
 	function applyLauncherPosition(left, top) {
@@ -197,7 +235,7 @@
 			const data = await res.json().catch(() => ({}));
 
 			if (res.status === 401) {
-				addMessage('note', 'Login to use the assistant.');
+				addMessage('note', 'Login to use the Gemini assistant.');
 				setBusy(true);
 				return;
 			}
@@ -205,7 +243,7 @@
 
 			const items = Array.isArray(data.messages) ? data.messages : [];
 			if (!items.length) {
-				addMessage('bot', 'Hi, I am your simple MongoDB assistant. Ask me about your projects or recent chats.');
+				addMessage('bot', 'Hi, I am your Gemini assistant. Ask me to prioritize, plan, or unblock your next step.');
 				return;
 			}
 
@@ -477,6 +515,7 @@
 		}
 		setOpen(!isOpen);
 		if (isOpen) {
+			await checkApiConnection();
 			switchTab('chat');
 			await loadHistory();
 		}
@@ -543,6 +582,12 @@
 		const message = (input.value || '').trim();
 		if (!message) return;
 
+		const apiReady = await checkApiConnection();
+		if (!apiReady) {
+			addMessage('note', 'Gemini API is not ready yet. Check login and GEMINI_API_KEY.');
+			return;
+		}
+
 		addMessage('user', message);
 		input.value = '';
 		setBusy(true);
@@ -558,7 +603,7 @@
 			if (thinkingBubble) thinkingBubble.remove();
 
 			if (res.status === 401) {
-				addMessage('note', 'Login to chat with the assistant.');
+				addMessage('note', 'Login to chat with Gemini assistant.');
 				return;
 			}
 			if (!res.ok) {
@@ -575,5 +620,6 @@
 		}
 	});
 
+	checkApiConnection();
 	restoreLauncherPosition();
 })();

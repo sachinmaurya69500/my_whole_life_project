@@ -189,7 +189,7 @@ function renderCards(targetEl, workflows) {
 		const projectThumb = node.querySelector('.project-thumb');
 		projectThumb.src = (wf.photo_urls && wf.photo_urls.length)
 			? wf.photo_urls[0]
-			: 'https://via.placeholder.com/520x320?text=Project+Photo';
+			: '/static/img/project-placeholder.svg';
 
 		node.querySelector('.delete-btn').addEventListener('click', async () => {
 			if (!confirm(`Delete workflow "${wf.title}"?`)) return;
@@ -331,7 +331,7 @@ async function loadProfile() {
 	const imageVersion = profile.profile_image_updated_at ? encodeURIComponent(profile.profile_image_updated_at) : Date.now();
 	const imageUrl = profile.profile_image_url
 		? `${profile.profile_image_url}?v=${imageVersion}`
-		: 'https://via.placeholder.com/300x300?text=Profile';
+		: '/static/img/profile-placeholder.svg';
 	el.profileName.value = profile.display_name || '';
 	el.profileLocation.value = profile.location || '';
 	el.profileBio.value = profile.bio || '';

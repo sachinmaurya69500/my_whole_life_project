@@ -5,6 +5,8 @@ import os
 from datetime import datetime, timedelta, timezone
 from functools import wraps
 from io import BytesIO
+from urllib import error as url_error
+from urllib import request as url_request
 from bson import ObjectId
 from dotenv import load_dotenv
 from flask import (
@@ -16,6 +18,7 @@ from flask import (
 	request,
 	session,
 	url_for,
+	send_from_directory,
 )
 from pymongo import MongoClient
 from pymongo.errors import ConfigurationError, PyMongoError
@@ -45,6 +48,15 @@ def to_object_id(value):
 		return ObjectId(value)
 	except Exception:
 		return None
+
+
+def gemini_api_key_value():
+	return (os.getenv("GEMINI_API_KEY") or "").strip()
+
+
+def gemini_api_key_ready():
+	api_key = gemini_api_key_value()
+	return bool(api_key) and api_key != "your_gemini_api_key_here"
 
 
 app = Flask(__name__)
@@ -142,51 +154,82 @@ def build_workflow_context(limit=10):
 
 
 
-def build_chat_context(limit=8):
+def build_rich_context(limit=15):
 	items = list(workflows_col.find({}).sort("updated_at", -1).limit(limit))
 	if not items:
 		return "No workflows available yet."
 
-	lines = []
+	lines = ["Current workflows:"]
 	for item in items:
 		lines.append(
 			f"- {item.get('title', 'Untitled')} | type={item.get('type', 'Daily')} | "
 			f"status={item.get('status', 'Not Started')} | progress={int(item.get('progress', 0))}%"
 		)
+		description = (item.get("description") or "").strip()
+		notes = (item.get("notes") or "").strip()
+		if description:
+			lines.append(f"  description: {description}")
+		if notes:
+			lines.append(f"  notes: {notes}")
+
 	return "\n".join(lines)
 
 
-def build_simple_chat_reply(user_message):
-	message = user_message.lower()
-	items = list(workflows_col.find({}).sort("updated_at", -1).limit(8))
-	if not items:
-		return "I’m connected to MongoDB, but I don’t see any projects yet. Add one and I’ll help track it."
+def _extract_gemini_content(response_data):
+	candidates = response_data.get("candidates") or []
+	if not candidates:
+		raise RuntimeError("Gemini API returned an empty response")
 
-	project_titles = [item.get('title', 'Untitled') for item in items]
-	total = len(list(workflows_col.find({})))
-	in_progress = len(list(workflows_col.find({"status": "In Progress"})))
-	completed = len(list(workflows_col.find({"status": "Completed"})))
-	first = items[0]
+	content = candidates[0].get("content") or {}
+	parts = content.get("parts") or []
+	texts = []
+	for part in parts:
+		if isinstance(part, dict):
+			text = (part.get("text") or "").strip()
+			if text:
+				texts.append(text)
 
-	if any(word in message for word in ["list", "show", "projects", "workflows"]):
-		return "Your recent projects are: " + ", ".join(project_titles[:5]) + "."
+	result = "\n".join(texts).strip()
+	if not result:
+		raise RuntimeError("Gemini API did not return message content")
+	return result
 
-	if any(word in message for word in ["progress", "status", "update"]):
-		return (
-			f"You have {total} total projects, {in_progress} in progress, and {completed} completed. "
-			f"Latest project: {first.get('title', 'Untitled')} is at {int(first.get('progress', 0))}% progress."
-		)
 
-	if any(word in message for word in ["help", "advice", "plan"]):
-		return (
-			f"For {first.get('title', 'your latest project')}, focus on the next small step first. "
-			f"It is currently {first.get('status', 'Not Started')} at {int(first.get('progress', 0))}% progress."
-		)
+def _call_gemini_chat_with_model(messages, model, system_instruction):
+	if not gemini_api_key_ready():
+		raise RuntimeError("GEMINI_API_KEY is not configured on the server")
 
-	return (
-		f"I’m connected to MongoDB and tracking your projects. "
-		f"Your latest project is {first.get('title', 'Untitled')} with {int(first.get('progress', 0))}% progress."
+	api_key = gemini_api_key_value()
+	payload = json.dumps(
+		{
+			"systemInstruction": {"parts": [{"text": system_instruction}]},
+			"contents": messages,
+			"generationConfig": {"maxOutputTokens": 500, "temperature": 0.3},
+		}
+	).encode("utf-8")
+
+	request_obj = url_request.Request(
+		f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}",
+		data=payload,
+		headers={"Content-Type": "application/json"},
+		method="POST",
 	)
+
+	try:
+		with url_request.urlopen(request_obj) as response:
+			response_data = json.loads(response.read().decode("utf-8"))
+	except url_error.HTTPError as exc:
+		error_body = exc.read().decode("utf-8", errors="ignore")
+		raise RuntimeError(f"Gemini API request failed: {exc.code} {error_body}") from exc
+	except url_error.URLError as exc:
+		raise RuntimeError(f"Unable to reach Gemini API: {exc}") from exc
+
+	return _extract_gemini_content(response_data)
+
+
+def call_gemini_chat(messages, system_instruction):
+	model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash").strip() or "gemini-2.0-flash"
+	return _call_gemini_chat_with_model(messages, model=model, system_instruction=system_instruction)
 
 
 def sanitize_chat_history(raw_history, limit=20):
@@ -748,6 +791,18 @@ def insights_data():
 	)
 
 
+@app.route("/api/ai-chat/status", methods=["GET"])
+def ai_chat_status():
+	return jsonify(
+		{
+			"provider": "gemini",
+			"api_key_configured": gemini_api_key_ready(),
+			"authenticated": bool(session.get("user_id")),
+			"ready": gemini_api_key_ready() and bool(session.get("user_id")),
+		}
+	)
+
+
 @app.route("/api/ai-chat", methods=["POST"])
 @login_required
 def ai_chat():
@@ -764,7 +819,36 @@ def ai_chat():
 		return jsonify({"error": "Message is too long"}), 400
 
 	chat_history = get_user_chat_history(user_id, limit=16)
-	reply = build_simple_chat_reply(user_message)
+	workflow_context = build_rich_context(limit=15)
+
+	system_prompt = (
+		"You are a productivity assistant for Sachin's workflow manager app. "
+		"Give concise, practical advice focused on priorities, scheduling, and execution. "
+		"Use the workflow context when relevant."
+	)
+	system_instruction = f"{system_prompt}\n\n{workflow_context}"
+
+	messages = []
+	for item in chat_history:
+		messages.append(
+			{
+				"role": "user" if item.get("role") == "user" else "model",
+				"parts": [{"text": item.get("content", "")}],
+			}
+		)
+	messages.append({"role": "user", "parts": [{"text": user_message}]})
+
+	try:
+		reply = call_gemini_chat(messages, system_instruction=system_instruction)
+	except RuntimeError as exc:
+		message = str(exc)
+		if "GEMINI_API_KEY" in message:
+			return jsonify({"error": "Gemini chat is not configured on the server"}), 503
+		if "Gemini API request failed: 400" in message:
+			return jsonify({"error": "Invalid Gemini model or request", "details": message}), 400
+		if "Gemini API request failed: 401" in message or "Gemini API request failed: 403" in message:
+			return jsonify({"error": "Gemini authentication/permission error", "details": message}), 403
+		return jsonify({"error": "AI service is temporarily unavailable", "details": message}), 502
 
 	store_chat_turn(user_id, user_message, reply)
 
@@ -988,17 +1072,6 @@ def upload_workflow_photos(workflow_id):
 		},
 	)
 
-	@app.route("/api/ai-chat/status", methods=["GET"])
-	def ai_chat_status():
-		return jsonify(
-			{
-				"provider": "mongodb",
-				"ready": True,
-				"message": "MongoDB chatbot is ready",
-			}
-		)
-
-
 	old_photo_ids = wf.get("photo_file_ids", [])
 	workflows_col.update_one(
 		{"_id": obj_id},
@@ -1101,6 +1174,11 @@ def serve_image(file_id):
 	metadata = stream.metadata or {}
 	content_type = metadata.get("contentType", "application/octet-stream")
 	return Response(data, mimetype=content_type)
+
+
+@app.route("/favicon.ico")
+def favicon():
+	return send_from_directory(os.path.join(app.root_path, "static"), "favicon.svg", mimetype="image/svg+xml")
 
 
 ensure_seed_data()

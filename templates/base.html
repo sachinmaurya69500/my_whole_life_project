@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}Sachin Workflow Manager{% endblock %}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="{{ url_for('static', filename='js/tailwind-cdn.js') }}"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -19,6 +19,7 @@
             }
         };
     </script>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}" />
     <script>
         (function () {
             const savedTheme = localStorage.getItem('swm-theme');
@@ -41,9 +42,9 @@
         id="assistantLauncher"
         class="assistant-launcher"
         type="button"
-        aria-label="Open Assistant"
+        aria-label="Open Gemini Assistant"
         aria-expanded="false"
-        title="Open Assistant"
+        title="Open Gemini Assistant"
     >
         <span class="assistant-launcher-core" aria-hidden="true">
             <span class="assistant-orbit orbit-one"></span>
@@ -52,11 +53,12 @@
         </span>
     </button>
 
-    <section id="assistantPanel" class="assistant-panel hidden" aria-label="Assistant" aria-hidden="true">
+    <section id="assistantPanel" class="assistant-panel hidden" aria-label="Gemini Assistant" aria-hidden="true">
         <header class="assistant-panel-header">
             <div>
-                <h3>MongoDB Assistant</h3>
-                <p>Simple chatbot connected to your database</p>
+                <h3>Gemini Assistant</h3>
+                <p>AI help for your workflow</p>
+                <div id="assistantApiStatus" class="assistant-api-status checking" aria-live="polite">Checking API...</div>
             </div>
             <div class="assistant-header-actions">
                 <button type="button" id="newChatBtn" class="assistant-header-btn" aria-label="Start new chat" title="Start new conversation">
@@ -91,7 +93,7 @@
         <div id="chatTab" class="assistant-tab-content active">
             <div id="assistantMessages" class="assistant-messages"></div>
             <form id="assistantForm" class="assistant-form">
-                <input id="assistantInput" type="text" maxlength="1500" aria-label="Assistant message input" placeholder="Ask about your projects, progress, or recent chats..." />
+                <input id="assistantInput" type="text" maxlength="1500" aria-label="Assistant message input" placeholder="Ask Gemini to prioritize, plan, or unblock your next step..." />
                 <button id="assistantSend" type="submit">Send</button>
             </form>
         </div>
