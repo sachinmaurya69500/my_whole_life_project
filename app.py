@@ -550,9 +550,64 @@ def insights_page():
 
 
 @app.route("/forgot-password", methods=["GET"])
-@page_login_required
 def forgot_password_page():
-	return render_template("forgot_password.html")
+	prefill_email = session.get("email") or normalize_email(os.getenv("APP_EMAIL", ""))
+	return render_template("forgot_password.html", prefill_email=prefill_email)
+
+
+@app.route("/forgot-password", methods=["POST"])
+def forgot_password_action():
+	payload = request.get_json(silent=True) or request.form
+	email = normalize_email(payload.get("email"))
+	new_password = (payload.get("new_password") or "").strip()
+	confirm_password = (payload.get("confirm_password") or "").strip()
+	configured_email = normalize_email(os.getenv("APP_EMAIL", ""))
+
+	if not email:
+		return jsonify({"error": "Email is required"}), 400
+
+	if configured_email and email != configured_email:
+		return jsonify({"error": "Account not found"}), 404
+
+	if not new_password or not confirm_password:
+		return jsonify({"error": "New password and confirm password are required"}), 400
+
+	if new_password != confirm_password:
+		return jsonify({"error": "Passwords do not match"}), 400
+
+	if len(new_password) < 6:
+		return jsonify({"error": "Password must be at least 6 characters"}), 400
+
+	user = users_col.find_one({"email": email})
+	if not user:
+		if configured_email and email == configured_email:
+			user_doc = {
+				"email": email,
+				"password_hash": generate_password_hash(new_password),
+				"display_name": "Sachin",
+				"location": "Haryana",
+				"bio": "Focused on building disciplined daily systems and long-term projects.",
+				"profile_image_file_id": None,
+				"created_at": utc_now(),
+				"updated_at": utc_now(),
+			}
+			users_col.insert_one(user_doc)
+			session.clear()
+			return jsonify({"message": "Password reset successfully"})
+		return jsonify({"error": "Account not found"}), 404
+
+	users_col.update_one(
+		{"_id": user["_id"]},
+		{
+			"$set": {
+				"password_hash": generate_password_hash(new_password),
+				"password_updated_at": utc_now(),
+				"updated_at": utc_now(),
+			}
+		},
+	)
+	session.clear()
+	return jsonify({"message": "Password reset successfully"})
 
 
 @app.route("/project/<workflow_id>", methods=["GET"])
@@ -621,7 +676,7 @@ def update_password():
 
 	user = users_col.find_one({"_id": user_id}) if user_id else None
 	if not user and session.get("email"):
-		user = users_col.find_one({"email": normalize_email(session["email"])} )
+		user = users_col.find_one({"email": normalize_email(session["email"])})
 	if not user:
 		return jsonify({"error": "User not found"}), 404
 
