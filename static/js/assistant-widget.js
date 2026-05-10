@@ -14,7 +14,7 @@
 		return;
 	}
 
-	function openJarvis() {
+	function openAtlas() {
 		jarvisPanel.classList.remove('hidden');
 		jarvisPanel.setAttribute('aria-hidden', 'false');
 		document.documentElement.setAttribute('data-theme', localStorage.getItem('swm-theme') || document.documentElement.getAttribute('data-theme') || 'dark');
@@ -23,20 +23,19 @@
 		startHolo();
 	}
 
-	function closeJarvis() {
-		jarvisPanel.classList.add('hidden');
+	function closeAtlas() {
 		jarvisPanel.setAttribute('aria-hidden', 'true');
 		stopHolo();
 	}
 
 	launcher.addEventListener('click', (e) => {
 		e.preventDefault();
-		if (jarvisPanel.classList.contains('hidden')) openJarvis();
-		else closeJarvis();
+		if (jarvisPanel.classList.contains('hidden')) openAtlas();
+		else closeAtlas();
 	});
-	jarvisClose.addEventListener('click', closeJarvis);
+	jarvisClose.addEventListener('click', closeAtlas);
 	document.addEventListener('keydown', (e) => {
-		if (e.key === 'Escape' && !jarvisPanel.classList.contains('hidden')) closeJarvis();
+		if (e.key === 'Escape' && !jarvisPanel.classList.contains('hidden')) closeAtlas();
 	});
 
 	function addBubble(role, text) {
@@ -58,17 +57,17 @@
 			if (data && data.api_key_configured && data.authenticated) {
 				jarvisStatus.classList.remove('checking');
 				jarvisStatus.classList.add('connected');
-				jarvisStatus.textContent = 'JARVIS Online';
+			jarvisStatus.textContent = 'ATLAS Online';
 				return true;
 			}
 			jarvisStatus.classList.remove('checking');
 			jarvisStatus.classList.add('disconnected');
-			jarvisStatus.textContent = data && !data.api_key_configured ? 'API Key missing' : 'Login required';
+			jarvisStatus.textContent = data && !data.api_key_configured ? 'API credentials missing' : 'Authentication required';
 			return false;
 		} catch (err) {
 			jarvisStatus.classList.remove('checking');
 			jarvisStatus.classList.add('disconnected');
-			jarvisStatus.textContent = 'AI unreachable';
+			jarvisStatus.textContent = 'Mission systems offline';
 			return false;
 		}
 	}
@@ -83,7 +82,7 @@
 		try {
 			const reply = await api('/api/ai-chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message }) });
 			if (thinking && thinking.parentNode) thinking.remove();
-			const text = reply.reply || 'JARVIS could not generate a response right now.';
+			const text = reply.reply || 'ATLAS cannot generate a response at this moment.';
 			addBubble('bot', text);
 			// speak the reply if available
 			speak(text);
@@ -91,7 +90,7 @@
 			playTone(880, 0.08);
 		} catch (err) {
 			if (thinking && thinking.parentNode) thinking.remove();
-			addBubble('note', err.message || 'Communication error with JARVIS');
+			addBubble('note', err.message || 'ATLAS communication error');
 		}
 	});
 

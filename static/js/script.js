@@ -145,6 +145,7 @@ function setupThemeSwitcher() {
 		const icons = {
 			'light': 'fa-moon',
 			'dark': 'fa-sun',
+			'spacex': 'fa-rocket',
 			'jarvis': 'fa-microchip'
 		};
 		themeToggle.innerHTML = `<i class="fa-solid ${icons[theme] || 'fa-circle-half-stroke'}"></i>`;
@@ -152,14 +153,18 @@ function setupThemeSwitcher() {
 	}
 	
 	themeToggle.addEventListener('click', () => {
-		const current = html.getAttribute('data-theme') || 'light';
-		const themes = ['light', 'dark', 'jarvis'];
+		const current = html.getAttribute('data-theme') || 'spacex';
+		const themes = ['light', 'dark', 'spacex'];
 		const nextIndex = (themes.indexOf(current) + 1) % themes.length;
 		setTheme(themes[nextIndex]);
 	});
 	
 	// Initialize with saved theme
-	const savedTheme = localStorage.getItem('swm-theme') || 'dark';
+	const savedTheme = localStorage.getItem('swm-theme') || 'spacex';
+	if (!localStorage.getItem('swm-theme')) {
+		html.setAttribute('data-theme', 'spacex');
+		localStorage.setItem('swm-theme', 'spacex');
+	}
 	updateThemeIcon(savedTheme);
 }
 
@@ -295,7 +300,7 @@ function renderCards(targetEl, workflows) {
 		const card = node.querySelector('.panel');
 		if (card) {
 			card.classList.add('hud-reveal', 'hud-sweep');
-			card.style.transitionDelay = `${Math.min(workflows.indexOf(wf), 8) * 55}ms`;
+			card.style.transitionDelay = `${Math.min(workflows.indexOf(wf), 8) * 60}ms`;
 			requestAnimationFrame(() => card.classList.add('is-visible'));
 		}
 		const titleLinkEl = node.querySelector('.title-link');
@@ -339,7 +344,7 @@ function renderManageTable(workflows) {
 	workflows.forEach((wf, index) => {
 		const tr = document.createElement('tr');
 		tr.className = 'border-b border-slate-800 hud-reveal';
-		tr.style.transitionDelay = `${Math.min(index, 10) * 45}ms`;
+		tr.style.transitionDelay = `${Math.min(index, 10) * 60}ms`;
 		tr.innerHTML = `
 			<td class="py-3 pr-2"><input data-field="title" value="${escapeHtml(wf.title)}" class="table-input w-56" /></td>
 			<td class="py-3 pr-2">
@@ -417,7 +422,7 @@ function renderRecentActivity(items) {
 	items.forEach((item, index) => {
 		const row = document.createElement('div');
 		row.className = 'rounded-lg border border-slate-800 bg-slate-900/50 p-3 hud-reveal hud-sweep';
-		row.style.transitionDelay = `${Math.min(index, 8) * 70}ms`;
+		row.style.transitionDelay = `${Math.min(index, 8) * 60}ms`;
 		row.innerHTML = `
 			<div class="flex justify-between gap-3">
 				<p class="font-medium">${escapeHtml(item.title)}</p>

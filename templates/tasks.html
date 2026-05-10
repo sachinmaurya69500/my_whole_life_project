@@ -50,17 +50,18 @@
 	<div id="mobileBackdrop" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden"></div>
 
 	<main class="flex-1 p-4 md:p-8 md:pl-10 overflow-x-hidden">
-		<header class="flex items-center justify-between mb-8">
-			<div class="flex items-center gap-3">
+		<header class="spacex-page-header mb-8">
+			<div class="min-w-0">
+				<div class="spacex-page-kicker">Task Log</div>
+				<h2 class="spacex-page-title">My Tasks</h2>
+				<p class="spacex-page-subtitle">Manage and track daily priorities with clear launch-style focus.</p>
+			</div>
+			<div class="spacex-header-actions">
 				<button id="menuToggle" class="md:hidden h-10 w-10 rounded-lg border border-slate-700 hover:bg-slate-800 transition">
 					<i class="fa-solid fa-bars"></i>
 				</button>
-				<div>
-					<h2 class="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">My Tasks</h2>
-					<p class="text-slate-400 text-sm mt-1">Manage and track your daily tasks</p>
-				</div>
+				<img id="topProfileImage" src="{{ url_for('static', filename='img/profile-placeholder.svg') }}" alt="Profile" class="h-10 w-10 rounded-full object-cover border border-slate-700 bg-slate-900" />
 			</div>
-			<img id="topProfileImage" src="{{ url_for('static', filename='img/profile-placeholder.svg') }}" alt="Profile" class="h-10 w-10 rounded-full object-cover border border-slate-700 bg-slate-900" />
 		</header>
 
 			<div class="grid gap-6">

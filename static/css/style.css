@@ -2206,6 +2206,342 @@ html[data-theme='jarvis'] .mobile-quick-nav-track {
 	border-radius: 999px;
 }
 
+html[data-theme='spacex'] .spacex-page-header,
+html[data-theme='spacex'] .spacex-auth-header {
+	position: relative;
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 1.25rem;
+	padding: 1.15rem 1.25rem;
+	margin-bottom: 1.25rem;
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 0.35rem;
+	background: linear-gradient(180deg, rgba(12, 12, 12, 0.92), rgba(7, 7, 7, 0.82));
+	box-shadow: 0 16px 40px rgba(0, 0, 0, 0.42);
+	backdrop-filter: blur(8px);
+}
+
+html[data-theme='spacex'] .spacex-page-header::before,
+html[data-theme='spacex'] .spacex-auth-header::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 120px;
+	height: 2px;
+	background: linear-gradient(90deg, #e10600, transparent);
+}
+
+html[data-theme='spacex'] .spacex-page-kicker,
+html[data-theme='spacex'] .spacex-auth-kicker {
+	font-family: 'Barlow Condensed', 'Inter', sans-serif;
+	font-size: 0.72rem;
+	letter-spacing: 0.32em;
+	text-transform: uppercase;
+	color: #e10600;
+	margin-bottom: 0.4rem;
+}
+
+html[data-theme='spacex'] .spacex-page-title,
+html[data-theme='spacex'] .spacex-auth-title {
+	font-family: 'Barlow Condensed', 'Inter', sans-serif;
+	font-size: clamp(2rem, 4vw, 4rem);
+	font-weight: 600;
+	line-height: 0.94;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: #ffffff;
+	margin: 0;
+}
+
+html[data-theme='spacex'] .spacex-page-subtitle,
+html[data-theme='spacex'] .spacex-auth-subtitle {
+	max-width: 42rem;
+	margin-top: 0.55rem;
+	font-size: 0.92rem;
+	line-height: 1.55;
+	letter-spacing: 0.02em;
+	color: #b8b8b8;
+}
+
+html[data-theme='spacex'] .spacex-header-actions,
+html[data-theme='spacex'] .spacex-auth-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+}
+
+html[data-theme='spacex'] .spacex-header-mark {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.75rem;
+	height: 2.75rem;
+	border-radius: 999px;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	background: rgba(255, 255, 255, 0.04);
+	color: #fff;
+}
+
+/* ========== SPACEX INSPIRED GLOBAL THEME ========== */
+
+html[data-theme='spacex'] {
+	--bg-main: #020202;
+	--bg-start: #0a0a0a;
+	--bg-end: #000000;
+	--panel: rgba(12, 12, 12, 0.82);
+	--panel-border: rgba(255, 255, 255, 0.08);
+	--text-main: #f5f5f5;
+	--text-subtle: #b8b8b8;
+	--brand: #e10600;
+	--brand-deep: #a10200;
+	--nav-hover: rgba(255, 255, 255, 0.05);
+	--nav-border-hover: rgba(255, 255, 255, 0.16);
+	--nav-active-bg: rgba(225, 6, 0, 0.12);
+	--nav-active-border: rgba(225, 6, 0, 0.45);
+	--nav-active-text: #ffffff;
+	--table-input-bg: rgba(10, 10, 10, 0.9);
+	--table-input-border: rgba(255, 255, 255, 0.12);
+	--dropzone-border: rgba(255, 255, 255, 0.16);
+	--dropzone-bg: rgba(225, 6, 0, 0.06);
+	--dropzone-text: #c9c9c9;
+	--body-text: #f5f5f5;
+	--chart-cyan-rgb: 225, 6, 0;
+	--chart-amber-rgb: 255, 255, 255;
+	--chart-neutral-rgb: 160, 160, 160;
+	--chart-axis-rgb: 180, 180, 180;
+	--chart-grid-rgb: 60, 60, 60;
+	--chart-legend-rgb: 245, 245, 245;
+	--chart-surface-rgb: 12, 12, 12;
+	font-family: 'Inter', sans-serif;
+}
+
+html[data-theme='spacex'] body,
+html[data-theme='spacex'] html {
+	background:
+		radial-gradient(circle at 50% 0%, rgba(225, 6, 0, 0.10), transparent 20%),
+		radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.06), transparent 18%),
+		radial-gradient(circle at 50% 100%, rgba(225, 6, 0, 0.05), transparent 18%),
+		linear-gradient(180deg, #090909 0%, #040404 48%, #000000 100%);
+	background-attachment: fixed;
+	color: #f5f5f5;
+}
+
+html[data-theme='spacex'] .jarvis-background {
+	background:
+		radial-gradient(circle at 50% 25%, rgba(255, 255, 255, 0.06), transparent 22%),
+		radial-gradient(circle at 50% 0%, rgba(225, 6, 0, 0.16), transparent 18%),
+		linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.78));
+}
+
+html[data-theme='spacex'] .jarvis-background::before {
+	background:
+		radial-gradient(circle at 50% 40%, transparent 0 14%, rgba(255, 255, 255, 0.12) 14.3% 14.8%, transparent 15.2% 30%, rgba(225, 6, 0, 0.18) 30.4% 31%, transparent 31.4% 100%),
+		radial-gradient(circle at 50% 0%, rgba(225, 6, 0, 0.12), transparent 55%);
+	opacity: 0.45;
+	animation: spacexOrbitPulse 16s ease-in-out infinite;
+}
+
+html[data-theme='spacex'] .jarvis-background::after {
+	background:
+		repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0, rgba(255, 255, 255, 0.035) 1px, transparent 1px, transparent 44px),
+		repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.02) 0, rgba(255, 255, 255, 0.02) 1px, transparent 1px, transparent 44px);
+	mask-image: radial-gradient(circle at 50% 30%, black 0 42%, transparent 74%);
+	opacity: 0.16;
+	animation: spacexGridDrift 42s linear infinite;
+}
+
+html[data-theme='spacex'] .jarvis-bg-orbit,
+html[data-theme='spacex'] .jarvis-bg-core,
+html[data-theme='spacex'] .jarvis-bg-grid {
+	display: none;
+}
+
+html[data-theme='spacex'] .sidebar-panel,
+html[data-theme='spacex'] .panel,
+html[data-theme='spacex'] .stat-card,
+html[data-theme='spacex'] .assistant-panel,
+html[data-theme='spacex'] .jarvis-shell,
+html[data-theme='spacex'] #workflowModal .panel {
+	background: rgba(10, 10, 10, 0.76);
+	border-color: rgba(255, 255, 255, 0.08);
+	box-shadow:
+		0 0 0 1px rgba(255, 255, 255, 0.03),
+		0 14px 40px rgba(0, 0, 0, 0.55),
+		inset 0 1px 0 rgba(255, 255, 255, 0.02);
+	backdrop-filter: blur(8px);
+}
+
+html[data-theme='spacex'] .panel::before,
+html[data-theme='spacex'] .stat-card::after {
+	content: '';
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	height: 1px;
+	background: linear-gradient(90deg, transparent, rgba(225, 6, 0, 0.7), transparent);
+}
+
+html[data-theme='spacex'] .panel-title,
+html[data-theme='spacex'] h1,
+html[data-theme='spacex'] h2,
+html[data-theme='spacex'] h3,
+html[data-theme='spacex'] .title-link {
+	font-family: 'Barlow Condensed', 'Inter', sans-serif;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	font-weight: 600;
+}
+
+html[data-theme='spacex'] .panel-title,
+html[data-theme='spacex'] h1,
+html[data-theme='spacex'] h2,
+html[data-theme='spacex'] h3 {
+	color: #ffffff;
+	text-shadow: none;
+}
+
+html[data-theme='spacex'] .nav-btn,
+html[data-theme='spacex'] .mobile-nav-btn,
+html[data-theme='spacex'] .btn,
+html[data-theme='spacex'] button,
+html[data-theme='spacex'] a.block,
+html[data-theme='spacex'] input,
+html[data-theme='spacex'] select,
+html[data-theme='spacex'] textarea {
+	border-radius: 0.2rem;
+	letter-spacing: 0.06em;
+}
+
+html[data-theme='spacex'] .btn-primary {
+	background: #ffffff;
+	color: #000000;
+	border-color: rgba(255, 255, 255, 0.9);
+	box-shadow: none;
+	text-transform: uppercase;
+}
+
+html[data-theme='spacex'] .btn-primary:hover {
+	background: #e10600;
+	color: #ffffff;
+	border-color: #e10600;
+}
+
+html[data-theme='spacex'] .btn-secondary,
+html[data-theme='spacex'] .assistant-header-btn,
+html[data-theme='spacex'] .assistant-close {
+	background: transparent;
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	color: #ffffff;
+	box-shadow: none;
+	text-transform: uppercase;
+}
+
+html[data-theme='spacex'] .btn-secondary:hover,
+html[data-theme='spacex'] .assistant-header-btn:hover,
+html[data-theme='spacex'] .assistant-close:hover {
+	background: rgba(255, 255, 255, 0.08);
+	border-color: rgba(255, 255, 255, 0.24);
+	box-shadow: none;
+}
+
+html[data-theme='spacex'] .sidebar-panel {
+	background: rgba(4, 4, 4, 0.96);
+	border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme='spacex'] .nav-btn,
+html[data-theme='spacex'] .mobile-nav-btn {
+	background: transparent;
+	color: #d0d0d0;
+	border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme='spacex'] .nav-btn:hover,
+html[data-theme='spacex'] .mobile-nav-btn:hover {
+	background: rgba(255, 255, 255, 0.05);
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+html[data-theme='spacex'] .nav-btn.active,
+html[data-theme='spacex'] .mobile-nav-btn.active {
+	background: rgba(225, 6, 0, 0.12);
+	border-color: rgba(225, 6, 0, 0.5);
+	color: #ffffff;
+}
+
+html[data-theme='spacex'] .stat-card {
+	background: linear-gradient(180deg, rgba(16, 16, 16, 0.92), rgba(8, 8, 8, 0.92));
+	border-color: rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme='spacex'] .stat-card p,
+html[data-theme='spacex'] .panel > p,
+html[data-theme='spacex'] .panel .text-sm,
+html[data-theme='spacex'] .panel .text-xs,
+html[data-theme='spacex'] .text-slate-400,
+html[data-theme='spacex'] .text-slate-500 {
+	color: #b8b8b8 !important;
+}
+
+html[data-theme='spacex'] .stat-card h3 {
+	font-family: 'Barlow Condensed', 'Inter', sans-serif;
+	font-size: 2.1rem;
+	letter-spacing: 0.08em;
+	color: #ffffff;
+}
+
+html[data-theme='spacex'] .progress-track {
+	background: rgba(255, 255, 255, 0.06);
+	border-color: rgba(255, 255, 255, 0.08);
+}
+
+html[data-theme='spacex'] .progress-fill {
+	background: linear-gradient(90deg, #e10600, #ffffff);
+	box-shadow: none;
+}
+
+html[data-theme='spacex'] .toast.success {
+	background: rgba(255, 255, 255, 0.96);
+	color: #000000;
+	border-color: rgba(255, 255, 255, 0.95);
+}
+
+html[data-theme='spacex'] .toast.error {
+	background: rgba(225, 6, 0, 0.92);
+	color: #ffffff;
+	border-color: rgba(225, 6, 0, 0.9);
+}
+
+html[data-theme='spacex'] .toast.info {
+	background: rgba(255, 255, 255, 0.10);
+	color: #ffffff;
+	border-color: rgba(255, 255, 255, 0.12);
+}
+
+html[data-theme='spacex'] .theme-toggle {
+	background: rgba(0, 0, 0, 0.72);
+	border-color: rgba(255, 255, 255, 0.14);
+	color: #ffffff;
+}
+
+html[data-theme='spacex'] .theme-toggle:hover {
+	box-shadow: 0 0 0 1px rgba(225, 6, 0, 0.16), 0 10px 28px rgba(0, 0, 0, 0.35);
+}
+
+@keyframes spacexOrbitPulse {
+	0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.45; }
+	50% { transform: scale(1.02) rotate(-1deg); opacity: 0.75; }
+}
+
+@keyframes spacexGridDrift {
+	from { transform: translateY(0); }
+	to { transform: translateY(60px); }
+}
+
 html[data-theme='jarvis'] .mobile-nav-btn,
 html[data-theme='jarvis'] .nav-btn {
 	letter-spacing: 0.04em;
@@ -2465,4 +2801,80 @@ html[data-theme='light'] .project-form select:focus {
 	background: rgba(255, 255, 255, 1);
 	border-color: rgba(8, 145, 178, 0.6);
 	box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+}
+
+/* Dashboard hero section styling */
+html[data-theme='spacex'] #dashboardSection::before {
+content: '';
+display: block;
+height: 1px;
+width: 100%;
+background: linear-gradient(90deg, transparent, rgba(225, 6, 0, 0.5), transparent);
+margin-bottom: 1.5rem;
+}
+
+html[data-theme='spacex'] .stat-card:hover {
+background: linear-gradient(180deg, rgba(20, 20, 20, 0.96), rgba(10, 10, 10, 0.96));
+border-color: rgba(225, 6, 0, 0.4);
+transition: all 0.3s ease;
+}
+
+html[data-theme='spacex'] .stat-card:hover h3 {
+color: #ffffff;
+text-shadow: 0 0 12px rgba(225, 6, 0, 0.3);
+}
+
+/* Mobile header responsiveness */
+@media (max-width: 640px) {
+html[data-theme='spacex'] .spacex-page-header {
+flex-direction: column;
+align-items: flex-start;
+gap: 1rem;
+}
+
+html[data-theme='spacex'] .spacex-page-title {
+font-size: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+html[data-theme='spacex'] .spacex-header-actions {
+width: 100%;
+justify-content: flex-start;
+}
+
+html[data-theme='spacex'] .spacex-header-actions button {
+flex: 1;
+}
+}
+
+/* Additional mobile refinements for sidebar and navigation */
+@media (max-width: 768px) {
+html[data-theme='spacex'] .sidebar-panel {
+width: 16rem;
+}
+
+html[data-theme='spacex'] .spacex-page-kicker {
+font-size: 0.7rem;
+letter-spacing: 0.12em;
+}
+
+html[data-theme='spacex'] .spacex-page-title {
+font-size: 1.75rem;
+}
+
+html[data-theme='spacex'] .nav-btn {
+padding: 0.5rem 0.6rem;
+font-size: 0.85rem;
+}
+}
+
+/* Tablet and landscape refinements */
+@media (max-width: 1024px) {
+html[data-theme='spacex'] .stat-card {
+min-height: auto;
+padding: 1rem;
+}
+
+html[data-theme='spacex'] .stat-card h3 {
+font-size: 1.75rem;
+}
 }

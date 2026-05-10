@@ -8,8 +8,8 @@
 		<div class="flex items-center gap-3 mb-8">
 			<img id="sidebarProfileImage" src="{{ url_for('static', filename='img/profile-placeholder.svg') }}" alt="Profile Avatar" class="h-11 w-11 rounded-xl object-cover border border-slate-700 bg-slate-900" />
 			<div>
-				<p class="text-xs uppercase tracking-wide text-slate-400">Sachin Maurya's <br>workspace</p>
-				<h1 class="font-semibold text-lg">Workflow Manager</h1>
+				<p class="text-xs uppercase tracking-wide text-slate-400"><i class="fa-solid fa-rocket mr-1"></i>Flight Systems</p>
+				<h1 class="font-semibold text-lg">Orbital Command</h1>
 			</div>
 		</div>
 
@@ -58,19 +58,15 @@
 	<div id="mobileBackdrop" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden"></div>
 
 	<main class="flex-1 p-4 md:p-8 md:pl-10 overflow-x-hidden">
-		<header class="flex items-center justify-between mb-6">
-			<div class="flex items-center gap-3">
-				<button id="menuToggle" class="md:hidden h-10 w-10 rounded-lg border border-slate-700">
-					<i class="fa-solid fa-bars"></i>
-				</button>
-				<div>
-					<h2 id="sectionTitle" class="text-2xl font-bold">Dashboard</h2>
-					<p class="text-slate-400 text-sm">Track, manage, and improve your workflows.</p>
-				</div>
+		<header class="spacex-page-header">
+			<div class="min-w-0">
+				<div class="spacex-page-kicker">Mission Control</div>
+				<h2 id="sectionTitle" class="spacex-page-title">Dashboard</h2>
+				<p class="spacex-page-subtitle">Track, manage, and improve your workflows with a launch-window mindset.</p>
 			</div>
-			<div class="flex items-center gap-3">
+			<div class="spacex-header-actions">
 				<img id="topProfileImage" src="{{ url_for('static', filename='img/profile-placeholder.svg') }}" alt="Top Profile Avatar" class="h-10 w-10 rounded-full object-cover border border-slate-700 bg-slate-900" />
-				<button id="openAddModalBtn" class="rounded-lg bg-cyan-500 text-slate-950 px-3 md:px-4 py-2 font-semibold hover:bg-cyan-400 transition text-sm md:text-base">
+				<button id="openAddModalBtn" class="btn btn-primary px-3 md:px-4 py-2 font-semibold text-sm md:text-base">
 					<i class="fa-solid fa-plus mr-2"></i>Add Workflow
 				</button>
 			</div>

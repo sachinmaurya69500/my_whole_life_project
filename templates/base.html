@@ -23,8 +23,8 @@
     <script>
         (function () {
             const savedTheme = localStorage.getItem('swm-theme');
-            // default to Jarvis theme for a Tony Stark-like experience
-            const initialTheme = savedTheme || 'jarvis';
+            // default to a SpaceX-inspired presentation
+            const initialTheme = savedTheme || 'spacex';
             document.documentElement.setAttribute('data-theme', initialTheme);
         })();
 
@@ -51,6 +51,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
     {% block head_extras %}{% endblock %}
@@ -72,13 +73,9 @@
         id="assistantLauncher"
         class="assistant-launcher"
         type="button"
-        aria-label="Open Jarvis Assistant"
-        aria-expanded="false"
-        title="Open Jarvis Assistant"
-    >
-        <span class="assistant-launcher-core" aria-hidden="true">
-            <span class="assistant-orbit orbit-one"></span>
-            <span class="assistant-orbit orbit-two"></span>
+		aria-label="Open ATLAS Assistant"
+		aria-expanded="false"
+		title="Open ATLAS — Mission AI Assistant"
             <i class="fa-solid fa-robot"></i>
         </span>
     </button>
@@ -127,38 +124,5 @@
     {% block scripts %}{% endblock %}
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
     <script src="{{ url_for('static', filename='js/assistant-widget.js') }}"></script>
-    <script>
-        (function () {
-            const themeToggle = document.getElementById('themeToggle');
-            if (!themeToggle) return;
-
-            const icon = themeToggle.querySelector('i');
-
-            function updateThemeIcon(theme) {
-                if (!icon) return;
-                if (theme === 'dark') icon.className = 'fa-solid fa-moon';
-                else if (theme === 'light') icon.className = 'fa-solid fa-sun';
-                else icon.className = 'fa-solid fa-robot';
-            }
-
-            function getTheme() {
-                return document.documentElement.getAttribute('data-theme') || 'jarvis';
-            }
-
-            updateThemeIcon(getTheme());
-
-            themeToggle.addEventListener('click', () => {
-                // cycle through light -> dark -> jarvis
-                const order = ['light', 'dark', 'jarvis'];
-                const current = getTheme();
-                let idx = order.indexOf(current);
-                if (idx === -1) idx = 2;
-                const next = order[(idx + 1) % order.length];
-                document.documentElement.setAttribute('data-theme', next);
-                localStorage.setItem('swm-theme', next);
-                updateThemeIcon(next);
-            });
-        })();
-    </script>
 </body>
 </html>

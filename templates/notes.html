@@ -5,12 +5,13 @@
 {% block content %}
 <main class="min-h-screen p-4 md:p-8">
     <div class="max-w-6xl mx-auto space-y-6">
-        <header class="flex flex-wrap items-center justify-between gap-3 panel">
-            <div>
-                <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Jarvis Notebook</p>
-                <h2 class="panel-title text-2xl mb-0">Notes</h2>
+        <header class="spacex-page-header">
+            <div class="min-w-0">
+                <div class="spacex-page-kicker">Mission Notes</div>
+                <h2 class="spacex-page-title">Notes</h2>
+                <p class="spacex-page-subtitle">Capture ideas, templates, and reference material with launch-deck clarity.</p>
             </div>
-            <div class="flex gap-2">
+            <div class="spacex-header-actions">
                 <button id="newNoteBtn" class="btn btn-primary">New Note</button>
                 <button id="toggleEditorBtn" class="btn btn-secondary">Toggle Preview</button>
             </div>

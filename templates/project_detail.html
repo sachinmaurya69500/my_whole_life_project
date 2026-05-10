@@ -5,12 +5,13 @@
 {% block content %}
 <main class="min-h-screen p-4 md:p-8">
 	<div class="max-w-5xl mx-auto space-y-6">
-		<div class="flex flex-wrap items-center justify-between gap-3 panel">
-			<div>
-				<p class="text-xs uppercase tracking-[0.25em] text-slate-400">Project Workspace</p>
-				<h1 id="projectTitleHeading" class="panel-title text-2xl md:text-3xl mb-0">Project Details</h1>
+		<div class="spacex-page-header">
+			<div class="min-w-0">
+				<div class="spacex-page-kicker">Mission Workspace</div>
+				<h1 id="projectTitleHeading" class="spacex-page-title">Project Details</h1>
+				<p class="spacex-page-subtitle">Review the mission snapshot, updates, and execution details in one place.</p>
 			</div>
-			<div class="flex gap-2">
+			<div class="spacex-header-actions">
 				<a href="/home" class="btn btn-secondary px-4 py-2 text-sm">
 					<i class="fa-solid fa-arrow-left mr-2"></i>Back
 				</a>
