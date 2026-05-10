@@ -39,6 +39,7 @@
 			<button class="nav-btn" data-section="daily"><i class="fa-solid fa-sun"></i>Daily Projects</button>
 			<button class="nav-btn" data-section="long-term"><i class="fa-solid fa-mountain"></i>Long-term Projects</button>
 			<button class="nav-btn" data-section="manage"><i class="fa-solid fa-table-list"></i>Manage Workflows</button>
+			<button class="nav-btn" data-section="sites"><i class="fa-solid fa-globe"></i>Tracked Websites</button>
 			<button class="nav-btn" data-section="profile"><i class="fa-solid fa-user"></i>Profile</button>
 		</nav>
 
@@ -78,15 +79,17 @@
 				<button class="mobile-nav-btn" data-section="daily"><i class="fa-solid fa-sun"></i>Daily</button>
 				<button class="mobile-nav-btn" data-section="long-term"><i class="fa-solid fa-mountain"></i>Long-term</button>
 				<button class="mobile-nav-btn" data-section="manage"><i class="fa-solid fa-table-list"></i>Manage</button>
+				<button class="mobile-nav-btn" data-section="sites"><i class="fa-solid fa-globe"></i>Sites</button>
 				<button class="mobile-nav-btn" data-section="profile"><i class="fa-solid fa-user"></i>Profile</button>
 			</div>
 		</section>
 
 		<section id="dashboardSection" class="section-view space-y-6">
-			<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+			<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
 				<article class="stat-card"><p>Total Workflows</p><h3 id="statTotal">0</h3></article>
 				<article class="stat-card"><p>Daily Projects</p><h3 id="statDaily">0</h3></article>
 				<article class="stat-card"><p>Long-term Projects</p><h3 id="statLongTerm">0</h3></article>
+				<article class="stat-card"><p>Tracked Websites</p><h3 id="statSites">0</h3></article>
 				<article class="stat-card"><p>Avg Progress</p><h3 id="statAvg">0%</h3></article>
 			</div>
 
@@ -131,6 +134,38 @@
 			</div>
 		</section>
 
+		<section id="sitesSection" class="section-view hidden space-y-4">
+			<div class="panel">
+				<div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+					<div>
+						<h3 class="panel-title !mb-0">Tracked Websites Admin Panel</h3>
+						<p class="text-sm text-slate-400 mt-1">Add websites you want to watch, such as SpaceX, NASA, or any custom source.</p>
+					</div>
+					<div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+						<input id="siteSearch" aria-label="Search tracked websites" placeholder="Search name, url, notes..." class="w-full sm:w-96 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+						<button id="openAddSiteModalBtn" class="btn btn-primary px-4 py-2 font-semibold text-sm whitespace-nowrap"><i class="fa-solid fa-plus mr-2"></i>Add Website</button>
+					</div>
+				</div>
+			</div>
+
+			<div class="panel overflow-x-auto">
+				<table class="w-full min-w-[1120px] text-sm">
+					<thead>
+						<tr class="text-left text-slate-400 border-b border-slate-800">
+							<th class="py-3 pr-2">Name</th>
+							<th class="py-3 pr-2">URL</th>
+							<th class="py-3 pr-2">Category</th>
+							<th class="py-3 pr-2">Status</th>
+							<th class="py-3 pr-2">Frequency</th>
+							<th class="py-3 pr-2">Notes</th>
+							<th class="py-3 pr-2">Actions</th>
+						</tr>
+					</thead>
+					<tbody id="siteTableBody"></tbody>
+				</table>
+			</div>
+		</section>
+
 		<section id="profileSection" class="section-view hidden">
 			<div class="panel max-w-4xl">
 				<h3 class="panel-title">Profile</h3>
@@ -168,6 +203,64 @@
 			</div>
 		</section>
 	</main>
+</div>
+
+<div id="siteModal" class="fixed inset-0 z-50 hidden">
+	<div class="absolute inset-0 bg-black/60" id="siteModalBackdrop"></div>
+	<div class="relative min-h-screen grid place-items-center p-4 overflow-y-auto">
+		<div class="w-full max-w-2xl panel border-slate-700 max-h-[calc(100vh-2rem)] overflow-y-auto">
+			<div class="flex items-center justify-between mb-4">
+				<h3 id="siteModalTitle" class="text-xl font-semibold">Add Tracked Website</h3>
+				<button id="closeSiteModalBtn" class="h-9 w-9 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-xmark"></i></button>
+			</div>
+
+			<form id="siteForm" class="space-y-4">
+				<input type="hidden" id="siteId" />
+				<div class="grid md:grid-cols-2 gap-4">
+					<div>
+						<label for="siteName" class="block text-sm mb-1">Website Name</label>
+						<input id="siteName" required class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" />
+					</div>
+					<div>
+						<label for="siteUrl" class="block text-sm mb-1">Website URL</label>
+						<input id="siteUrl" required placeholder="https://www.spacex.com" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" />
+					</div>
+				</div>
+
+				<div class="grid md:grid-cols-3 gap-4">
+					<div>
+						<label class="block text-sm mb-1">Category</label>
+						<input id="siteCategory" placeholder="Space" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" />
+					</div>
+					<div>
+						<label class="block text-sm mb-1">Status</label>
+						<select id="siteStatus" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2">
+							<option>Active</option>
+							<option>Paused</option>
+						</select>
+					</div>
+					<div>
+						<label class="block text-sm mb-1">Check Frequency</label>
+						<select id="siteFrequency" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2">
+							<option>Manual</option>
+							<option>Daily</option>
+							<option>Weekly</option>
+						</select>
+					</div>
+				</div>
+
+				<div>
+					<label class="block text-sm mb-1">Notes</label>
+					<textarea id="siteNotes" rows="4" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"></textarea>
+				</div>
+
+				<div class="flex justify-end gap-3 pt-2">
+					<button type="button" id="cancelSiteModalBtn" class="rounded-lg border border-slate-700 px-4 py-2 hover:bg-slate-800">Cancel</button>
+					<button type="submit" class="rounded-lg bg-cyan-500 text-slate-950 px-4 py-2 font-semibold hover:bg-cyan-400">Save Website</button>
+				</div>
+			</form>
+		</div>
+	</div>
 </div>
 
 <div id="workflowModal" class="fixed inset-0 z-50 hidden">

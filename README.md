@@ -9,7 +9,9 @@ Production-style Flask + MongoDB + GridFS workflow management web app.
 - Dashboard stats: Total, Daily, Long-term, Average Progress
 - Daily and Long-term project views with progress cards
 - Manage workflows admin table with search and inline quick edits
+- Tracked websites admin panel for adding custom sources like SpaceX and NASA
 - Add/Edit/Delete workflows via REST-style API and fetch()
+- Add/Edit/Delete tracked websites via REST-style API and fetch()
 - Gemini AI Studio chatbot assistant integrated on dashboard
 - Chat memory persisted per user and auto-loaded on dashboard
 - Multiple workflow photo uploads to GridFS

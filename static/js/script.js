@@ -1,5 +1,6 @@
 const state = {
 	workflows: [],
+	trackedSites: [],
 	currentSection: 'dashboard',
 	selectedFiles: [],
 	chatBusy: false,
@@ -13,6 +14,7 @@ const el = {
 		daily: document.getElementById('dailySection'),
 		'long-term': document.getElementById('long-termSection'),
 		manage: document.getElementById('manageSection'),
+		sites: document.getElementById('sitesSection'),
 		profile: document.getElementById('profileSection'),
 	},
 	sectionTitle: document.getElementById('sectionTitle'),
@@ -20,10 +22,13 @@ const el = {
 	longTermGrid: document.getElementById('longTermGrid'),
 	manageTableBody: document.getElementById('manageTableBody'),
 	manageSearch: document.getElementById('manageSearch'),
+	siteSearch: document.getElementById('siteSearch'),
+	siteTableBody: document.getElementById('siteTableBody'),
 	recentActivity: document.getElementById('recentActivity'),
 	statTotal: document.getElementById('statTotal'),
 	statDaily: document.getElementById('statDaily'),
 	statLongTerm: document.getElementById('statLongTerm'),
+	statSites: document.getElementById('statSites'),
 	statAvg: document.getElementById('statAvg'),
 	modal: document.getElementById('workflowModal'),
 	modalTitle: document.getElementById('modalTitle'),
@@ -46,6 +51,20 @@ const el = {
 	dropZone: document.getElementById('dropZone'),
 	selectedFiles: document.getElementById('selectedFiles'),
 	cardTemplate: document.getElementById('workflowCardTemplate'),
+	openAddSiteModalBtn: document.getElementById('openAddSiteModalBtn'),
+	siteModal: document.getElementById('siteModal'),
+	siteModalTitle: document.getElementById('siteModalTitle'),
+	closeSiteModalBtn: document.getElementById('closeSiteModalBtn'),
+	cancelSiteModalBtn: document.getElementById('cancelSiteModalBtn'),
+	siteModalBackdrop: document.getElementById('siteModalBackdrop'),
+	siteForm: document.getElementById('siteForm'),
+	siteId: document.getElementById('siteId'),
+	siteName: document.getElementById('siteName'),
+	siteUrl: document.getElementById('siteUrl'),
+	siteCategory: document.getElementById('siteCategory'),
+	siteStatus: document.getElementById('siteStatus'),
+	siteFrequency: document.getElementById('siteFrequency'),
+	siteNotes: document.getElementById('siteNotes'),
 	profileForm: document.getElementById('profileForm'),
 	profileName: document.getElementById('profileName'),
 	profileLocation: document.getElementById('profileLocation'),
@@ -283,6 +302,7 @@ function setActiveSection(sectionKey) {
 		daily: 'Daily Projects',
 		'long-term': 'Long-term Projects',
 		manage: 'Manage Workflows',
+		sites: 'Tracked Websites',
 		profile: 'Profile',
 	};
 	el.sectionTitle.textContent = titleMap[sectionKey] || 'Dashboard';
@@ -412,6 +432,85 @@ function renderManageTable(workflows) {
 	});
 }
 
+function siteStatusClass(status) {
+	if (status === 'Paused') return 'chip-amber';
+	return 'chip-green';
+}
+
+function formatFrequency(value) {
+	return value || 'Manual';
+}
+
+function openTrackedSiteModal(site = null) {
+	if (site) {
+		el.siteModalTitle.textContent = 'Edit Tracked Website';
+		el.siteId.value = site._id;
+		el.siteName.value = site.name || '';
+		el.siteUrl.value = site.url || '';
+		el.siteCategory.value = site.category || 'General';
+		el.siteStatus.value = site.status || 'Active';
+		el.siteFrequency.value = site.check_frequency || 'Manual';
+		el.siteNotes.value = site.notes || '';
+	} else {
+		el.siteModalTitle.textContent = 'Add Tracked Website';
+		el.siteForm.reset();
+		el.siteId.value = '';
+		el.siteStatus.value = 'Active';
+		el.siteFrequency.value = 'Manual';
+	}
+	el.siteModal.classList.remove('hidden');
+}
+
+function closeTrackedSiteModal() {
+	el.siteModal.classList.add('hidden');
+	el.siteForm.reset();
+	el.siteId.value = '';
+	el.siteStatus.value = 'Active';
+	el.siteFrequency.value = 'Manual';
+}
+
+function renderTrackedSitesTable(sites) {
+	el.siteTableBody.innerHTML = '';
+	if (!sites.length) {
+		el.siteTableBody.innerHTML = '<tr><td colspan="7" class="py-4"><div class="hud-empty-state">No tracked websites yet.</div></td></tr>';
+		return;
+	}
+
+	sites.forEach((site, index) => {
+		const tr = document.createElement('tr');
+		tr.className = 'border-b border-slate-800 hud-reveal';
+		tr.style.transitionDelay = `${Math.min(index, 10) * 60}ms`;
+		tr.innerHTML = `
+			<td class="py-3 pr-2 font-medium text-slate-100">${escapeHtml(site.name)}</td>
+			<td class="py-3 pr-2 max-w-[20rem] truncate"><a href="${escapeHtml(site.url)}" target="_blank" rel="noreferrer" class="text-cyan-300 hover:underline">${escapeHtml(site.url)}</a></td>
+			<td class="py-3 pr-2">${escapeHtml(site.category || 'General')}</td>
+			<td class="py-3 pr-2"><span class="status-chip ${siteStatusClass(site.status)}">${escapeHtml(site.status || 'Active')}</span></td>
+			<td class="py-3 pr-2">${escapeHtml(formatFrequency(site.check_frequency))}</td>
+			<td class="py-3 pr-2 max-w-[18rem] text-slate-300">${escapeHtml(site.notes || 'No notes added yet.')}</td>
+			<td class="py-3 pr-2">
+				<div class="flex gap-2">
+					<button class="edit-site-btn rounded-lg border border-slate-700 px-3 py-1.5 text-xs">Edit</button>
+					<button class="delete-site-btn rounded-lg border border-rose-800 text-rose-300 px-3 py-1.5 text-xs">Delete</button>
+				</div>
+			</td>
+		`;
+
+		tr.querySelector('.edit-site-btn').addEventListener('click', () => {
+			openTrackedSiteModal(site);
+		});
+
+		tr.querySelector('.delete-site-btn').addEventListener('click', async () => {
+			if (!confirm(`Delete tracked website "${site.name}"?`)) return;
+			await api(`/api/tracked-sites/${site._id}`, { method: 'DELETE' });
+			showToast('Tracked website deleted');
+			await loadAll();
+		});
+
+			el.siteTableBody.appendChild(tr);
+		requestAnimationFrame(() => tr.classList.add('is-visible'));
+	});
+}
+
 function renderRecentActivity(items) {
 	el.recentActivity.innerHTML = '';
 	if (!items.length) {
@@ -461,6 +560,9 @@ async function loadDashboard() {
 	el.statTotal.textContent = data.total;
 	el.statDaily.textContent = data.daily;
 	el.statLongTerm.textContent = data.long_term;
+	if (el.statSites) {
+		el.statSites.textContent = data.tracked_sites_count ?? 0;
+	}
 	el.statAvg.textContent = `${data.avg_progress}%`;
 	renderRecentActivity(data.recent_activity || []);
 }
@@ -497,8 +599,17 @@ async function loadWorkflows(search = '') {
 	renderManageTable(state.workflows);
 }
 
+async function loadTrackedSites(search = '') {
+	const query = search ? `?q=${encodeURIComponent(search)}` : '';
+	if (el.siteTableBody) {
+		el.siteTableBody.innerHTML = '<tr><td colspan="7" class="py-4"><div class="hud-skeleton h-10 rounded-lg"></div></td></tr>';
+	}
+	state.trackedSites = await api(`/api/tracked-sites${query}`);
+	renderTrackedSitesTable(state.trackedSites);
+}
+
 async function loadAll() {
-	await Promise.all([loadDashboard(), loadWorkflows(), loadProfile(), loadChatHistory()]);
+	await Promise.all([loadDashboard(), loadWorkflows(), loadTrackedSites(), loadProfile(), loadChatHistory()]);
 }
 
 function escapeHtml(value) {
@@ -618,6 +729,19 @@ el.closeModalBtn.addEventListener('click', closeModal);
 el.cancelModalBtn.addEventListener('click', closeModal);
 el.modalBackdrop.addEventListener('click', closeModal);
 
+if (el.openAddSiteModalBtn) {
+	el.openAddSiteModalBtn.addEventListener('click', () => openTrackedSiteModal());
+}
+if (el.closeSiteModalBtn) {
+	el.closeSiteModalBtn.addEventListener('click', closeTrackedSiteModal);
+}
+if (el.cancelSiteModalBtn) {
+	el.cancelSiteModalBtn.addEventListener('click', closeTrackedSiteModal);
+}
+if (el.siteModalBackdrop) {
+	el.siteModalBackdrop.addEventListener('click', closeTrackedSiteModal);
+}
+
 el.workflowForm.addEventListener('submit', async (e) => {
 	e.preventDefault();
 
@@ -690,6 +814,15 @@ el.manageSearch.addEventListener('input', async (e) => {
 	renderManageTable(workflows);
 });
 
+if (el.siteSearch) {
+	el.siteSearch.addEventListener('input', async (e) => {
+		const search = e.target.value.trim();
+		const query = search ? `?q=${encodeURIComponent(search)}` : '';
+		const sites = await api(`/api/tracked-sites${query}`);
+		renderTrackedSitesTable(sites);
+	});
+}
+
 el.profileForm.addEventListener('submit', async (e) => {
 	e.preventDefault();
 	await api('/api/profile', {
@@ -725,5 +858,42 @@ el.logoutBtn.addEventListener('click', async () => {
 	await api('/logout', { method: 'POST' });
 	window.location.href = '/login';
 });
+
+if (el.siteForm) {
+	el.siteForm.addEventListener('submit', async (e) => {
+		e.preventDefault();
+
+		const payload = {
+			name: el.siteName.value.trim(),
+			url: el.siteUrl.value.trim(),
+			category: el.siteCategory.value.trim(),
+			status: el.siteStatus.value,
+			check_frequency: el.siteFrequency.value,
+			notes: el.siteNotes.value.trim(),
+		};
+
+		try {
+			if (el.siteId.value) {
+				await api(`/api/tracked-sites/${el.siteId.value}`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(payload),
+				});
+				showToast('Tracked website updated');
+			} else {
+				await api('/api/tracked-sites', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(payload),
+				});
+				showToast('Tracked website added');
+			}
+			closeTrackedSiteModal();
+			await loadAll();
+		} catch (err) {
+			showToast(err.message, 'error');
+		}
+	});
+}
 
 loadAll().catch((err) => showToast(err.message, 'error'));

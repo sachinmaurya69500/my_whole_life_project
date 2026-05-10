@@ -95,6 +95,7 @@ contacts_col = db["contacts"]
 expenses_col = db["expenses"]
 reminders_col = db["reminders"]
 notes_col = db["notes"]
+tracked_sites_col = db["tracked_sites"]
 templates_col = db["templates"]
 
 
@@ -137,6 +138,34 @@ def workflow_to_json(doc):
 		"additional_details": doc.get("additional_details", ""),
 		"photo_urls": [f"/image/{str(photo_id)}?v={version}" for photo_id in photos],
 		"photo_ids": [str(photo_id) for photo_id in photos],
+		"created_at": doc.get("created_at").isoformat() if doc.get("created_at") else "",
+		"updated_at": doc.get("updated_at").isoformat() if doc.get("updated_at") else "",
+	}
+
+
+def task_to_json(doc):
+	due_date = doc.get("due_date")
+	return {
+		"_id": str(doc.get("_id")),
+		"title": doc.get("title", ""),
+		"description": doc.get("description", ""),
+		"priority": doc.get("priority", "Medium"),
+		"status": doc.get("status", "Todo"),
+		"assigned_to": doc.get("assigned_to", ""),
+		"due_date": due_date.isoformat() if due_date else "",
+		"created_at": doc.get("created_at").isoformat() if doc.get("created_at") else "",
+		"updated_at": doc.get("updated_at").isoformat() if doc.get("updated_at") else "",
+	}
+
+
+def contact_to_json(doc):
+	return {
+		"_id": str(doc.get("_id")),
+		"name": doc.get("name", ""),
+		"email": doc.get("email", ""),
+		"phone": doc.get("phone", ""),
+		"company": doc.get("company", ""),
+		"notes": doc.get("notes", ""),
 		"created_at": doc.get("created_at").isoformat() if doc.get("created_at") else "",
 		"updated_at": doc.get("updated_at").isoformat() if doc.get("updated_at") else "",
 	}
@@ -188,8 +217,34 @@ def note_to_json(doc):
 	}
 
 
+def tracked_site_to_json(doc):
+	last_checked_at = doc.get("last_checked_at")
+	return {
+		"_id": str(doc.get("_id")),
+		"name": doc.get("name", ""),
+		"url": doc.get("url", ""),
+		"category": doc.get("category", "General"),
+		"notes": doc.get("notes", ""),
+		"status": doc.get("status", "Active"),
+		"check_frequency": doc.get("check_frequency", "Manual"),
+		"last_checked_at": last_checked_at.isoformat() if last_checked_at else "",
+		"last_check_result": doc.get("last_check_result", ""),
+		"created_at": doc.get("created_at").isoformat() if doc.get("created_at") else "",
+		"updated_at": doc.get("updated_at").isoformat() if doc.get("updated_at") else "",
+	}
+
+
 def normalize_email(value):
 	return (value or "").strip().lower()
+
+
+def normalize_site_url(value):
+	url = (value or "").strip()
+	if not url:
+		return ""
+	if not url.startswith(("http://", "https://")):
+		url = f"https://{url}"
+	return url
 
 
 def parse_event_datetime(value):
@@ -554,6 +609,37 @@ def ensure_seed_data():
 			)
 		workflows_col.insert_many(docs)
 
+	if tracked_sites_col.count_documents({}) == 0:
+		now = utc_now()
+		tracked_sites_col.insert_many(
+			[
+				{
+					"name": "SpaceX",
+					"url": "https://www.spacex.com",
+					"category": "Space",
+					"notes": "Official SpaceX homepage and launch updates.",
+					"status": "Active",
+					"check_frequency": "Manual",
+					"last_checked_at": now,
+					"last_check_result": "Seeded",
+					"created_at": now,
+					"updated_at": now,
+				},
+				{
+					"name": "NASA",
+					"url": "https://www.nasa.gov",
+					"category": "Space",
+					"notes": "News, missions, and research updates.",
+					"status": "Active",
+					"check_frequency": "Manual",
+					"last_checked_at": now,
+					"last_check_result": "Seeded",
+					"created_at": now,
+					"updated_at": now,
+				},
+			]
+		)
+
 
 @app.route("/")
 def root():
@@ -871,6 +957,7 @@ def dashboard_stats():
 	daily = len([w for w in workflows if w.get("type") == "Daily"])
 	long_term = len([w for w in workflows if w.get("type") == "Long-term"])
 	avg_progress = round(sum(w.get("progress", 0) for w in workflows) / total, 2) if total else 0
+	tracked_sites_count = tracked_sites_col.count_documents({})
 
 	recent_docs = list(workflows_col.find({}).sort("updated_at", -1).limit(6))
 	recent_activity = []
@@ -890,6 +977,7 @@ def dashboard_stats():
 			"daily": daily,
 			"long_term": long_term,
 			"avg_progress": avg_progress,
+			"tracked_sites_count": tracked_sites_count,
 			"recent_activity": recent_activity,
 		}
 	)
@@ -1048,6 +1136,133 @@ def ai_chat_history():
 
 	history = get_user_chat_history(user_id, limit=40)
 	return jsonify({"messages": history})
+
+
+@app.route("/api/tracked-sites", methods=["GET"])
+@login_required
+def list_tracked_sites():
+	q = request.args.get("q", "").strip()
+	status = request.args.get("status", "").strip()
+
+	mongo_query = {}
+	if status in {"Active", "Paused"}:
+		mongo_query["status"] = status
+	if q:
+		mongo_query["$or"] = [
+			{"name": {"$regex": q, "$options": "i"}},
+			{"url": {"$regex": q, "$options": "i"}},
+			{"category": {"$regex": q, "$options": "i"}},
+			{"notes": {"$regex": q, "$options": "i"}},
+		]
+
+	docs = list(tracked_sites_col.find(mongo_query).sort("updated_at", -1))
+	return jsonify([tracked_site_to_json(doc) for doc in docs])
+
+
+@app.route("/api/tracked-sites", methods=["POST"])
+@login_required
+def create_tracked_site():
+	data = request.get_json(silent=True) or {}
+
+	name = (data.get("name") or "").strip()
+	url = normalize_site_url(data.get("url") or "")
+	category = (data.get("category") or "General").strip() or "General"
+	notes = (data.get("notes") or "").strip()
+	status = (data.get("status") or "Active").strip()
+	check_frequency = (data.get("check_frequency") or "Manual").strip() or "Manual"
+
+	if not name:
+		return jsonify({"error": "Website name is required"}), 400
+	if not url:
+		return jsonify({"error": "Website URL is required"}), 400
+	if status not in {"Active", "Paused"}:
+		return jsonify({"error": "Invalid tracking status"}), 400
+	if check_frequency not in {"Manual", "Daily", "Weekly"}:
+		return jsonify({"error": "Invalid check frequency"}), 400
+
+	now = utc_now()
+	doc = {
+		"name": name,
+		"url": url,
+		"category": category,
+		"notes": notes,
+		"status": status,
+		"check_frequency": check_frequency,
+		"last_checked_at": now,
+		"last_check_result": "Created",
+		"created_at": now,
+		"updated_at": now,
+	}
+	result = tracked_sites_col.insert_one(doc)
+	created = tracked_sites_col.find_one({"_id": result.inserted_id})
+	return jsonify(tracked_site_to_json(created)), 201
+
+
+@app.route("/api/tracked-sites/<site_id>", methods=["PUT"])
+@login_required
+def update_tracked_site(site_id):
+	obj_id = to_object_id(site_id)
+	if not obj_id:
+		return jsonify({"error": "Invalid tracked site id"}), 400
+
+	data = request.get_json(silent=True) or {}
+	update_payload = {}
+
+	if "name" in data:
+		name = (data.get("name") or "").strip()
+		if not name:
+			return jsonify({"error": "Website name cannot be empty"}), 400
+		update_payload["name"] = name
+
+	if "url" in data:
+		url = normalize_site_url(data.get("url") or "")
+		if not url:
+			return jsonify({"error": "Website URL cannot be empty"}), 400
+		update_payload["url"] = url
+
+	if "category" in data:
+		update_payload["category"] = (data.get("category") or "General").strip() or "General"
+
+	if "notes" in data:
+		update_payload["notes"] = (data.get("notes") or "").strip()
+
+	if "status" in data:
+		status = (data.get("status") or "").strip()
+		if status not in {"Active", "Paused"}:
+			return jsonify({"error": "Invalid tracking status"}), 400
+		update_payload["status"] = status
+
+	if "check_frequency" in data:
+		check_frequency = (data.get("check_frequency") or "").strip()
+		if check_frequency not in {"Manual", "Daily", "Weekly"}:
+			return jsonify({"error": "Invalid check frequency"}), 400
+		update_payload["check_frequency"] = check_frequency
+
+	if not update_payload:
+		return jsonify({"error": "No valid fields provided"}), 400
+
+	update_payload["updated_at"] = utc_now()
+	update_payload["last_checked_at"] = utc_now()
+	tracked_sites_col.update_one({"_id": obj_id}, {"$set": update_payload})
+	updated = tracked_sites_col.find_one({"_id": obj_id})
+	if not updated:
+		return jsonify({"error": "Tracked site not found"}), 404
+	return jsonify(tracked_site_to_json(updated))
+
+
+@app.route("/api/tracked-sites/<site_id>", methods=["DELETE"])
+@login_required
+def delete_tracked_site(site_id):
+	obj_id = to_object_id(site_id)
+	if not obj_id:
+		return jsonify({"error": "Invalid tracked site id"}), 400
+
+	site = tracked_sites_col.find_one({"_id": obj_id})
+	if not site:
+		return jsonify({"error": "Tracked site not found"}), 404
+
+	tracked_sites_col.delete_one({"_id": obj_id})
+	return jsonify({"message": "Tracked site deleted"})
 
 
 @app.route("/api/workflows", methods=["GET"])
