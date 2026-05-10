@@ -1,625 +1,252 @@
 (function () {
+	// Minimal, immersive Jarvis assistant implementation
 	const launcher = document.getElementById('assistantLauncher');
-	const panel = document.getElementById('assistantPanel');
-	const closeBtn = document.getElementById('assistantClose');
-	const messagesEl = document.getElementById('assistantMessages');
-	const form = document.getElementById('assistantForm');
-	const input = document.getElementById('assistantInput');
-	const sendBtn = document.getElementById('assistantSend');
+	const jarvisPanel = document.getElementById('jarvisPanel');
+	const jarvisClose = document.getElementById('jarvisClose');
+	const jarvisMessages = document.getElementById('jarvisMessages');
+	const jarvisForm = document.getElementById('jarvisForm');
+	const jarvisInput = document.getElementById('jarvisInput');
+	const jarvisVoiceBtn = document.getElementById('jarvisVoiceBtn');
+	const jarvisStatus = document.getElementById('jarvisStatus');
+	const jarvisCanvas = document.getElementById('jarvisCanvas');
 
-	if (!launcher || !panel || !closeBtn || !messagesEl || !form || !input || !sendBtn) {
+	if (!launcher || !jarvisPanel || !jarvisClose || !jarvisMessages || !jarvisForm || !jarvisInput) {
 		return;
 	}
 
-	const tabButtons = document.querySelectorAll('.assistant-tab');
-	const chatTab = document.getElementById('chatTab');
-	const historyTab = document.getElementById('historyTab');
-	const addProjectTab = document.getElementById('addProjectTab');
-	const editProjectTab = document.getElementById('editProjectTab');
-	const adviceTab = document.getElementById('adviceTab');
-
-	const newChatBtn = document.getElementById('newChatBtn');
-	const historyList = document.getElementById('historyList');
-	const clearHistoryBtn = document.getElementById('clearHistoryBtn');
-
-	const addProjectForm = document.getElementById('addProjectForm');
-	const editProjectForm = document.getElementById('editProjectForm');
-	const editProjectSelect = document.getElementById('editProjectSelect');
-	const deleteProjectBtn = document.getElementById('deleteProjectBtn');
-
-	const adviceForm = document.getElementById('adviceForm');
-	const adviceProjectSelect = document.getElementById('adviceProjectSelect');
-	const adviceText = document.getElementById('adviceText');
-	const apiStatusEl = document.getElementById('assistantApiStatus');
-
-	let isOpen = false;
-	let isBusy = false;
-	let historyLoaded = false;
-	let isDragging = false;
-	let suppressNextClick = false;
-	let currentEditProjectId = null;
-	const POSITION_KEY = 'swm-assistant-launcher-position';
-
-	function clamp(value, min, max) {
-		return Math.max(min, Math.min(value, max));
+	function openJarvis() {
+		jarvisPanel.classList.remove('hidden');
+		jarvisPanel.setAttribute('aria-hidden', 'false');
+		document.documentElement.setAttribute('data-theme', localStorage.getItem('swm-theme') || document.documentElement.getAttribute('data-theme') || 'dark');
+		jarvisInput.focus();
+		checkAiStatus();
+		startHolo();
 	}
 
-	function getLauncherRect() {
-		return launcher.getBoundingClientRect();
+	function closeJarvis() {
+		jarvisPanel.classList.add('hidden');
+		jarvisPanel.setAttribute('aria-hidden', 'true');
+		stopHolo();
 	}
 
-	function addMessage(role, text) {
-		const bubble = document.createElement('div');
-		bubble.className = `assistant-bubble ${role}`;
-		bubble.textContent = text;
-		messagesEl.appendChild(bubble);
-		messagesEl.scrollTop = messagesEl.scrollHeight;
-		return bubble;
+	launcher.addEventListener('click', (e) => {
+		e.preventDefault();
+		if (jarvisPanel.classList.contains('hidden')) openJarvis();
+		else closeJarvis();
+	});
+	jarvisClose.addEventListener('click', closeJarvis);
+	document.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape' && !jarvisPanel.classList.contains('hidden')) closeJarvis();
+	});
+
+	function addBubble(role, text) {
+		const div = document.createElement('div');
+		div.className = `assistant-bubble ${role}`;
+		div.textContent = text;
+		jarvisMessages.appendChild(div);
+		jarvisMessages.scrollTop = jarvisMessages.scrollHeight;
+		return div;
 	}
 
-	function setBusy(flag) {
-		isBusy = flag;
-		input.disabled = flag;
-		sendBtn.disabled = flag;
-		sendBtn.textContent = flag ? 'Thinking...' : 'Send';
-	}
-
-	function showMessage(elementId, text, type) {
-		const el = document.getElementById(elementId);
-		if (!el) return;
-		el.textContent = text;
-		el.className = `project-message show ${type}`;
-		setTimeout(() => el.classList.remove('show'), 3000);
-	}
-
-	function setApiStatus(state, text) {
-		if (!apiStatusEl) return;
-		apiStatusEl.classList.remove('connected', 'checking', 'disconnected');
-		apiStatusEl.classList.add(state);
-		apiStatusEl.textContent = text;
-	}
-
-	async function checkApiConnection() {
-		setApiStatus('checking', 'Checking API...');
+	async function checkAiStatus() {
+		if (!jarvisStatus) return;
+		jarvisStatus.classList.remove('connected', 'checking', 'disconnected');
+		jarvisStatus.classList.add('checking');
+		jarvisStatus.textContent = 'Checking AI...';
 		try {
-			const res = await fetch('/api/ai-chat/status', {
-				method: 'GET',
-				headers: { Accept: 'application/json' },
-			});
-			const data = await res.json().catch(() => ({}));
-
-			if (!res.ok) {
-				setApiStatus('disconnected', 'API unreachable');
-				return false;
+			const data = await api('/api/ai-chat/status');
+			if (data && data.api_key_configured && data.authenticated) {
+				jarvisStatus.classList.remove('checking');
+				jarvisStatus.classList.add('connected');
+				jarvisStatus.textContent = 'JARVIS Online';
+				return true;
 			}
-			if (!data.api_key_configured) {
-				setApiStatus('disconnected', 'API key missing');
-				return false;
-			}
-			if (!data.authenticated) {
-				setApiStatus('checking', 'Login required');
-				return false;
-			}
-
-			setApiStatus('connected', 'Gemini connected');
-			return true;
+			jarvisStatus.classList.remove('checking');
+			jarvisStatus.classList.add('disconnected');
+			jarvisStatus.textContent = data && !data.api_key_configured ? 'API Key missing' : 'Login required';
+			return false;
 		} catch (err) {
-			setApiStatus('disconnected', 'API unreachable');
+			jarvisStatus.classList.remove('checking');
+			jarvisStatus.classList.add('disconnected');
+			jarvisStatus.textContent = 'AI unreachable';
 			return false;
 		}
 	}
 
-	function applyLauncherPosition(left, top) {
-		const margin = 12;
-		const maxLeft = Math.max(margin, window.innerWidth - launcher.offsetWidth - margin);
-		const maxTop = Math.max(margin, window.innerHeight - launcher.offsetHeight - margin);
-		const clampedLeft = clamp(left, margin, maxLeft);
-		const clampedTop = clamp(top, margin, maxTop);
-
-		launcher.style.left = `${clampedLeft}px`;
-		launcher.style.top = `${clampedTop}px`;
-		launcher.style.right = 'auto';
-		launcher.style.bottom = 'auto';
-
-		if (isOpen) {
-			positionPanel();
-		}
-	}
-
-	function saveLauncherPosition() {
-		const rect = getLauncherRect();
-		localStorage.setItem(POSITION_KEY, JSON.stringify({ left: Math.round(rect.left), top: Math.round(rect.top) }));
-	}
-
-	function restoreLauncherPosition() {
-		try {
-			const raw = localStorage.getItem(POSITION_KEY);
-			if (!raw) return;
-			const parsed = JSON.parse(raw);
-			if (!parsed || typeof parsed.left !== 'number' || typeof parsed.top !== 'number') return;
-			applyLauncherPosition(parsed.left, parsed.top);
-		} catch (err) {
-			// Ignore malformed value.
-		}
-	}
-
-	function positionPanel() {
-		if (!isOpen) return;
-		if (window.matchMedia('(max-width: 640px)').matches) {
-			panel.style.left = '';
-			panel.style.right = '';
-			panel.style.top = '';
-			panel.style.bottom = '';
-			return;
-		}
-
-		const rect = getLauncherRect();
-		const panelWidth = panel.offsetWidth || 390;
-		const panelHeight = panel.offsetHeight || 560;
-		const margin = 12;
-		const gap = 12;
-
-		let left = rect.right - panelWidth;
-		left = clamp(left, margin, window.innerWidth - panelWidth - margin);
-
-		let top = rect.top - panelHeight - gap;
-		if (top < margin) {
-			top = rect.bottom + gap;
-		}
-		top = clamp(top, margin, window.innerHeight - panelHeight - margin);
-
-		panel.style.left = `${left}px`;
-		panel.style.top = `${top}px`;
-		panel.style.right = 'auto';
-		panel.style.bottom = 'auto';
-	}
-
-	function setOpen(flag) {
-		isOpen = flag;
-		panel.classList.toggle('hidden', !flag);
-		panel.setAttribute('aria-hidden', flag ? 'false' : 'true');
-		launcher.setAttribute('aria-expanded', flag ? 'true' : 'false');
-		if (flag) {
-			positionPanel();
-		}
-	}
-
-	function switchTab(tabName) {
-		tabButtons.forEach((btn) => btn.classList.remove('active'));
-		[chatTab, historyTab, addProjectTab, editProjectTab, adviceTab]
-			.filter(Boolean)
-			.forEach((tab) => tab.classList.remove('active'));
-
-		const activeBtn = Array.from(tabButtons).find((btn) => btn.getAttribute('data-tab') === tabName);
-		if (activeBtn) activeBtn.classList.add('active');
-
-		if (tabName === 'chat' && chatTab) {
-			chatTab.classList.add('active');
-			input.focus();
-			return;
-		}
-		if (tabName === 'history' && historyTab) {
-			historyTab.classList.add('active');
-			loadHistoryList();
-			return;
-		}
-		if (tabName === 'add-project' && addProjectTab) {
-			addProjectTab.classList.add('active');
-			const titleInput = document.getElementById('projectTitle');
-			if (titleInput) titleInput.focus();
-			return;
-		}
-		if (tabName === 'edit-project' && editProjectTab) {
-			editProjectTab.classList.add('active');
-			loadProjectsForEdit();
-			if (editProjectSelect) editProjectSelect.focus();
-			return;
-		}
-		if (tabName === 'advice' && adviceTab) {
-			adviceTab.classList.add('active');
-			loadProjectsForAdvice();
-			if (adviceProjectSelect) adviceProjectSelect.focus();
-		}
-	}
-
-	async function loadHistory() {
-		if (historyLoaded) return;
-		historyLoaded = true;
-		messagesEl.innerHTML = '';
-
-		try {
-			const res = await fetch('/api/ai-chat/history', {
-				method: 'GET',
-				headers: { Accept: 'application/json' },
-			});
-			const data = await res.json().catch(() => ({}));
-
-			if (res.status === 401) {
-				addMessage('note', 'Login to use the Gemini assistant.');
-				setBusy(true);
-				return;
-			}
-			if (!res.ok) throw new Error(data.error || 'Unable to load chat history');
-
-			const items = Array.isArray(data.messages) ? data.messages : [];
-			if (!items.length) {
-				addMessage('bot', 'Hi, I am your Gemini assistant. Ask me to prioritize, plan, or unblock your next step.');
-				return;
-			}
-
-			items.forEach((item) => addMessage(item.role === 'user' ? 'user' : 'bot', item.content || ''));
-		} catch (err) {
-			addMessage('note', err.message || 'Unable to load chat history right now.');
-		}
-	}
-
-	async function loadHistoryList() {
-		if (!historyList) return;
-		historyList.innerHTML = '';
-		try {
-			const res = await fetch('/api/ai-chat/history', {
-				method: 'GET',
-				headers: { Accept: 'application/json' },
-			});
-			const data = await res.json().catch(() => ({}));
-			if (!res.ok) throw new Error(data.error || 'Failed to load history');
-
-			const items = Array.isArray(data.messages) ? data.messages : [];
-			if (!items.length) {
-				historyList.innerHTML = '<div class="history-empty">No chat history yet.</div>';
-				return;
-			}
-
-			items.forEach((item, idx) => {
-				const row = document.createElement('div');
-				row.className = 'history-item';
-				const role = item.role === 'user' ? 'You' : 'Assistant';
-				const content = (item.content || '').trim();
-				const preview = content.length > 100 ? `${content.slice(0, 100)}...` : content;
-				row.innerHTML = `
-					<div class="history-item-date">${role} · Message ${items.length - idx}</div>
-					<div class="history-item-text">${preview || '(empty message)'}</div>
-				`;
-				row.addEventListener('click', () => switchTab('chat'));
-				historyList.appendChild(row);
-			});
-		} catch (err) {
-			historyList.innerHTML = `<div class="history-empty">${err.message || 'Unable to load history.'}</div>`;
-		}
-	}
-
-	async function loadProjectsForEdit() {
-		if (!editProjectSelect) return;
-		try {
-			const res = await fetch('/api/workflows', { method: 'GET', headers: { Accept: 'application/json' } });
-			const projects = await res.json();
-			editProjectSelect.innerHTML = '<option value="">-- Select a project --</option>';
-			projects.forEach((proj) => {
-				const option = document.createElement('option');
-				option.value = proj.id;
-				option.textContent = proj.title;
-				editProjectSelect.appendChild(option);
-			});
-		} catch (err) {
-			editProjectSelect.innerHTML = '<option value="">Error loading projects</option>';
-		}
-	}
-
-	async function loadProjectsForAdvice() {
-		if (!adviceProjectSelect) return;
-		try {
-			const res = await fetch('/api/workflows', { method: 'GET', headers: { Accept: 'application/json' } });
-			const projects = await res.json();
-			adviceProjectSelect.innerHTML = '<option value="">-- Select a project --</option>';
-			projects.forEach((proj) => {
-				const option = document.createElement('option');
-				option.value = proj.id;
-				option.textContent = proj.title;
-				adviceProjectSelect.appendChild(option);
-			});
-		} catch (err) {
-			adviceProjectSelect.innerHTML = '<option value="">Error loading projects</option>';
-		}
-	}
-
-	if (editProjectSelect) {
-		editProjectSelect.addEventListener('change', async (e) => {
-			const projectId = e.target.value;
-			if (!projectId) {
-				currentEditProjectId = null;
-				return;
-			}
-			try {
-				const res = await fetch(`/api/workflows/${projectId}`, { method: 'GET', headers: { Accept: 'application/json' } });
-				if (!res.ok) throw new Error('Failed to load project');
-				const proj = await res.json();
-				currentEditProjectId = proj.id;
-
-				document.getElementById('editProjectTitle').value = proj.title || '';
-				document.getElementById('editProjectType').value = proj.type || 'Daily';
-				document.getElementById('editProjectDescription').value = proj.description || '';
-				document.getElementById('editProjectStatus').value = proj.status || 'Not Started';
-				document.getElementById('editProjectProgress').value = proj.progress || 0;
-				document.getElementById('editProjectStartDate').value = proj.start_date ? proj.start_date.split('T')[0] : '';
-				document.getElementById('editProjectDueDate').value = proj.due_date ? proj.due_date.split('T')[0] : '';
-				document.getElementById('editProjectNotes').value = proj.notes || '';
-			} catch (err) {
-				showMessage('editProjectMessage', err.message || 'Unable to load project', 'error');
-			}
-		});
-	}
-
-	if (adviceProjectSelect && adviceText) {
-		adviceProjectSelect.addEventListener('change', async (e) => {
-			const projectId = e.target.value;
-			adviceText.value = '';
-			if (!projectId) return;
-			try {
-				const res = await fetch(`/api/workflows/${projectId}/advice`, { method: 'GET', headers: { Accept: 'application/json' } });
-				if (!res.ok) throw new Error('Failed to load advice');
-				const data = await res.json();
-				adviceText.value = data.advice || '';
-			} catch (err) {
-				showMessage('adviceMessage', err.message || 'Unable to load advice', 'error');
-			}
-		});
-	}
-
-	if (addProjectForm) {
-		addProjectForm.addEventListener('submit', async (e) => {
-			e.preventDefault();
-			const title = (document.getElementById('projectTitle').value || '').trim();
-			if (!title) {
-				showMessage('addProjectMessage', 'Please enter a project title', 'error');
-				return;
-			}
-
-			const payload = {
-				title,
-				type: document.getElementById('projectType').value,
-				description: (document.getElementById('projectDescription').value || '').trim(),
-				status: document.getElementById('projectStatus').value,
-				progress: parseInt(document.getElementById('projectProgress').value || '0', 10),
-				start_date: document.getElementById('projectStartDate').value ? `${document.getElementById('projectStartDate').value}T00:00:00Z` : null,
-				due_date: document.getElementById('projectDueDate').value ? `${document.getElementById('projectDueDate').value}T00:00:00Z` : null,
-				notes: (document.getElementById('projectNotes').value || '').trim(),
-			};
-
-			try {
-				const res = await fetch('/api/workflows', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(payload),
-				});
-				const data = await res.json().catch(() => ({}));
-				if (!res.ok) throw new Error(data.error || 'Failed to create project');
-				showMessage('addProjectMessage', 'Project created successfully', 'success');
-				addProjectForm.reset();
-			} catch (err) {
-				showMessage('addProjectMessage', err.message || 'Unable to create project', 'error');
-			}
-		});
-	}
-
-	if (editProjectForm) {
-		editProjectForm.addEventListener('submit', async (e) => {
-			e.preventDefault();
-			if (!currentEditProjectId) {
-				showMessage('editProjectMessage', 'Please select a project first', 'error');
-				return;
-			}
-
-			const payload = {
-				title: (document.getElementById('editProjectTitle').value || '').trim(),
-				type: document.getElementById('editProjectType').value,
-				description: (document.getElementById('editProjectDescription').value || '').trim(),
-				status: document.getElementById('editProjectStatus').value,
-				progress: parseInt(document.getElementById('editProjectProgress').value || '0', 10),
-				start_date: document.getElementById('editProjectStartDate').value ? `${document.getElementById('editProjectStartDate').value}T00:00:00Z` : null,
-				due_date: document.getElementById('editProjectDueDate').value ? `${document.getElementById('editProjectDueDate').value}T00:00:00Z` : null,
-				notes: (document.getElementById('editProjectNotes').value || '').trim(),
-			};
-
-			try {
-				const res = await fetch(`/api/workflows/${currentEditProjectId}`, {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(payload),
-				});
-				const data = await res.json().catch(() => ({}));
-				if (!res.ok) throw new Error(data.error || 'Failed to update project');
-				showMessage('editProjectMessage', 'Project updated successfully', 'success');
-				loadProjectsForEdit();
-			} catch (err) {
-				showMessage('editProjectMessage', err.message || 'Unable to update project', 'error');
-			}
-		});
-	}
-
-	if (deleteProjectBtn) {
-		deleteProjectBtn.addEventListener('click', async () => {
-			if (!currentEditProjectId) {
-				showMessage('editProjectMessage', 'Please select a project first', 'error');
-				return;
-			}
-			if (!window.confirm('Are you sure you want to delete this project?')) return;
-			try {
-				const res = await fetch(`/api/workflows/${currentEditProjectId}`, { method: 'DELETE', headers: { Accept: 'application/json' } });
-				const data = await res.json().catch(() => ({}));
-				if (!res.ok) throw new Error(data.error || 'Failed to delete project');
-				showMessage('editProjectMessage', 'Project deleted successfully', 'success');
-				currentEditProjectId = null;
-				loadProjectsForEdit();
-			} catch (err) {
-				showMessage('editProjectMessage', err.message || 'Unable to delete project', 'error');
-			}
-		});
-	}
-
-	if (adviceForm && adviceProjectSelect && adviceText) {
-		adviceForm.addEventListener('submit', async (e) => {
-			e.preventDefault();
-			const projectId = adviceProjectSelect.value;
-			if (!projectId) {
-				showMessage('adviceMessage', 'Please select a project', 'error');
-				return;
-			}
-			try {
-				const res = await fetch(`/api/workflows/${projectId}/advice`, {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ advice: (adviceText.value || '').trim() }),
-				});
-				const data = await res.json().catch(() => ({}));
-				if (!res.ok) throw new Error(data.error || 'Failed to save advice');
-				showMessage('adviceMessage', 'Advice saved successfully', 'success');
-			} catch (err) {
-				showMessage('adviceMessage', err.message || 'Unable to save advice', 'error');
-			}
-		});
-	}
-
-	tabButtons.forEach((btn) => {
-		btn.addEventListener('click', () => {
-			switchTab(btn.getAttribute('data-tab'));
-		});
-	});
-
-	if (newChatBtn) {
-		newChatBtn.addEventListener('click', () => {
-			messagesEl.innerHTML = '';
-			historyLoaded = false;
-			input.value = '';
-			addMessage('bot', 'New chat started. What do you want to focus on now?');
-			switchTab('chat');
-		});
-	}
-
-	if (clearHistoryBtn) {
-		clearHistoryBtn.addEventListener('click', () => {
-			if (!window.confirm('Clear chat from the current view?')) return;
-			messagesEl.innerHTML = '';
-			historyLoaded = false;
-			if (historyList) {
-				historyList.innerHTML = '<div class="history-empty">No chat history yet.</div>';
-			}
-			addMessage('bot', 'Chat view cleared.');
-			switchTab('chat');
-		});
-	}
-
-	launcher.addEventListener('click', async () => {
-		if (suppressNextClick) {
-			suppressNextClick = false;
-			return;
-		}
-		setOpen(!isOpen);
-		if (isOpen) {
-			await checkApiConnection();
-			switchTab('chat');
-			await loadHistory();
-		}
-	});
-
-	launcher.addEventListener('pointerdown', (e) => {
-		if (e.button !== 0) return;
-		const startX = e.clientX;
-		const startY = e.clientY;
-		const startRect = getLauncherRect();
-		const startLeft = startRect.left;
-		const startTop = startRect.top;
-		let moved = false;
-
-		launcher.classList.add('dragging');
-		launcher.setPointerCapture(e.pointerId);
-
-		function onMove(moveEvent) {
-			const dx = moveEvent.clientX - startX;
-			const dy = moveEvent.clientY - startY;
-			if (!moved && Math.hypot(dx, dy) > 6) {
-				moved = true;
-				isDragging = true;
-			}
-			if (!moved) return;
-			applyLauncherPosition(startLeft + dx, startTop + dy);
-		}
-
-		function onUp() {
-			launcher.classList.remove('dragging');
-			launcher.removeEventListener('pointermove', onMove);
-			launcher.removeEventListener('pointerup', onUp);
-			launcher.removeEventListener('pointercancel', onUp);
-			if (moved) {
-				saveLauncherPosition();
-				suppressNextClick = true;
-			}
-			isDragging = false;
-		}
-
-		launcher.addEventListener('pointermove', onMove);
-		launcher.addEventListener('pointerup', onUp);
-		launcher.addEventListener('pointercancel', onUp);
-	});
-
-	closeBtn.addEventListener('click', () => setOpen(false));
-
-	document.addEventListener('keydown', (e) => {
-		if (e.key === 'Escape' && isOpen) {
-			setOpen(false);
-		}
-	});
-
-	window.addEventListener('resize', () => {
-		if (isDragging) return;
-		const rect = getLauncherRect();
-		applyLauncherPosition(rect.left, rect.top);
-	});
-
-	form.addEventListener('submit', async (e) => {
-		e.preventDefault();
-		if (isBusy) return;
-
-		const message = (input.value || '').trim();
+	jarvisForm.addEventListener('submit', async (ev) => {
+		ev.preventDefault();
+		const message = (jarvisInput.value || '').trim();
 		if (!message) return;
-
-		const apiReady = await checkApiConnection();
-		if (!apiReady) {
-			addMessage('note', 'Gemini API is not ready yet. Check login and GEMINI_API_KEY.');
-			return;
-		}
-
-		addMessage('user', message);
-		input.value = '';
-		setBusy(true);
-		const thinkingBubble = addMessage('bot', 'Thinking...');
-
+		jarvisInput.value = '';
+		addBubble('user', message);
+		const thinking = addBubble('bot', 'Analyzing...');
 		try {
-			const res = await fetch('/api/ai-chat', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ message }),
-			});
-			const data = await res.json().catch(() => ({}));
-			if (thinkingBubble) thinkingBubble.remove();
-
-			if (res.status === 401) {
-				addMessage('note', 'Login to chat with Gemini assistant.');
-				return;
-			}
-			if (!res.ok) {
-				const details = data.details ? `\n${data.details}` : '';
-				throw new Error(`${data.error || 'Chat request failed'}${details}`);
-			}
-
-			addMessage('bot', data.reply || 'I could not generate a response right now.');
+			const reply = await api('/api/ai-chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message }) });
+			if (thinking && thinking.parentNode) thinking.remove();
+			const text = reply.reply || 'JARVIS could not generate a response right now.';
+			addBubble('bot', text);
+			// speak the reply if available
+			speak(text);
+			// subtle response tone
+			playTone(880, 0.08);
 		} catch (err) {
-			if (thinkingBubble && thinkingBubble.parentNode) thinkingBubble.remove();
-			addMessage('note', err.message || 'Something went wrong while contacting the assistant.');
-		} finally {
-			setBusy(false);
+			if (thinking && thinking.parentNode) thinking.remove();
+			addBubble('note', err.message || 'Communication error with JARVIS');
 		}
 	});
 
-	checkApiConnection();
-	restoreLauncherPosition();
+	// Voice button: toggle speech recognition
+	jarvisVoiceBtn && jarvisVoiceBtn.addEventListener('click', async () => {
+		if (!window._jarvisRecognition) {
+			initSpeech();
+		}
+		const rec = window._jarvisRecognition;
+		if (!rec) {
+			showToast('Speech recognition not supported in this browser.', 'error');
+			return;
+		}
+		if (window._jarvisListening) {
+			rec.stop();
+			return;
+		}
+		try {
+			playTone(1320, 0.06);
+			rec.start();
+		} catch (err) {
+			showToast('Unable to start voice recognition', 'error');
+		}
+	});
+
+	// Simple holographic canvas animation
+	let holoAnim = null;
+	function startHolo() {
+		if (!jarvisCanvas) return;
+		const ctx = jarvisCanvas.getContext('2d');
+		let t = 0;
+		function draw() {
+			const w = jarvisCanvas.width = jarvisCanvas.clientWidth || 800;
+			const h = jarvisCanvas.height = 180;
+			ctx.clearRect(0, 0, w, h);
+			for (let i = 0; i < 6; i++) {
+				const y = h * (i + 1) / 7 + Math.sin((t + i) * 0.04) * 8;
+				const grad = ctx.createLinearGradient(0, y - 6, w, y + 6);
+				grad.addColorStop(0, 'rgba(0,212,255,0)');
+				grad.addColorStop(0.5, 'rgba(0,212,255,0.15)');
+				grad.addColorStop(1, 'rgba(0,212,255,0)');
+				ctx.fillStyle = grad;
+				ctx.fillRect(0, y - 6, w, 12);
+			}
+			const cx = w / 2;
+			const cy = h / 2;
+			const radius = 28 + Math.sin(t * 0.02) * 8;
+			ctx.beginPath();
+			const g = ctx.createRadialGradient(cx, cy, radius * 0.2, cx, cy, radius * 2);
+			g.addColorStop(0, 'rgba(0,212,255,0.16)');
+			g.addColorStop(1, 'rgba(0,212,255,0)');
+			ctx.fillStyle = g;
+			ctx.arc(cx, cy, radius * 2, 0, Math.PI * 2);
+			ctx.fill();
+			t++;
+			holoAnim = requestAnimationFrame(draw);
+		}
+		if (!holoAnim) draw();
+	}
+
+	function stopHolo() {
+		if (holoAnim) cancelAnimationFrame(holoAnim);
+		holoAnim = null;
+	}
+
+	// Speech utilities
+	function speak(text) {
+		try {
+			if (!('speechSynthesis' in window)) return;
+			const utter = new SpeechSynthesisUtterance(text);
+			utter.lang = 'en-US';
+			utter.rate = 1.02;
+			utter.pitch = 1.05;
+			const voices = speechSynthesis.getVoices();
+			if (voices && voices.length) {
+				const preferred = voices.find((v) => /en[-_]?us/i.test(v.lang) || /google/i.test(v.name));
+				if (preferred) utter.voice = preferred;
+			}
+			speechSynthesis.cancel();
+			speechSynthesis.speak(utter);
+		} catch (err) {
+			// ignore TTS errors
+		}
+	}
+
+	function playTone(freq, duration) {
+		try {
+			const Ctx = window.AudioContext || window.webkitAudioContext;
+			if (!Ctx) return;
+			const ctx = new Ctx();
+			const o = ctx.createOscillator();
+			const g = ctx.createGain();
+			o.type = 'sine';
+			o.frequency.value = freq;
+			g.gain.value = 0.0001;
+			o.connect(g);
+			g.connect(ctx.destination);
+			o.start();
+			g.gain.exponentialRampToValueAtTime(0.05, ctx.currentTime + 0.01);
+			g.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + duration);
+			setTimeout(() => {
+				try { o.stop(); } catch (e) {}
+				try { ctx.close(); } catch (e) {}
+			}, duration * 1000 + 60);
+		} catch (e) {
+			// ignore audio errors
+		}
+	}
+
+	function initSpeech() {
+		const SR = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+		if (!SR) {
+			window._jarvisRecognition = null;
+			return;
+		}
+		const rec = new SR();
+		rec.lang = 'en-US';
+		rec.interimResults = false;
+		rec.maxAlternatives = 1;
+		rec.onstart = () => {
+			window._jarvisListening = true;
+			jarvisVoiceBtn && jarvisVoiceBtn.classList && jarvisVoiceBtn.classList.add('listening');
+			showToast('JARVIS listening...', 'info');
+		};
+		rec.onend = () => {
+			window._jarvisListening = false;
+			jarvisVoiceBtn && jarvisVoiceBtn.classList && jarvisVoiceBtn.classList.remove('listening');
+			showToast('JARVIS stopped listening', 'info');
+			playTone(880, 0.04);
+		};
+		rec.onerror = (e) => {
+			window._jarvisListening = false;
+			jarvisVoiceBtn && jarvisVoiceBtn.classList && jarvisVoiceBtn.classList.remove('listening');
+			showToast('Voice error: ' + (e.error || 'unknown'), 'error');
+		};
+		rec.onresult = (ev) => {
+			const t = (ev.results && ev.results[0] && ev.results[0][0] && ev.results[0][0].transcript) || '';
+			if (t) {
+				jarvisInput.value = t;
+				// small tone to confirm capture
+				playTone(1760, 0.05);
+				// auto-submit
+				jarvisForm.dispatchEvent(new Event('submit', { cancelable: true }));
+			}
+		};
+		window._jarvisRecognition = rec;
+	}
+
+	// Initialize: hide old assistant elements if any and prepare Jarvis
+	(function init() {
+		const saved = localStorage.getItem('swm-theme');
+		if (saved === 'jarvis') document.documentElement.setAttribute('data-theme', 'jarvis');
+		const old = document.getElementById('assistantPanel');
+		if (old) old.remove();
+		// Prepare speech APIs if available
+		try { initSpeech(); } catch (e) {}
+	})();
 })();

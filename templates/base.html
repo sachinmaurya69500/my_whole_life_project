@@ -73,161 +73,44 @@
         </span>
     </button>
 
-    <section id="assistantPanel" class="assistant-panel hidden" aria-label="Gemini Assistant" aria-hidden="true">
-        <header class="assistant-panel-header">
-            <div>
-                <h3>Gemini Assistant</h3>
-                <p>AI help for your workflow</p>
-                <div id="assistantApiStatus" class="assistant-api-status checking" aria-live="polite">Checking API...</div>
-            </div>
-            <div class="assistant-header-actions">
-                <button type="button" id="newChatBtn" class="assistant-header-btn" aria-label="Start new chat" title="Start new conversation">
-                    <i class="fa-solid fa-plus"></i>
-                </button>
-                <button id="assistantClose" type="button" class="assistant-close" aria-label="Close assistant">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-        </header>
-
-        <!-- Tab Navigation -->
-        <div class="assistant-tabs">
-            <button type="button" class="assistant-tab active" data-tab="chat" aria-label="Chat with assistant">
-                <i class="fa-solid fa-comments"></i> Chat
-            </button>
-            <button type="button" class="assistant-tab" data-tab="history" aria-label="View chat history">
-                <i class="fa-solid fa-clock"></i> History
-            </button>
-            <button type="button" class="assistant-tab" data-tab="add-project" aria-label="Add new project">
-                <i class="fa-solid fa-plus"></i> New Project
-            </button>
-            <button type="button" class="assistant-tab" data-tab="edit-project" aria-label="Edit existing project">
-                <i class="fa-solid fa-pen"></i> Edit Project
-            </button>
-            <button type="button" class="assistant-tab" data-tab="advice" aria-label="Manage project advice">
-                <i class="fa-solid fa-lightbulb"></i> Advice
-            </button>
-        </div>
-
-        <!-- Chat Tab -->
-        <div id="chatTab" class="assistant-tab-content active">
-            <div id="assistantMessages" class="assistant-messages"></div>
-            <form id="assistantForm" class="assistant-form">
-                <input id="assistantInput" type="text" maxlength="1500" aria-label="Assistant message input" placeholder="Ask Gemini to prioritize, plan, or unblock your next step..." />
-                <button id="assistantSend" type="submit">Send</button>
-            </form>
-        </div>
-
-        <!-- History Tab -->
-        <div id="historyTab" class="assistant-tab-content">
-            <div class="history-container">
-                <div id="historyList" class="history-list"></div>
-                <button type="button" id="clearHistoryBtn" class="project-form-btn delete" style="margin-top: 1rem;">
-                    <i class="fa-solid fa-trash"></i> Clear All History
-                </button>
-            </div>
-        </div>
-
-        <!-- Add Project Tab -->
-        <div id="addProjectTab" class="assistant-tab-content">
-            <form id="addProjectForm" class="project-form">
-                <label>Project Title <span class="required">*</span>
-                    <input type="text" id="projectTitle" required maxlength="100" placeholder="e.g., Project on English" aria-label="Project title" />
-                </label>
-                <label>Type <span class="required">*</span>
-                    <select id="projectType" required aria-label="Project type">
-                        <option value="Daily">Daily</option>
-                        <option value="Long-term">Long-term</option>
-                    </select>
-                </label>
-                <label>Description
-                    <textarea id="projectDescription" maxlength="300" placeholder="What is this project about?" rows="2" aria-label="Project description"></textarea>
-                </label>
-                <label>Status
-                    <select id="projectStatus" aria-label="Project status">
-                        <option value="Not Started">Not Started</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Completed">Completed</option>
-                    </select>
-                </label>
-                <label>Progress (%)
-                    <input type="number" id="projectProgress" min="0" max="100" value="0" aria-label="Project progress percentage" />
-                </label>
-                <label>Start Date
-                    <input type="date" id="projectStartDate" aria-label="Project start date" />
-                </label>
-                <label>Due Date
-                    <input type="date" id="projectDueDate" aria-label="Project due date" />
-                </label>
-                <label>Notes
-                    <textarea id="projectNotes" maxlength="300" placeholder="Additional notes..." rows="2" aria-label="Project notes"></textarea>
-                </label>
-                <button type="submit" class="project-form-btn">Create Project</button>
-                <div id="addProjectMessage" class="project-message"></div>
-            </form>
-        </div>
-
-        <!-- Edit Project Tab -->
-        <div id="editProjectTab" class="assistant-tab-content">
-            <form id="editProjectForm" class="project-form">
-                <label>Select Project <span class="required">*</span>
-                    <select id="editProjectSelect" required aria-label="Select project to edit">
-                        <option value="">Loading projects...</option>
-                    </select>
-                </label>
-                <label>Title <span class="required">*</span>
-                    <input type="text" id="editProjectTitle" required maxlength="100" aria-label="Project title" />
-                </label>
-                <label>Type <span class="required">*</span>
-                    <select id="editProjectType" required aria-label="Project type">
-                        <option value="Daily">Daily</option>
-                        <option value="Long-term">Long-term</option>
-                    </select>
-                </label>
-                <label>Description
-                    <textarea id="editProjectDescription" maxlength="300" rows="2" aria-label="Project description"></textarea>
-                </label>
-                <label>Status
-                    <select id="editProjectStatus" aria-label="Project status">
-                        <option value="Not Started">Not Started</option>
-                        <option value="In Progress">In Progress</option>
-                        <option value="Completed">Completed</option>
-                    </select>
-                </label>
-                <label>Progress (%)
-                    <input type="number" id="editProjectProgress" min="0" max="100" value="0" aria-label="Project progress percentage" />
-                </label>
-                <label>Start Date
-                    <input type="date" id="editProjectStartDate" aria-label="Project start date" />
-                </label>
-                <label>Due Date
-                    <input type="date" id="editProjectDueDate" aria-label="Project due date" />
-                </label>
-                <label>Notes
-                    <textarea id="editProjectNotes" maxlength="300" rows="2" aria-label="Project notes"></textarea>
-                </label>
-                <div class="project-form-buttons">
-                    <button type="submit" class="project-form-btn">Update Project</button>
-                    <button type="button" id="deleteProjectBtn" class="project-form-btn delete">Delete</button>
+    <!-- Jarvis Fullscreen Assistant Panel (replaces previous assistant UI) -->
+    <section id="jarvisPanel" class="jarvis-panel hidden" aria-label="Jarvis Assistant" aria-hidden="true">
+        <div class="jarvis-backdrop"></div>
+        <div class="jarvis-shell">
+            <header class="jarvis-header">
+                <div class="jarvis-title">
+                    <div class="jarvis-logo"><i class="fa-solid fa-microchip"></i></div>
+                    <div>
+                        <h2 class="text-glow">JARVIS</h2>
+                        <p class="text-scan">Your personal AI assistant — Tactical Interface</p>
+                    </div>
                 </div>
-                <div id="editProjectMessage" class="project-message"></div>
-            </form>
-        </div>
+                <div class="jarvis-actions">
+                    <button id="jarvisClose" class="btn btn-secondary" aria-label="Close Jarvis"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </header>
 
-        <!-- Advice Tab -->
-        <div id="adviceTab" class="assistant-tab-content">
-            <form id="adviceForm" class="project-form">
-                <label>Select Project <span class="required">*</span>
-                    <select id="adviceProjectSelect" required aria-label="Select project to add advice">
-                        <option value="">Loading projects...</option>
-                    </select>
-                </label>
-                <label>Your Advice (💡 This will help the assistant give better suggestions)
-                    <textarea id="adviceText" maxlength="500" placeholder="e.g., I work best in the morning. Breaking this into smaller daily tasks helps. Focus on quality over quantity." rows="3" aria-label="Advice for this project"></textarea>
-                </label>
-                <button type="submit" class="project-form-btn">Save Advice</button>
-                <div id="adviceMessage" class="project-message"></div>
-            </form>
+            <main class="jarvis-main">
+                <section class="jarvis-holo">
+                    <canvas id="jarvisCanvas" width="800" height="300"></canvas>
+                </section>
+
+                <section class="jarvis-chat">
+                    <div id="jarvisMessages" class="assistant-messages jarvis-messages"></div>
+                    <form id="jarvisForm" class="assistant-form jarvis-form">
+                        <button id="jarvisVoiceBtn" type="button" class="btn btn-secondary jarvis-voice" title="Voice input (click)">
+                            <i class="fa-solid fa-microphone"></i>
+                        </button>
+                        <input id="jarvisInput" type="text" maxlength="2000" placeholder="Ask JARVIS anything..." aria-label="Jarvis input" />
+                        <button id="jarvisSend" type="submit" class="btn btn-primary">Send</button>
+                    </form>
+                </section>
+            </main>
+
+            <footer class="jarvis-footer">
+                <div id="jarvisStatus" class="assistant-api-status checking">Checking AI...</div>
+                <div class="jarvis-hint text-scan">Type "JARVIS" anytime to activate the theme.</div>
+            </footer>
         </div>
     </section>
 
