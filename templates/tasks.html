@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Tasks - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="p-6 max-w-4xl mx-auto">
+    <header class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold">Tasks</h2>
+        <button id="newTaskBtn" class="rounded-lg bg-cyan-500 text-slate-950 px-3 py-2 font-semibold">New Task</button>
+    </header>
+
+    <div id="tasksList" class="space-y-3"></div>
+
+    <div id="taskFormWrap" class="hidden panel mt-6">
+        <form id="taskForm" class="space-y-3 p-4">
+            <input type="hidden" id="taskId" />
+            <div>
+                <label class="block text-sm">Title</label>
+                <input id="taskTitle" class="w-full rounded-lg border border-slate-700 px-3 py-2" required />
+            </div>
+            <div>
+                <label class="block text-sm">Description</label>
+                <textarea id="taskDescription" rows="3" class="w-full rounded-lg border border-slate-700 px-3 py-2"></textarea>
+            </div>
+            <div class="grid md:grid-cols-3 gap-3">
+                <select id="taskPriority" class="rounded-lg border border-slate-700 px-3 py-2">
+                    <option>Low</option>
+                    <option selected>Medium</option>
+                    <option>High</option>
+                </select>
+                <select id="taskStatus" class="rounded-lg border border-slate-700 px-3 py-2">
+                    <option selected>Todo</option>
+                    <option>In Progress</option>
+                    <option>Done</option>
+                </select>
+                <input id="taskDueDate" type="date" class="rounded-lg border border-slate-700 px-3 py-2" />
+            </div>
+            <div class="flex gap-3 justify-end">
+                <button id="cancelTaskBtn" type="button" class="rounded-lg border border-slate-700 px-3 py-2">Cancel</button>
+                <button type="submit" class="rounded-lg bg-cyan-500 text-slate-950 px-3 py-2">Save Task</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/tasks.js') }}"></script>
+{% endblock %}

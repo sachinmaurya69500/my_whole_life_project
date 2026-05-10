@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Contacts - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="p-6 max-w-4xl mx-auto">
+    <header class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold">Contacts</h2>
+        <button id="newContactBtn" class="rounded-lg bg-cyan-500 text-slate-950 px-3 py-2 font-semibold">New Contact</button>
+    </header>
+
+    <div id="contactsList" class="space-y-3"></div>
+
+    <div id="contactFormWrap" class="hidden panel mt-6">
+        <form id="contactForm" class="space-y-3 p-4">
+            <input type="hidden" id="contactId" />
+            <div>
+                <label class="block text-sm">Name</label>
+                <input id="contactName" class="w-full rounded-lg border border-slate-700 px-3 py-2" required />
+            </div>
+            <div class="grid md:grid-cols-2 gap-3">
+                <input id="contactEmail" class="rounded-lg border border-slate-700 px-3 py-2" placeholder="email@example.com" />
+                <input id="contactPhone" class="rounded-lg border border-slate-700 px-3 py-2" placeholder="Phone" />
+            </div>
+            <div>
+                <label class="block text-sm">Company</label>
+                <input id="contactCompany" class="w-full rounded-lg border border-slate-700 px-3 py-2" />
+            </div>
+            <div>
+                <label class="block text-sm">Notes</label>
+                <textarea id="contactNotes" rows="3" class="w-full rounded-lg border border-slate-700 px-3 py-2"></textarea>
+            </div>
+            <div class="flex gap-3 justify-end">
+                <button id="cancelContactBtn" type="button" class="rounded-lg border border-slate-700 px-3 py-2">Cancel</button>
+                <button type="submit" class="rounded-lg bg-cyan-500 text-slate-950 px-3 py-2">Save Contact</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/contacts.js') }}"></script>
+{% endblock %}

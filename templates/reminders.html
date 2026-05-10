@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Reminders - {{ app_name }}{% endblock %}
+
+{% block content %}
+<div class="p-6 max-w-4xl mx-auto">
+    <header class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold">Reminders</h2>
+        <button id="newReminderBtn" class="rounded-lg bg-cyan-500 text-slate-950 px-3 py-2 font-semibold">New Reminder</button>
+    </header>
+
+    <div id="remindersList" class="space-y-3"></div>
+
+    <div id="reminderFormWrap" class="hidden panel mt-6">
+        <form id="reminderForm" class="space-y-3 p-4">
+            <input type="hidden" id="reminderId" />
+            <div>
+                <label class="block text-sm">Title</label>
+                <input id="reminderTitle" class="w-full rounded-lg border border-slate-700 px-3 py-2" required />
+            </div>
+            <div>
+                <label class="block text-sm">Message</label>
+                <textarea id="reminderMessage" rows="3" class="w-full rounded-lg border border-slate-700 px-3 py-2"></textarea>
+            </div>
+            <div class="grid md:grid-cols-2 gap-3">
+                <input id="reminderDue" type="datetime-local" class="rounded-lg border border-slate-700 px-3 py-2" />
+                <input id="reminderRepeat" type="number" class="rounded-lg border border-slate-700 px-3 py-2" placeholder="Repeat minutes (optional)" />
+            </div>
+            <div class="flex gap-3 justify-end">
+                <button id="cancelReminderBtn" type="button" class="rounded-lg border border-slate-700 px-3 py-2">Cancel</button>
+                <button type="submit" class="rounded-lg bg-cyan-500 text-slate-950 px-3 py-2">Save Reminder</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/reminders.js') }}"></script>
+{% endblock %}

@@ -90,6 +90,10 @@ users_col = db["users"]
 workflows_col = db["workflows"]
 events_col = db["events"]
 fs_bucket = GridFSBucket(db)
+tasks_col = db["tasks"]
+contacts_col = db["contacts"]
+expenses_col = db["expenses"]
+reminders_col = db["reminders"]
 
 
 def login_required(fn):
@@ -150,6 +154,20 @@ def event_to_json(doc):
 		"reminder_minutes": int(doc.get("reminder_minutes", 30)),
 		"start_at": start_at.isoformat() if start_at else "",
 		"end_at": end_at.isoformat() if end_at else "",
+		"created_at": doc.get("created_at").isoformat() if doc.get("created_at") else "",
+		"updated_at": doc.get("updated_at").isoformat() if doc.get("updated_at") else "",
+	}
+
+
+def reminder_to_json(doc):
+	due = doc.get("due_date")
+	return {
+		"_id": str(doc.get("_id")),
+		"title": doc.get("title", ""),
+		"message": doc.get("message", ""),
+		"due_date": due.isoformat() if due else "",
+		"repeat_minutes": int(doc.get("repeat_minutes", 0)),
+		"status": doc.get("status", "Pending"),
 		"created_at": doc.get("created_at").isoformat() if doc.get("created_at") else "",
 		"updated_at": doc.get("updated_at").isoformat() if doc.get("updated_at") else "",
 	}
@@ -680,6 +698,30 @@ def project_detail_page(workflow_id):
 	if not obj_id:
 		return redirect(url_for("home"))
 	return render_template("project_detail.html", workflow_id=workflow_id, app_name="Sachin Workflow Manager")
+
+
+@app.route('/tasks')
+@page_login_required
+def tasks_page():
+	return render_template('tasks.html', app_name='Sachin Workflow Manager')
+
+
+@app.route('/contacts')
+@page_login_required
+def contacts_page():
+	return render_template('contacts.html', app_name='Sachin Workflow Manager')
+
+
+@app.route('/travel')
+@page_login_required
+def travel_page():
+	return render_template('travel.html', app_name='Sachin Workflow Manager')
+
+
+@app.route('/calendar')
+@page_login_required
+def calendar_page():
+	return render_template('calendar.html', app_name='Sachin Workflow Manager')
 
 
 @app.route("/api/profile", methods=["GET"])
@@ -1286,6 +1328,307 @@ def get_workflow_advice(workflow_id):
 	return jsonify({"advice": wf.get("advice", "")})
 
 
+@app.route('/api/tasks', methods=['GET'])
+@login_required
+def list_tasks():
+	docs = list(tasks_col.find({}).sort('updated_at', -1))
+	return jsonify([task_to_json(d) for d in docs])
+
+
+@app.route('/api/tasks', methods=['POST'])
+@login_required
+def create_task():
+	data = request.get_json(silent=True) or {}
+	title = (data.get('title') or '').strip()
+	if not title:
+		return jsonify({'error': 'Title is required'}), 400
+	priority = (data.get('priority') or 'Medium').strip()
+	status = (data.get('status') or 'Todo').strip()
+	due_date = parse_iso_or_none(data.get('due_date') or '')
+	now = utc_now()
+	doc = {
+		'title': title,
+		'description': (data.get('description') or '').strip(),
+		'priority': priority,
+		'status': status,
+		'assigned_to': (data.get('assigned_to') or '').strip(),
+		'due_date': due_date,
+		'created_at': now,
+		'updated_at': now,
+	}
+	res = tasks_col.insert_one(doc)
+	created = tasks_col.find_one({'_id': res.inserted_id})
+	return jsonify(task_to_json(created)), 201
+
+
+@app.route('/api/tasks/<task_id>', methods=['PUT'])
+@login_required
+def update_task(task_id):
+	obj_id = to_object_id(task_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid id'}), 400
+	data = request.get_json(silent=True) or {}
+	update = {}
+	if 'title' in data:
+		title = (data.get('title') or '').strip()
+		if not title:
+			return jsonify({'error': 'Title cannot be empty'}), 400
+		update['title'] = title
+	if 'description' in data:
+		update['description'] = (data.get('description') or '').strip()
+	if 'priority' in data:
+		update['priority'] = (data.get('priority') or 'Medium')
+	if 'status' in data:
+		update['status'] = (data.get('status') or 'Todo')
+	if 'assigned_to' in data:
+		update['assigned_to'] = (data.get('assigned_to') or '').strip()
+	if 'due_date' in data:
+		update['due_date'] = parse_iso_or_none(data.get('due_date') or '')
+	if not update:
+		return jsonify({'error': 'No valid fields provided'}), 400
+	update['updated_at'] = utc_now()
+	tasks_col.update_one({'_id': obj_id}, {'$set': update})
+	updated = tasks_col.find_one({'_id': obj_id})
+	if not updated:
+		return jsonify({'error': 'Task not found'}), 404
+	return jsonify(task_to_json(updated))
+
+
+@app.route('/api/tasks/<task_id>', methods=['DELETE'])
+@login_required
+def delete_task(task_id):
+	obj_id = to_object_id(task_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid id'}), 400
+	tasks_col.delete_one({'_id': obj_id})
+	return jsonify({'message': 'Task deleted'})
+
+
+@app.route('/api/contacts', methods=['GET'])
+@login_required
+def list_contacts():
+	docs = list(contacts_col.find({}).sort('name', 1))
+	return jsonify([contact_to_json(d) for d in docs])
+
+
+@app.route('/api/contacts', methods=['POST'])
+@login_required
+def create_contact():
+	data = request.get_json(silent=True) or {}
+	name = (data.get('name') or '').strip()
+	if not name:
+		return jsonify({'error': 'Name is required'}), 400
+	now = utc_now()
+	doc = {
+		'name': name,
+		'email': normalize_email(data.get('email') or ''),
+		'phone': (data.get('phone') or '').strip(),
+		'company': (data.get('company') or '').strip(),
+		'notes': (data.get('notes') or '').strip(),
+		'created_at': now,
+		'updated_at': now,
+	}
+	res = contacts_col.insert_one(doc)
+	created = contacts_col.find_one({'_id': res.inserted_id})
+	return jsonify(contact_to_json(created)), 201
+
+
+@app.route('/api/contacts/<contact_id>', methods=['PUT'])
+@login_required
+def update_contact(contact_id):
+	obj_id = to_object_id(contact_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid id'}), 400
+	data = request.get_json(silent=True) or {}
+	update = {}
+	if 'name' in data:
+		name = (data.get('name') or '').strip()
+		if not name:
+			return jsonify({'error': 'Name cannot be empty'}), 400
+		update['name'] = name
+	if 'email' in data:
+		update['email'] = normalize_email(data.get('email') or '')
+	if 'phone' in data:
+		update['phone'] = (data.get('phone') or '').strip()
+	if 'company' in data:
+		update['company'] = (data.get('company') or '').strip()
+	if 'notes' in data:
+		update['notes'] = (data.get('notes') or '').strip()
+	if not update:
+		return jsonify({'error': 'No valid fields provided'}), 400
+	update['updated_at'] = utc_now()
+	contacts_col.update_one({'_id': obj_id}, {'$set': update})
+	updated = contacts_col.find_one({'_id': obj_id})
+	if not updated:
+		return jsonify({'error': 'Contact not found'}), 404
+	return jsonify(contact_to_json(updated))
+
+
+@app.route('/api/contacts/<contact_id>', methods=['DELETE'])
+@login_required
+def delete_contact(contact_id):
+	obj_id = to_object_id(contact_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid id'}), 400
+	contacts_col.delete_one({'_id': obj_id})
+	return jsonify({'message': 'Contact deleted'})
+
+
+@app.route('/api/expenses', methods=['GET'])
+@login_required
+def list_expenses():
+	docs = list(expenses_col.find({}).sort('date', -1))
+	out = []
+	for d in docs:
+		out.append({
+			'_id': str(d.get('_id')),
+			'date': d.get('date').isoformat() if d.get('date') else '',
+			'type': d.get('type', ''),
+			'amount': float(d.get('amount', 0)),
+			'currency': d.get('currency', 'USD'),
+			'vendor': d.get('vendor', ''),
+			'notes': d.get('notes', ''),
+		})
+	return jsonify(out)
+
+
+@app.route('/api/expenses', methods=['POST'])
+@login_required
+def create_expense():
+	data = request.get_json(silent=True) or {}
+	date = parse_iso_or_none(data.get('date') or '')
+	try:
+		amount = float(data.get('amount') or 0)
+	except Exception:
+		return jsonify({'error': 'Invalid amount'}), 400
+	doc = {
+		'date': date or utc_now(),
+		'type': (data.get('type') or '').strip(),
+		'amount': amount,
+		'currency': (data.get('currency') or 'USD').strip(),
+		'vendor': (data.get('vendor') or '').strip(),
+		'notes': (data.get('notes') or '').strip(),
+		'created_at': utc_now(),
+		'updated_at': utc_now(),
+	}
+	res = expenses_col.insert_one(doc)
+	created = expenses_col.find_one({'_id': res.inserted_id})
+	return jsonify({'_id': str(created['_id'])}), 201
+
+
+@app.route('/api/expenses/<expense_id>', methods=['DELETE'])
+@login_required
+def delete_expense(expense_id):
+	obj_id = to_object_id(expense_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid id'}), 400
+	expenses_col.delete_one({'_id': obj_id})
+	return jsonify({'message': 'Expense deleted'})
+
+
+@app.route('/api/events', methods=['GET'])
+@login_required
+def list_events():
+	docs = list(events_col.find({}).sort('start_at', 1))
+	return jsonify([event_to_json(d) for d in docs])
+
+
+@app.route('/reminders')
+@page_login_required
+def reminders_page():
+	return render_template('reminders.html', app_name='Sachin Workflow Manager')
+
+
+@app.route('/api/reminders', methods=['GET'])
+@login_required
+def list_reminders():
+	docs = list(reminders_col.find({}).sort('due_date', 1))
+	return jsonify([reminder_to_json(d) for d in docs])
+
+
+@app.route('/api/reminders', methods=['POST'])
+@login_required
+def create_reminder():
+	data = request.get_json(silent=True) or {}
+	title = (data.get('title') or '').strip()
+	if not title:
+		return jsonify({'error': 'Title is required'}), 400
+	due_date = parse_iso_or_none(data.get('due_date') or '')
+	now = utc_now()
+	doc = {
+		'title': title,
+		'message': (data.get('message') or '').strip(),
+		'due_date': due_date,
+		'repeat_minutes': int(data.get('repeat_minutes') or 0),
+		'status': 'Pending',
+		'created_at': now,
+		'updated_at': now,
+	}
+	res = reminders_col.insert_one(doc)
+	created = reminders_col.find_one({'_id': res.inserted_id})
+	return jsonify(reminder_to_json(created)), 201
+
+
+@app.route('/api/reminders/<reminder_id>', methods=['PUT'])
+@login_required
+def update_reminder(reminder_id):
+	obj_id = to_object_id(reminder_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid id'}), 400
+	data = request.get_json(silent=True) or {}
+	update = {}
+	if 'title' in data:
+		title = (data.get('title') or '').strip()
+		if not title:
+			return jsonify({'error': 'Title cannot be empty'}), 400
+		update['title'] = title
+	if 'message' in data:
+		update['message'] = (data.get('message') or '').strip()
+	if 'due_date' in data:
+		update['due_date'] = parse_iso_or_none(data.get('due_date') or '')
+	if 'repeat_minutes' in data:
+		try:
+			update['repeat_minutes'] = int(data.get('repeat_minutes') or 0)
+		except Exception:
+			return jsonify({'error': 'Invalid repeat_minutes'}), 400
+	if 'status' in data:
+		update['status'] = (data.get('status') or 'Pending')
+	if not update:
+		return jsonify({'error': 'No valid fields provided'}), 400
+	update['updated_at'] = utc_now()
+	reminders_col.update_one({'_id': obj_id}, {'$set': update})
+	updated = reminders_col.find_one({'_id': obj_id})
+	if not updated:
+		return jsonify({'error': 'Reminder not found'}), 404
+	return jsonify(reminder_to_json(updated))
+
+
+@app.route('/api/reminders/<reminder_id>', methods=['DELETE'])
+@login_required
+def delete_reminder(reminder_id):
+	obj_id = to_object_id(reminder_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid id'}), 400
+	reminders_col.delete_one({'_id': obj_id})
+	return jsonify({'message': 'Reminder deleted'})
+
+
+@app.route('/api/reminders/due', methods=['GET'])
+@login_required
+def due_reminders():
+	now = utc_now()
+	docs = list(reminders_col.find({'due_date': {'$lte': now}, 'status': {'$ne': 'Sent'}}))
+	out = []
+	for d in docs:
+		out.append(reminder_to_json(d))
+		# mark as sent to avoid duplicate alerts; keep updated_at
+		try:
+			reminders_col.update_one({'_id': d['_id']}, {'$set': {'status': 'Sent', 'updated_at': utc_now()}})
+		except Exception:
+			pass
+	return jsonify(out)
+
+
 @app.route("/image/<file_id>")
 def serve_image(file_id):
 	obj_id = to_object_id(file_id)
@@ -1308,6 +1651,12 @@ def favicon():
 	return send_from_directory(os.path.join(app.root_path, "static"), "favicon.svg", mimetype="image/svg+xml")
 
 
+ensure_seed_data()
+cleanup_legacy_data()
+
+
+if __name__ == "__main__":
+	app.run(debug=os.getenv("FLASK_DEBUG", "false").lower() == "true")
 ensure_seed_data()
 cleanup_legacy_data()
 
