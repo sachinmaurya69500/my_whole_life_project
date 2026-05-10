@@ -1363,6 +1363,593 @@ html[data-theme='light'] .card:hover {
 	}
 }
 
+/* ==================== JARVIS HOLOGRAPHIC THEME ==================== */
+
+:root {
+	--jarvis-primary: #00d4ff;
+	--jarvis-secondary: #0088cc;
+	--jarvis-accent: #00ffff;
+	--jarvis-dark: #0a0e27;
+	--jarvis-darker: #05070f;
+	--jarvis-grid: rgba(0, 212, 255, 0.05);
+}
+
+html[data-theme='jarvis'] {
+	--bg-main: #05070f;
+	--bg-start: #0a0f2e;
+	--bg-end: #050507;
+	--panel: rgba(10, 14, 39, 0.8);
+	--panel-border: rgba(0, 212, 255, 0.2);
+	--text-main: #00ffff;
+	--text-subtle: #00d4ff;
+	--brand: #00d4ff;
+	--brand-deep: #0088cc;
+	--body-text: #e0f7ff;
+}
+
+/* ========== JARVIS BACKGROUND WITH HOLOGRAPHIC GRID ========== */
+
+html[data-theme='jarvis'] body,
+html[data-theme='jarvis'] html {
+	background: 
+		linear-gradient(
+			90deg, 
+			rgba(0, 212, 255, 0.03) 1px, 
+			transparent 1px
+		),
+		linear-gradient(
+			180deg, 
+			rgba(0, 212, 255, 0.03) 1px, 
+			transparent 1px
+		),
+		radial-gradient(circle at 10% 10%, rgba(0, 212, 255, 0.15), transparent 40%),
+		linear-gradient(155deg, #05070f 0%, #0a0f2e 50%, #050507 100%);
+	background-size: 100px 100px, 100px 100px, 100% 100%, 100% 100%;
+	background-attachment: fixed;
+	background-color: #05070f;
+}
+
+/* ========== JARVIS PANELS & CARDS ========== */
+
+html[data-theme='jarvis'] .panel {
+	background: 
+		radial-gradient(circle at top right, rgba(0, 212, 255, 0.1), transparent 60%),
+		linear-gradient(145deg, rgba(10, 14, 39, 0.9), rgba(5, 7, 15, 0.95));
+	border: 1px solid rgba(0, 212, 255, 0.25);
+	border-radius: 8px;
+	box-shadow: 
+		0 0 20px rgba(0, 212, 255, 0.15),
+		inset 0 1px 0 rgba(0, 212, 255, 0.1),
+		0 20px 40px rgba(0, 0, 0, 0.5);
+	backdrop-filter: blur(12px);
+	position: relative;
+	overflow: hidden;
+}
+
+html[data-theme='jarvis'] .panel::before {
+	content: '';
+	position: absolute;
+	top: -50%;
+	right: -50%;
+	width: 200%;
+	height: 200%;
+	background: 
+		linear-gradient(
+			45deg,
+			transparent 30%,
+			rgba(0, 212, 255, 0.1) 50%,
+			transparent 70%
+		);
+	animation: jarvisShine 8s infinite;
+	pointer-events: none;
+}
+
+@keyframes jarvisShine {
+	0% {
+		transform: rotate(0deg) translateX(0);
+	}
+	50% {
+		transform: rotate(0deg) translateX(50px);
+	}
+	100% {
+		transform: rotate(0deg) translateX(0);
+	}
+}
+
+/* ========== JARVIS GLOWING BORDERS ========== */
+
+html[data-theme='jarvis'] .panel {
+	position: relative;
+}
+
+html[data-theme='jarvis'] .panel::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: -100%;
+	width: 200%;
+	height: 100%;
+	background: linear-gradient(
+		90deg,
+		transparent,
+		rgba(0, 212, 255, 0.2),
+		transparent
+	);
+	animation: jarvisGlowScan 6s infinite;
+	pointer-events: none;
+}
+
+@keyframes jarvisGlowScan {
+	0% {
+		left: -100%;
+	}
+	100% {
+		left: 100%;
+	}
+}
+
+/* ========== JARVIS TYPOGRAPHY ========== */
+
+html[data-theme='jarvis'] h1,
+html[data-theme='jarvis'] h2,
+html[data-theme='jarvis'] h3,
+html[data-theme='jarvis'] h4,
+html[data-theme='jarvis'] h5,
+html[data-theme='jarvis'] h6 {
+	text-shadow: 
+		0 0 10px rgba(0, 212, 255, 0.5),
+		0 0 20px rgba(0, 212, 255, 0.3);
+	letter-spacing: 0.05em;
+	font-weight: 700;
+}
+
+html[data-theme='jarvis'] p,
+html[data-theme='jarvis'] span,
+html[data-theme='jarvis'] button,
+html[data-theme='jarvis'] label {
+	text-shadow: 0 0 5px rgba(0, 212, 255, 0.2);
+}
+
+/* ========== JARVIS BUTTONS ========== */
+
+html[data-theme='jarvis'] .btn-primary {
+	background: linear-gradient(135deg, rgba(0, 212, 255, 0.85), rgba(0, 136, 204, 0.85));
+	border: 1px solid rgba(0, 212, 255, 0.6);
+	box-shadow: 
+		0 0 20px rgba(0, 212, 255, 0.4),
+		inset 0 1px 0 rgba(0, 255, 255, 0.3),
+		0 8px 16px rgba(0, 136, 204, 0.3);
+	color: #08293f;
+	text-shadow: 0 0 5px rgba(0, 212, 255, 0.3);
+	position: relative;
+	overflow: hidden;
+}
+
+html[data-theme='jarvis'] .btn-primary::before {
+	content: '';
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 0;
+	height: 0;
+	background: rgba(0, 255, 255, 0.4);
+	border-radius: 50%;
+	transform: translate(-50%, -50%);
+	transition: width 0.6s, height 0.6s;
+}
+
+html[data-theme='jarvis'] .btn-primary:hover::before {
+	width: 300px;
+	height: 300px;
+}
+
+html[data-theme='jarvis'] .btn-primary:hover {
+	background: linear-gradient(135deg, rgba(0, 212, 255, 1), rgba(0, 136, 204, 1));
+	box-shadow: 
+		0 0 30px rgba(0, 212, 255, 0.6),
+		inset 0 1px 0 rgba(0, 255, 255, 0.4),
+		0 12px 24px rgba(0, 136, 204, 0.5);
+}
+
+/* ========== JARVIS FORM INPUTS ========== */
+
+html[data-theme='jarvis'] input:not([type="checkbox"]):not([type="radio"]),
+html[data-theme='jarvis'] textarea,
+html[data-theme='jarvis'] select {
+	background: rgba(10, 14, 39, 0.7);
+	border: 1px solid rgba(0, 212, 255, 0.3);
+	color: #00ffff;
+	backdrop-filter: blur(8px);
+	box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+	text-shadow: 0 0 5px rgba(0, 212, 255, 0.3);
+}
+
+html[data-theme='jarvis'] input:not([type="checkbox"]):not([type="radio"]):focus,
+html[data-theme='jarvis'] textarea:focus,
+html[data-theme='jarvis'] select:focus {
+	background: rgba(10, 14, 39, 0.9);
+	border-color: rgba(0, 212, 255, 0.8);
+	box-shadow: 
+		inset 0 2px 8px rgba(0, 0, 0, 0.3),
+		0 0 0 3px rgba(0, 212, 255, 0.2),
+		0 0 20px rgba(0, 212, 255, 0.3);
+}
+
+html[data-theme='jarvis'] input::placeholder,
+html[data-theme='jarvis'] textarea::placeholder {
+	color: rgba(0, 212, 255, 0.4);
+}
+
+/* ========== JARVIS STAT CARDS ========== */
+
+html[data-theme='jarvis'] .stat-card {
+	background: 
+		radial-gradient(circle at top left, rgba(0, 212, 255, 0.15), transparent 50%),
+		linear-gradient(145deg, rgba(10, 14, 39, 0.8), rgba(5, 7, 15, 0.9));
+	border: 1px solid rgba(0, 212, 255, 0.3);
+	box-shadow: 
+		0 0 20px rgba(0, 212, 255, 0.15),
+		inset 0 1px 0 rgba(0, 212, 255, 0.1);
+	position: relative;
+	overflow: hidden;
+}
+
+html[data-theme='jarvis'] .stat-card h3 {
+	color: #00ffff;
+	text-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
+	animation: jarvisGlow 3s ease-in-out infinite;
+}
+
+@keyframes jarvisGlow {
+	0%, 100% {
+		text-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+	}
+	50% {
+		text-shadow: 0 0 30px rgba(0, 212, 255, 0.8);
+	}
+}
+
+/* ========== JARVIS SIDEBAR ========== */
+
+html[data-theme='jarvis'] .sidebar-panel {
+	background: 
+		linear-gradient(180deg, rgba(10, 14, 39, 0.95), rgba(5, 7, 15, 0.98)),
+		repeating-linear-gradient(
+			0deg,
+			rgba(0, 212, 255, 0.02),
+			rgba(0, 212, 255, 0.02) 1px,
+			transparent 1px,
+			transparent 2px
+		);
+	border-right: 2px solid rgba(0, 212, 255, 0.3);
+	box-shadow: inset -1px 0 20px rgba(0, 212, 255, 0.1);
+}
+
+html[data-theme='jarvis'] .nav-btn {
+	border: 1px solid rgba(0, 212, 255, 0.2);
+	background: rgba(10, 14, 39, 0.5);
+	color: #00d4ff;
+	transition: all 0.3s ease;
+	position: relative;
+}
+
+html[data-theme='jarvis'] .nav-btn:hover {
+	background: rgba(0, 136, 204, 0.2);
+	border-color: rgba(0, 212, 255, 0.5);
+	box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+}
+
+html[data-theme='jarvis'] .nav-btn.active {
+	background: rgba(0, 136, 204, 0.3);
+	border-color: rgba(0, 212, 255, 0.8);
+	color: #00ffff;
+	box-shadow: 
+		0 0 15px rgba(0, 212, 255, 0.4),
+		inset 0 1px 0 rgba(0, 255, 255, 0.2);
+}
+
+html[data-theme='jarvis'] .nav-btn.active::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	width: 3px;
+	background: linear-gradient(180deg, #00ffff, #00d4ff);
+	box-shadow: 0 0 10px #00d4ff;
+}
+
+/* ========== JARVIS THEME TOGGLE BUTTON ========== */
+
+html[data-theme='jarvis'] .theme-toggle {
+	border: 1px solid rgba(0, 212, 255, 0.4);
+	background: rgba(10, 14, 39, 0.8);
+	color: #00d4ff;
+	box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+}
+
+html[data-theme='jarvis'] .theme-toggle:hover {
+	box-shadow: 0 0 25px rgba(0, 212, 255, 0.4);
+}
+
+html[data-theme='jarvis'] .theme-toggle i {
+	animation: rotateIcon 0.6s ease;
+}
+
+@keyframes rotateIcon {
+	from {
+		transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* ========== JARVIS TOAST NOTIFICATIONS ========== */
+
+html[data-theme='jarvis'] .toast {
+	border: 1px solid;
+	backdrop-filter: blur(12px);
+	font-weight: 600;
+	letter-spacing: 0.05em;
+}
+
+html[data-theme='jarvis'] .toast.success {
+	background: linear-gradient(135deg, rgba(0, 212, 255, 0.85), rgba(0, 136, 204, 0.85));
+	border-color: rgba(0, 212, 255, 0.6);
+	color: #082f49;
+	box-shadow: 0 0 30px rgba(0, 212, 255, 0.5);
+}
+
+html[data-theme='jarvis'] .toast.error {
+	background: linear-gradient(135deg, rgba(220, 38, 38, 0.85), rgba(153, 27, 27, 0.85));
+	border-color: rgba(239, 68, 68, 0.6);
+	color: #fff;
+	box-shadow: 0 0 30px rgba(239, 68, 68, 0.4);
+}
+
+html[data-theme='jarvis'] .toast.info {
+	background: linear-gradient(135deg, rgba(0, 136, 204, 0.85), rgba(0, 88, 140, 0.85));
+	border-color: rgba(0, 212, 255, 0.6);
+	color: #cffafe;
+	box-shadow: 0 0 30px rgba(0, 212, 255, 0.4);
+}
+
+/* ========== JARVIS LOADING ANIMATION ========== */
+
+.jarvis-loading {
+	display: inline-block;
+	width: 20px;
+	height: 20px;
+}
+
+.jarvis-loading::after {
+	content: '';
+	display: block;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	border: 2px solid rgba(0, 212, 255, 0.2);
+	border-color: rgba(0, 212, 255, 0.2) transparent;
+	border-top-color: #00d4ff;
+	animation: jarvisSpinner 1.2s linear infinite;
+}
+
+@keyframes jarvisSpinner {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+/* ========== JARVIS SCANNING EFFECT ========== */
+
+@keyframes jarvisScan {
+	0% {
+		top: -100%;
+	}
+	100% {
+		top: 100%;
+	}
+}
+
+.jarvis-scan::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 2px;
+	background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.8), transparent);
+	animation: jarvisScan 3s infinite;
+}
+
+/* ========== JARVIS IRIS ANIMATION (FOR MODALS) ========== */
+
+@keyframes jarvisIrisOpen {
+	0% {
+		clip-path: circle(0% at 50% 50%);
+		opacity: 0;
+	}
+	100% {
+		clip-path: circle(100% at 50% 50%);
+		opacity: 1;
+	}
+}
+
+@keyframes jarvisIrisClose {
+	0% {
+		clip-path: circle(100% at 50% 50%);
+		opacity: 1;
+	}
+	100% {
+		clip-path: circle(0% at 50% 50%);
+		opacity: 0;
+	}
+}
+
+html[data-theme='jarvis'] .modal:not(.hidden) {
+	animation: jarvisIrisOpen 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+html[data-theme='jarvis'] .modal.closing {
+	animation: jarvisIrisClose 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+/* ========== JARVIS PULSE EFFECT ========== */
+
+@keyframes jarvisPulse {
+	0%, 100% {
+		opacity: 1;
+		box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+	}
+	50% {
+		opacity: 0.7;
+		box-shadow: 0 0 30px rgba(0, 212, 255, 0.6);
+	}
+}
+
+.jarvis-pulse {
+	animation: jarvisPulse 2s ease-in-out infinite;
+}
+
+/* ========== JARVIS DATA VISUALIZATION ========== */
+
+html[data-theme='jarvis'] .progress-track {
+	background: rgba(10, 14, 39, 0.9);
+	border: 1px solid rgba(0, 212, 255, 0.2);
+	box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+html[data-theme='jarvis'] .progress-fill {
+	background: linear-gradient(90deg, #0088cc, #00ffff);
+	box-shadow: 0 0 15px rgba(0, 212, 255, 0.6);
+}
+
+/* ========== JARVIS SMOOTH TRANSITIONS ========== */
+
+html[data-theme='jarvis'] * {
+	transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+}
+
+html[data-theme='jarvis'] .btn,
+html[data-theme='jarvis'] button {
+	transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+/* ========== JARVIS TEXT EFFECTS ========== */
+
+html[data-theme='jarvis'] .text-glow {
+	color: #00ffff;
+	text-shadow: 
+		0 0 10px rgba(0, 212, 255, 0.5),
+		0 0 20px rgba(0, 136, 204, 0.3),
+		0 0 30px rgba(0, 212, 255, 0.2);
+}
+
+html[data-theme='jarvis'] .text-scan {
+	animation: textScan 6s infinite;
+}
+
+@keyframes textScan {
+	0% {
+		text-shadow: 0 0 5px rgba(0, 212, 255, 0.2);
+	}
+	50% {
+		text-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+	}
+	100% {
+		text-shadow: 0 0 5px rgba(0, 212, 255, 0.2);
+	}
+}
+
+/* ========== JARVIS CARD HOVER EFFECT ========== */
+
+html[data-theme='jarvis'] .card {
+	border: 1px solid rgba(0, 212, 255, 0.3);
+	box-shadow: 
+		0 0 15px rgba(0, 212, 255, 0.2),
+		inset 0 1px 0 rgba(0, 212, 255, 0.1);
+}
+
+html[data-theme='jarvis'] .card:hover {
+	border-color: rgba(0, 212, 255, 0.6);
+	box-shadow: 
+		0 0 30px rgba(0, 212, 255, 0.4),
+		inset 0 1px 0 rgba(0, 212, 255, 0.2),
+		0 8px 32px rgba(0, 136, 204, 0.2);
+	transform: translateY(-6px);
+}
+
+/* ========== JARVIS EASTER EGG ========== */
+
+.jarvis-voice-command {
+	position: fixed;
+	bottom: 1.5rem;
+	left: 1.5rem;
+	z-index: 1000;
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 1rem 1.5rem;
+	background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(0, 136, 204, 0.15));
+	border: 1px solid rgba(0, 212, 255, 0.4);
+	border-radius: 8px;
+	backdrop-filter: blur(12px);
+	box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+	cursor: pointer;
+	transition: all 0.3s ease;
+	font-weight: 600;
+	color: #00d4ff;
+	text-shadow: 0 0 5px rgba(0, 212, 255, 0.3);
+}
+
+.jarvis-voice-command:hover {
+	background: linear-gradient(135deg, rgba(0, 212, 255, 0.25), rgba(0, 136, 204, 0.25));
+	box-shadow: 0 0 30px rgba(0, 212, 255, 0.4);
+}
+
+.jarvis-mic-pulse {
+	width: 12px;
+	height: 12px;
+	background: #00d4ff;
+	border-radius: 50%;
+	box-shadow: 0 0 10px #00d4ff;
+	animation: jarvisMicPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes jarvisMicPulse {
+	0%, 100% {
+		opacity: 1;
+		transform: scale(1);
+	}
+	50% {
+		opacity: 0.5;
+		transform: scale(1.3);
+	}
+}
+
+/* ========== JARVIS SCROLLBAR ========== */
+
+html[data-theme='jarvis'] ::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
+html[data-theme='jarvis'] ::-webkit-scrollbar-track {
+	background: rgba(10, 14, 39, 0.8);
+}
+
+html[data-theme='jarvis'] ::-webkit-scrollbar-thumb {
+	background: linear-gradient(180deg, rgba(0, 212, 255, 0.6), rgba(0, 136, 204, 0.6));
+	border-radius: 5px;
+	box-shadow: 0 0 10px rgba(0, 212, 255, 0.3);
+}
+
+html[data-theme='jarvis'] ::-webkit-scrollbar-thumb:hover {
+	background: linear-gradient(180deg, rgba(0, 212, 255, 0.8), rgba(0, 136, 204, 0.8));
+	box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+}
+
 html[data-theme='light'] .assistant-tab.active {
 	color: rgba(8, 145, 178, 1);
 	border-bottom-color: rgba(8, 145, 178, 1);

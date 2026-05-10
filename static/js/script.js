@@ -71,30 +71,150 @@ function showToast(message, kind = 'ok') {
 	if (!toast) {
 		toast = document.createElement('div');
 		toast.id = 'globalToast';
-		toast.className = 'fixed bottom-4 right-4 z-[60] px-4 py-2 rounded-lg text-sm shadow-xl transition';
+		toast.className = 'toast';
 		document.body.appendChild(toast);
 	}
+	// Clean up previous timeout
+	if (toast.timeoutId) clearTimeout(toast.timeoutId);
+	
 	toast.textContent = message;
-	toast.classList.remove('bg-rose-500', 'bg-emerald-500', 'opacity-0');
-	toast.classList.add(kind === 'error' ? 'bg-rose-500' : 'bg-emerald-500');
-	toast.classList.add('opacity-100');
-	setTimeout(() => toast.classList.add('opacity-0'), 2200);
+	toast.classList.remove('success', 'error', 'info');
+	toast.classList.add(kind === 'error' ? 'error' : kind === 'info' ? 'info' : 'success');
+	
+	// Add animation classes
+	toast.style.animation = 'none';
+	setTimeout(() => { toast.style.animation = 'slideInUp 0.3s ease, slideOutDown 0.3s ease 2.2s forwards'; }, 10);
+	
+	toast.timeoutId = setTimeout(() => toast.remove(), 2500);
 }
 
 async function api(path, options = {}) {
-	const res = await fetch(path, options);
-	const data = await res.json().catch(() => ({}));
-	if (!res.ok) {
-		if (res.status === 401) {
-			window.location.href = '/login';
-			return;
+	try {
+		const res = await fetch(path, options);
+		const data = await res.json().catch(() => ({}));
+		
+		if (!res.ok) {
+			if (res.status === 401) {
+				window.location.href = '/login';
+				return;
+			}
+			
+			// Better error messages
+			let errorMessage = data.error || data.message || 'Request failed';
+			
+			// Provide helpful context
+			if (res.status === 0 || res.status === undefined) {
+				errorMessage = '⚠️ Network error - Check your connection';
+			} else if (res.status === 500) {
+				errorMessage = data.error || '❌ Server error - Please contact support';
+			} else if (res.status === 404) {
+				errorMessage = '🔍 Not found - Check your data';
+			} else if (res.status === 400) {
+				errorMessage = data.error || '⚠️ Invalid request - Check your inputs';
+			}
+			
+			const details = data.details ? ` (${data.details})` : '';
+			throw new Error(`${errorMessage}${details}`);
 		}
-		const primary = data.error || data.message || 'Request failed';
-		const details = data.details ? `\n${data.details}` : '';
-		throw new Error(`${primary}${details}`);
+		return data;
+	} catch (err) {
+		// Handle network errors
+		if (err instanceof TypeError) {
+			throw new Error('🌐 Connection failed - Is the server running?');
+		}
+		throw err;
 	}
-	return data;
 }
+
+/* ==================== THEME SWITCHING ==================== */
+
+function setupThemeSwitcher() {
+	const themeToggle = document.getElementById('themeToggle');
+	const html = document.documentElement;
+	
+	if (!themeToggle) return;
+	
+	function setTheme(theme) {
+		html.setAttribute('data-theme', theme);
+		localStorage.setItem('swm-theme', theme);
+		updateThemeIcon(theme);
+	}
+	
+	function updateThemeIcon(theme) {
+		if (!themeToggle) return;
+		const icons = {
+			'light': 'fa-moon',
+			'dark': 'fa-sun',
+			'jarvis': 'fa-microchip'
+		};
+		themeToggle.innerHTML = `<i class="fa-solid ${icons[theme] || 'fa-circle-half-stroke'}"></i>`;
+		themeToggle.title = `Theme: ${theme.toUpperCase()}`;
+	}
+	
+	themeToggle.addEventListener('click', () => {
+		const current = html.getAttribute('data-theme') || 'light';
+		const themes = ['light', 'dark', 'jarvis'];
+		const nextIndex = (themes.indexOf(current) + 1) % themes.length;
+		setTheme(themes[nextIndex]);
+	});
+	
+	// Initialize with saved theme
+	const savedTheme = localStorage.getItem('swm-theme') || 'dark';
+	updateThemeIcon(savedTheme);
+}
+
+/* ==================== JARVIS EASTER EGG ==================== */
+
+function initializeJarvisEasterEgg() {
+	const html = document.documentElement;
+	let jarvisCommand = '';
+	let jarvisPanel = null;
+	
+	// Listen for "JARVIS" voice commands or key sequences
+	document.addEventListener('keydown', (e) => {
+		jarvisCommand += e.key.toLowerCase();
+		
+		// If user types "jarvis", activate the theme
+		if (jarvisCommand.includes('jarvis')) {
+			html.setAttribute('data-theme', 'jarvis');
+			localStorage.setItem('swm-theme', 'jarvis');
+			showJarvisActivated();
+			jarvisCommand = '';
+		}
+		
+		// Reset if too long
+		if (jarvisCommand.length > 20) {
+			jarvisCommand = jarvisCommand.slice(-10);
+		}
+	});
+	
+	function showJarvisActivated() {
+		showToast('🤖 JARVIS: "Good morning, sir. Welcome to the system."', 'info');
+		
+		// Create voice command widget if Jarvis theme is active
+		if (html.getAttribute('data-theme') === 'jarvis' && !document.querySelector('.jarvis-voice-command')) {
+			const voiceWidget = document.createElement('div');
+			voiceWidget.className = 'jarvis-voice-command';
+			voiceWidget.innerHTML = `
+				<div class="jarvis-mic-pulse"></div>
+				<span>JARVIS System Online</span>
+			`;
+			voiceWidget.addEventListener('click', () => {
+				showToast('🎤 JARVIS: "How may I assist you today?"', 'info');
+			});
+			document.body.appendChild(voiceWidget);
+			
+			// Animate entrance
+			voiceWidget.style.animation = 'slideInUp 0.5s ease';
+		}
+	}
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+	setupThemeSwitcher();
+	initializeJarvisEasterEgg();
+});
 
 function statusClass(status) {
 	if (status === 'Completed') return 'chip-green';
