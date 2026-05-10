@@ -88,6 +88,7 @@ else:
 		) from exc
 users_col = db["users"]
 workflows_col = db["workflows"]
+events_col = db["events"]
 fs_bucket = GridFSBucket(db)
 
 
@@ -135,8 +136,44 @@ def workflow_to_json(doc):
 	}
 
 
+def event_to_json(doc):
+	start_at = doc.get("start_at")
+	end_at = doc.get("end_at")
+	return {
+		"_id": str(doc.get("_id")),
+		"title": doc.get("title", ""),
+		"description": doc.get("description", ""),
+		"location": doc.get("location", ""),
+		"category": doc.get("category", "Personal"),
+		"status": doc.get("status", "Planned"),
+		"all_day": bool(doc.get("all_day", False)),
+		"reminder_minutes": int(doc.get("reminder_minutes", 30)),
+		"start_at": start_at.isoformat() if start_at else "",
+		"end_at": end_at.isoformat() if end_at else "",
+		"created_at": doc.get("created_at").isoformat() if doc.get("created_at") else "",
+		"updated_at": doc.get("updated_at").isoformat() if doc.get("updated_at") else "",
+	}
+
+
 def normalize_email(value):
 	return (value or "").strip().lower()
+
+
+def parse_event_datetime(value):
+	value = (value or "").strip()
+	if not value:
+		return None
+	if len(value) == 10 and value.count("-") == 2:
+		value = f"{value}T00:00:00"
+	if value.endswith("Z"):
+		value = value[:-1] + "+00:00"
+	try:
+		parsed = datetime.fromisoformat(value)
+	except ValueError:
+		return None
+	if parsed.tzinfo is None:
+		parsed = parsed.replace(tzinfo=timezone.utc)
+	return parsed
 
 
 def build_workflow_context(limit=10):
@@ -171,6 +208,32 @@ def build_rich_context(limit=15):
 			lines.append(f"  description: {description}")
 		if notes:
 			lines.append(f"  notes: {notes}")
+
+	return "\n".join(lines)
+
+
+def build_calendar_context(limit=10):
+	events = list(events_col.find({}).sort("start_at", 1).limit(limit))
+	if not events:
+		return "No events scheduled yet."
+
+	lines = ["Upcoming events:"]
+	for event in events:
+		start_at = event.get("start_at")
+		end_at = event.get("end_at")
+		start_label = start_at.isoformat() if start_at else "unspecified"
+		end_label = end_at.isoformat() if end_at else ""
+		location = (event.get("location") or "").strip()
+		category = event.get("category", "Personal")
+		status = event.get("status", "Planned")
+		parts = [f"- {event.get('title', 'Untitled')}", f"start={start_label}", f"category={category}", f"status={status}"]
+		if end_label:
+			parts.append(f"end={end_label}")
+		if location:
+			parts.append(f"location={location}")
+		if event.get("all_day"):
+			parts.append("all_day=true")
+		lines.append(" | ".join(parts))
 
 	return "\n".join(lines)
 
