@@ -506,7 +506,7 @@ function renderTrackedSitesTable(sites) {
 			await loadAll();
 		});
 
-			el.siteTableBody.appendChild(tr);
+		el.siteTableBody.appendChild(tr);
 		requestAnimationFrame(() => tr.classList.add('is-visible'));
 	});
 }
