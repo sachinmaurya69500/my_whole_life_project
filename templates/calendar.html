@@ -3,14 +3,128 @@
 {% block title %}Calendar - {{ app_name }}{% endblock %}
 
 {% block content %}
-<div class="p-6 max-w-4xl mx-auto">
-    <header class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-bold">Calendar</h2>
-        <a href="/project/" class="text-sm text-slate-400">Manage events</a>
-    </header>
+<div class="flex min-h-screen">
+	<aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-40 w-72 sidebar-panel p-5 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+		<div class="flex items-center gap-3 mb-8">
+			<img id="sidebarProfileImage" src="{{ url_for('static', filename='img/profile-placeholder.svg') }}" alt="Profile Avatar" class="h-11 w-11 rounded-xl object-cover border border-slate-700 bg-slate-900" />
+			<div>
+				<p class="text-xs uppercase tracking-wide text-slate-400">Your <br>workspace</p>
+				<h1 class="font-semibold text-lg">Calendar</h1>
+			</div>
+		</div>
 
-    <div id="eventsList" class="space-y-3"></div>
-    <p class="text-sm text-slate-400 mt-3">Double-click the calendar area to create a time block. Drag an event and drop it to reschedule (you'll be prompted for new time).</p>
+		<nav class="space-y-2">
+			<a href="/" class="block rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 transition">
+				<i class="fa-solid fa-home mr-2"></i>Dashboard
+			</a>
+			<a href="/tasks" class="block rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 transition">
+				<i class="fa-solid fa-list-check mr-2"></i>Tasks
+			</a>
+			<a href="/calendar" class="block rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 bg-slate-800 border-cyan-500 hover:bg-slate-800 transition active">
+				<i class="fa-solid fa-calendar-days mr-2"></i>Calendar
+			</a>
+			<a href="/contacts" class="block rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 transition">
+				<i class="fa-solid fa-address-book mr-2"></i>Contacts
+			</a>
+			<a href="/travel" class="block rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 transition">
+				<i class="fa-solid fa-plane mr-2"></i>Travel
+			</a>
+			<a href="/reminders" class="block rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 transition">
+				<i class="fa-solid fa-bell mr-2"></i>Reminders
+			</a>
+			<a href="/notes" class="block rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 transition">
+				<i class="fa-solid fa-note-sticky mr-2"></i>Notes
+			</a>
+		</nav>
+
+		<div class="mt-8 p-4 rounded-xl border border-slate-700 bg-gradient-to-br from-cyan-500/10 to-blue-500/10">
+			<p class="text-sm text-slate-300 font-medium">💡 Pro Tip</p>
+			<p class="text-xs text-slate-400 mt-1">Double-click to create, drag to reschedule events easily.</p>
+		</div>
+
+		<button id="logoutBtn" class="mt-8 w-full rounded-lg border border-slate-700 py-2 text-sm hover:bg-slate-800 transition font-medium">
+			<i class="fa-solid fa-right-from-bracket mr-2"></i>Logout
+		</button>
+	</aside>
+
+	<div id="mobileBackdrop" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden"></div>
+
+	<main class="flex-1 p-4 md:p-8 md:pl-10 overflow-x-hidden">
+		<header class="flex items-center justify-between mb-8">
+			<div class="flex items-center gap-3">
+				<button id="menuToggle" class="md:hidden h-10 w-10 rounded-lg border border-slate-700 hover:bg-slate-800 transition">
+					<i class="fa-solid fa-bars"></i>
+				</button>
+				<div>
+					<h2 class="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Calendar & Events</h2>
+					<p class="text-slate-400 text-sm mt-1">Manage your schedule and time blocks</p>
+				</div>
+			</div>
+			<img id="topProfileImage" src="{{ url_for('static', filename='img/profile-placeholder.svg') }}" alt="Profile" class="h-10 w-10 rounded-full object-cover border border-slate-700 bg-slate-900" />
+		</header>
+
+		<div class="grid gap-6">
+			<!-- Events List Card -->
+			<div class="panel">
+				<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 pb-6 border-b border-slate-800">
+					<div>
+						<h3 class="panel-title !mb-0">Your Events</h3>
+						<p class="text-sm text-slate-400 mt-1">Create, view, and manage your calendar events</p>
+					</div>
+					<button onclick="document.getElementById('createEventForm').scrollIntoView({behavior: 'smooth'})" class="btn btn-primary whitespace-nowrap">
+						<i class="fa-solid fa-plus mr-2"></i>New Event
+					</button>
+				</div>
+				<div id="eventsList" class="space-y-3"></div>
+				<div class="mt-6 p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+					<p class="text-sm text-slate-400">
+						<i class="fa-solid fa-info-circle mr-2 text-cyan-400"></i>
+						<strong>Tip:</strong> Drag an event to reschedule it, or double-click to create a new time block.
+					</p>
+				</div>
+			</div>
+
+			<!-- Create Event Form -->
+			<div class="panel" id="createEventForm">
+				<h3 class="panel-title mb-6">Create New Event</h3>
+				<form id="eventForm" class="space-y-4">
+					<div class="grid gap-4 md:grid-cols-2">
+						<div>
+							<label class="block text-sm font-medium text-slate-300 mb-2">Event Title *</label>
+							<input type="text" id="eventTitle" placeholder="e.g., Team Meeting" required class="w-full px-4 py-2 rounded-lg border border-slate-700 bg-slate-900 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition">
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-slate-300 mb-2">All Day?</label>
+							<input type="checkbox" id="eventAllDay" class="w-4 h-4 rounded border-slate-700 cursor-pointer accent-cyan-500">
+						</div>
+					</div>
+					<div class="grid gap-4 md:grid-cols-2">
+						<div>
+							<label class="block text-sm font-medium text-slate-300 mb-2">Start Date & Time *</label>
+							<input type="datetime-local" id="eventStart" required class="w-full px-4 py-2 rounded-lg border border-slate-700 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition">
+						</div>
+						<div>
+							<label class="block text-sm font-medium text-slate-300 mb-2">End Date & Time *</label>
+							<input type="datetime-local" id="eventEnd" required class="w-full px-4 py-2 rounded-lg border border-slate-700 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition">
+						</div>
+					</div>
+					<div>
+						<label class="block text-sm font-medium text-slate-300 mb-2">Description</label>
+						<textarea id="eventDescription" placeholder="Add event details..." rows="3" class="w-full px-4 py-2 rounded-lg border border-slate-700 bg-slate-900 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition resize-none"></textarea>
+					</div>
+					<div class="flex gap-3">
+						<button type="submit" class="btn btn-primary">
+							<i class="fa-solid fa-check mr-2"></i>Create Event
+						</button>
+						<button type="reset" class="btn btn-secondary">
+							<i class="fa-solid fa-undo mr-2"></i>Clear
+						</button>
+					</div>
+					<input type="hidden" id="eventId">
+				</form>
+			</div>
+		</div>
+	</main>
 </div>
 {% endblock %}
 

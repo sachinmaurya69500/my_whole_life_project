@@ -3,44 +3,132 @@
 {% block title %}Tasks - {{ app_name }}{% endblock %}
 
 {% block content %}
-<div class="p-6 max-w-4xl mx-auto">
-    <header class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-bold">Tasks</h2>
-        <button id="newTaskBtn" class="rounded-lg bg-cyan-500 text-slate-950 px-3 py-2 font-semibold">New Task</button>
-    </header>
+<div class="flex min-h-screen">
+	<aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-40 w-72 sidebar-panel p-5 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
+		<div class="flex items-center gap-3 mb-8">
+			<img id="sidebarProfileImage" src="{{ url_for('static', filename='img/profile-placeholder.svg') }}" alt="Profile Avatar" class="h-11 w-11 rounded-xl object-cover border border-slate-700 bg-slate-900" />
+			<div>
+				<p class="text-xs uppercase tracking-wide text-slate-400">Your <br>workspace</p>
+				<h1 class="font-semibold text-lg">Tasks</h1>
+			</div>
+		</div>
 
-    <div id="tasksList" class="space-y-3"></div>
+		<nav class="space-y-2">
+			<a href="/" class="block rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 transition">
+				<i class="fa-solid fa-home mr-2"></i>Dashboard
+			</a>
+			<a href="/tasks" class="block rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 bg-slate-800 border-cyan-500 hover:bg-slate-800 transition active">
+				<i class="fa-solid fa-list-check mr-2"></i>Tasks
+			</a>
+			<a href="/calendar" class="block rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 transition">
+				<i class="fa-solid fa-calendar-days mr-2"></i>Calendar
+			</a>
+			<a href="/contacts" class="block rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 transition">
+				<i class="fa-solid fa-address-book mr-2"></i>Contacts
+			</a>
+			<a href="/travel" class="block rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 transition">
+				<i class="fa-solid fa-plane mr-2"></i>Travel
+			</a>
+			<a href="/reminders" class="block rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 transition">
+				<i class="fa-solid fa-bell mr-2"></i>Reminders
+			</a>
+			<a href="/notes" class="block rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 transition">
+				<i class="fa-solid fa-note-sticky mr-2"></i>Notes
+			</a>
+		</nav>
 
-    <div id="taskFormWrap" class="hidden panel mt-6">
-        <form id="taskForm" class="space-y-3 p-4">
-            <input type="hidden" id="taskId" />
-            <div>
-                <label class="block text-sm">Title</label>
-                <input id="taskTitle" class="w-full rounded-lg border border-slate-700 px-3 py-2" required />
-            </div>
-            <div>
-                <label class="block text-sm">Description</label>
-                <textarea id="taskDescription" rows="3" class="w-full rounded-lg border border-slate-700 px-3 py-2"></textarea>
-            </div>
-            <div class="grid md:grid-cols-3 gap-3">
-                <select id="taskPriority" class="rounded-lg border border-slate-700 px-3 py-2">
-                    <option>Low</option>
-                    <option selected>Medium</option>
-                    <option>High</option>
-                </select>
-                <select id="taskStatus" class="rounded-lg border border-slate-700 px-3 py-2">
-                    <option selected>Todo</option>
-                    <option>In Progress</option>
-                    <option>Done</option>
-                </select>
-                <input id="taskDueDate" type="date" class="rounded-lg border border-slate-700 px-3 py-2" />
-            </div>
-            <div class="flex gap-3 justify-end">
-                <button id="cancelTaskBtn" type="button" class="rounded-lg border border-slate-700 px-3 py-2">Cancel</button>
-                <button type="submit" class="rounded-lg bg-cyan-500 text-slate-950 px-3 py-2">Save Task</button>
-            </div>
-        </form>
-    </div>
+		<div class="mt-8 p-4 rounded-xl border border-slate-700 bg-gradient-to-br from-cyan-500/10 to-blue-500/10">
+			<p class="text-sm text-slate-300 font-medium">📋 Pro Tip</p>
+			<p class="text-xs text-slate-400 mt-1">Organize your tasks by priority and deadline to stay focused.</p>
+		</div>
+
+		<button id="logoutBtn" class="mt-8 w-full rounded-lg border border-slate-700 py-2 text-sm hover:bg-slate-800 transition font-medium">
+			<i class="fa-solid fa-right-from-bracket mr-2"></i>Logout
+		</button>
+	</aside>
+
+	<div id="mobileBackdrop" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden"></div>
+
+	<main class="flex-1 p-4 md:p-8 md:pl-10 overflow-x-hidden">
+		<header class="flex items-center justify-between mb-8">
+			<div class="flex items-center gap-3">
+				<button id="menuToggle" class="md:hidden h-10 w-10 rounded-lg border border-slate-700 hover:bg-slate-800 transition">
+					<i class="fa-solid fa-bars"></i>
+				</button>
+				<div>
+					<h2 class="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">My Tasks</h2>
+					<p class="text-slate-400 text-sm mt-1">Manage and track your daily tasks</p>
+				</div>
+			</div>
+			<img id="topProfileImage" src="{{ url_for('static', filename='img/profile-placeholder.svg') }}" alt="Profile" class="h-10 w-10 rounded-full object-cover border border-slate-700 bg-slate-900" />
+		</header>
+
+		<div class="grid gap-6">
+			<!-- Tasks List Card -->
+			<div class="panel">
+				<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 pb-6 border-b border-slate-800">
+					<div>
+						<h3 class="panel-title !mb-0">Your Tasks</h3>
+						<p class="text-sm text-slate-400 mt-1">Create, manage, and complete your tasks</p>
+					</div>
+					<button id="newTaskBtn" class="btn btn-primary whitespace-nowrap">
+						<i class="fa-solid fa-plus mr-2"></i>New Task
+					</button>
+				</div>
+				<div id="tasksList" class="space-y-3"></div>
+			</div>
+
+			<!-- Create/Edit Task Form -->
+			<div class="panel" id="taskFormWrap" style="display: none;">
+				<h3 class="panel-title mb-6">New Task</h3>
+				<form id="taskForm" class="space-y-4">
+					<input type="hidden" id="taskId" />
+					<div>
+						<label class="block">
+							<span class="text-sm font-medium text-slate-300 mb-2 block">Task Title *</span>
+							<input id="taskTitle" class="w-full" placeholder="e.g., Complete project report" required />
+						</label>
+					</div>
+					<div>
+						<label class="block">
+							<span class="text-sm font-medium text-slate-300 mb-2 block">Description</span>
+							<textarea id="taskDescription" placeholder="Add task details..." rows="3"></textarea>
+						</label>
+					</div>
+					<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+						<label class="block">
+							<span class="text-sm font-medium text-slate-300 mb-2 block">Priority</span>
+							<select id="taskPriority">
+								<option>Low</option>
+								<option selected>Medium</option>
+								<option>High</option>
+							</select>
+						</label>
+						<label class="block">
+							<span class="text-sm font-medium text-slate-300 mb-2 block">Status</span>
+							<select id="taskStatus">
+								<option selected>Todo</option>
+								<option>In Progress</option>
+								<option>Done</option>
+							</select>
+						</label>
+						<label class="block">
+							<span class="text-sm font-medium text-slate-300 mb-2 block">Due Date</span>
+							<input id="taskDueDate" type="date" />
+						</label>
+					</div>
+					<div class="flex gap-3 justify-end pt-4">
+						<button id="cancelTaskBtn" type="button" class="btn btn-secondary">
+							<i class="fa-solid fa-xmark mr-2"></i>Cancel
+						</button>
+						<button type="submit" class="btn btn-primary">
+							<i class="fa-solid fa-check mr-2"></i>Save Task
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</main>
 </div>
 {% endblock %}
 
