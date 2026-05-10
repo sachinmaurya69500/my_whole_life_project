@@ -3,6 +3,7 @@
 {% block title %}Calendar - {{ app_name }}{% endblock %}
 
 {% block content %}
+
 <div class="flex min-h-screen">
 	<aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-40 w-72 sidebar-panel p-5 transform -translate-x-full md:translate-x-0 transition-transform duration-300">
 		<div class="flex items-center gap-3 mb-8">
@@ -56,7 +57,7 @@
 					<i class="fa-solid fa-bars"></i>
 				</button>
 				<div>
-					<h2 class="text-3xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Calendar & Events</h2>
+					<h2 class="panel-title text-3xl">Calendar & Events</h2>
 					<p class="text-slate-400 text-sm mt-1">Manage your schedule and time blocks</p>
 				</div>
 			</div>
@@ -91,21 +92,21 @@
 					<div class="grid gap-4 md:grid-cols-2">
 						<div>
 							<label class="block text-sm font-medium text-slate-300 mb-2">Event Title *</label>
-							<input type="text" id="eventTitle" placeholder="e.g., Team Meeting" required class="w-full px-4 py-2 rounded-lg border border-slate-700 bg-slate-900 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition">
+							<input type="text" id="eventTitle" aria-label="Event title" placeholder="e.g., Team Meeting" required class="w-full px-4 py-2 rounded-lg border border-slate-700 bg-slate-900 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition">
 						</div>
 						<div>
 							<label class="block text-sm font-medium text-slate-300 mb-2">All Day?</label>
-							<input type="checkbox" id="eventAllDay" class="w-4 h-4 rounded border-slate-700 cursor-pointer accent-cyan-500">
+							<input type="checkbox" id="eventAllDay" aria-label="All day event" class="w-4 h-4 rounded border-slate-700 cursor-pointer accent-cyan-500">
 						</div>
 					</div>
 					<div class="grid gap-4 md:grid-cols-2">
 						<div>
 							<label class="block text-sm font-medium text-slate-300 mb-2">Start Date & Time *</label>
-							<input type="datetime-local" id="eventStart" required class="w-full px-4 py-2 rounded-lg border border-slate-700 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition">
+							<input type="datetime-local" id="eventStart" aria-label="Start date and time" required class="w-full px-4 py-2 rounded-lg border border-slate-700 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition">
 						</div>
 						<div>
 							<label class="block text-sm font-medium text-slate-300 mb-2">End Date & Time *</label>
-							<input type="datetime-local" id="eventEnd" required class="w-full px-4 py-2 rounded-lg border border-slate-700 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition">
+							<input type="datetime-local" id="eventEnd" aria-label="End date and time" required class="w-full px-4 py-2 rounded-lg border border-slate-700 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition">
 						</div>
 					</div>
 					<div>

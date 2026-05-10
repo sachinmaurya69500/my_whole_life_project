@@ -3,40 +3,45 @@
 {% block title %}Contacts - {{ app_name }}{% endblock %}
 
 {% block content %}
-<div class="p-6 max-w-4xl mx-auto">
-    <header class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-bold">Contacts</h2>
-        <button id="newContactBtn" class="rounded-lg bg-cyan-500 text-slate-950 px-3 py-2 font-semibold">New Contact</button>
-    </header>
+<main class="min-h-screen p-4 md:p-8">
+    <div class="max-w-5xl mx-auto space-y-6">
+        <header class="flex flex-wrap items-center justify-between gap-3 panel">
+            <div>
+                <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Jarvis Directory</p>
+                <h2 class="panel-title text-2xl mb-0">Contacts</h2>
+            </div>
+            <button id="newContactBtn" class="btn btn-primary">New Contact</button>
+        </header>
 
-    <div id="contactsList" class="space-y-3"></div>
+        <div id="contactsList" class="space-y-3"></div>
 
-    <div id="contactFormWrap" class="hidden panel mt-6">
-        <form id="contactForm" class="space-y-3 p-4">
-            <input type="hidden" id="contactId" />
-            <div>
-                <label class="block text-sm">Name</label>
-                <input id="contactName" class="w-full rounded-lg border border-slate-700 px-3 py-2" required />
-            </div>
-            <div class="grid md:grid-cols-2 gap-3">
-                <input id="contactEmail" class="rounded-lg border border-slate-700 px-3 py-2" placeholder="email@example.com" />
-                <input id="contactPhone" class="rounded-lg border border-slate-700 px-3 py-2" placeholder="Phone" />
-            </div>
-            <div>
-                <label class="block text-sm">Company</label>
-                <input id="contactCompany" class="w-full rounded-lg border border-slate-700 px-3 py-2" />
-            </div>
-            <div>
-                <label class="block text-sm">Notes</label>
-                <textarea id="contactNotes" rows="3" class="w-full rounded-lg border border-slate-700 px-3 py-2"></textarea>
-            </div>
-            <div class="flex gap-3 justify-end">
-                <button id="cancelContactBtn" type="button" class="rounded-lg border border-slate-700 px-3 py-2">Cancel</button>
-                <button type="submit" class="rounded-lg bg-cyan-500 text-slate-950 px-3 py-2">Save Contact</button>
-            </div>
-        </form>
+        <div id="contactFormWrap" class="hidden panel mt-6">
+            <form id="contactForm" class="space-y-3 p-4">
+                <input type="hidden" id="contactId" />
+                <div>
+                    <label class="block text-sm mb-1">Name</label>
+                    <input id="contactName" aria-label="Contact name" class="w-full rounded-lg border border-slate-700 px-3 py-2" required />
+                </div>
+                <div class="grid md:grid-cols-2 gap-3">
+                    <input id="contactEmail" aria-label="Contact email" class="rounded-lg border border-slate-700 px-3 py-2" placeholder="email@example.com" />
+                    <input id="contactPhone" aria-label="Contact phone" class="rounded-lg border border-slate-700 px-3 py-2" placeholder="Phone" />
+                </div>
+                <div>
+                    <label class="block text-sm mb-1">Company</label>
+                    <input id="contactCompany" aria-label="Contact company" class="w-full rounded-lg border border-slate-700 px-3 py-2" />
+                </div>
+                <div>
+                    <label class="block text-sm mb-1">Notes</label>
+                    <textarea id="contactNotes" rows="3" class="w-full rounded-lg border border-slate-700 px-3 py-2"></textarea>
+                </div>
+                <div class="flex gap-3 justify-end">
+                    <button id="cancelContactBtn" type="button" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Contact</button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
+</main>
 {% endblock %}
 
 {% block scripts %}

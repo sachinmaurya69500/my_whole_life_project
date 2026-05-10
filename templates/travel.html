@@ -3,41 +3,46 @@
 {% block title %}Travel & Expenses - {{ app_name }}{% endblock %}
 
 {% block content %}
-<div class="p-6 max-w-4xl mx-auto">
-    <header class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-bold">Travel & Expenses</h2>
-        <button id="newExpenseBtn" class="rounded-lg bg-cyan-500 text-slate-950 px-3 py-2 font-semibold">Add Expense</button>
-    </header>
+<main class="min-h-screen p-4 md:p-8">
+    <div class="max-w-4xl mx-auto space-y-6">
+        <header class="flex flex-wrap items-center justify-between gap-3 panel">
+            <div>
+                <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Jarvis Ledger</p>
+                <h2 class="panel-title text-2xl mb-0">Travel & Expenses</h2>
+            </div>
+            <button id="newExpenseBtn" class="btn btn-primary">Add Expense</button>
+        </header>
 
-    <div id="expensesList" class="space-y-3"></div>
+        <div id="expensesList" class="space-y-3"></div>
 
-    <div id="expenseFormWrap" class="hidden panel mt-6">
-        <form id="expenseForm" class="space-y-3 p-4">
-            <input type="hidden" id="expenseId" />
-            <div>
-                <label class="block text-sm">Date</label>
-                <input id="expenseDate" type="date" class="rounded-lg border border-slate-700 px-3 py-2" />
-            </div>
-            <div class="grid md:grid-cols-3 gap-3">
-                <input id="expenseType" class="rounded-lg border border-slate-700 px-3 py-2" placeholder="Transport, Hotel, Meal" />
-                <input id="expenseAmount" class="rounded-lg border border-slate-700 px-3 py-2" placeholder="Amount" />
-                <input id="expenseCurrency" class="rounded-lg border border-slate-700 px-3 py-2" placeholder="Currency" value="USD" />
-            </div>
-            <div>
-                <label class="block text-sm">Vendor</label>
-                <input id="expenseVendor" class="w-full rounded-lg border border-slate-700 px-3 py-2" />
-            </div>
-            <div>
-                <label class="block text-sm">Notes</label>
-                <textarea id="expenseNotes" rows="3" class="w-full rounded-lg border border-slate-700 px-3 py-2"></textarea>
-            </div>
-            <div class="flex gap-3 justify-end">
-                <button id="cancelExpenseBtn" type="button" class="rounded-lg border border-slate-700 px-3 py-2">Cancel</button>
-                <button type="submit" class="rounded-lg bg-cyan-500 text-slate-950 px-3 py-2">Save Expense</button>
-            </div>
-        </form>
+        <div id="expenseFormWrap" class="hidden panel mt-6">
+            <form id="expenseForm" class="space-y-3 p-4">
+                <input type="hidden" id="expenseId" />
+                <div>
+                    <label class="block text-sm mb-1">Date</label>
+                    <input id="expenseDate" aria-label="Expense date" type="date" class="rounded-lg border border-slate-700 px-3 py-2" />
+                </div>
+                <div class="grid md:grid-cols-3 gap-3">
+                    <input id="expenseType" aria-label="Expense type" class="rounded-lg border border-slate-700 px-3 py-2" placeholder="Transport, Hotel, Meal" />
+                    <input id="expenseAmount" aria-label="Expense amount" class="rounded-lg border border-slate-700 px-3 py-2" placeholder="Amount" />
+                    <input id="expenseCurrency" aria-label="Expense currency" class="rounded-lg border border-slate-700 px-3 py-2" placeholder="Currency" value="USD" />
+                </div>
+                <div>
+                    <label class="block text-sm mb-1">Vendor</label>
+                    <input id="expenseVendor" aria-label="Expense vendor" class="w-full rounded-lg border border-slate-700 px-3 py-2" />
+                </div>
+                <div>
+                    <label class="block text-sm mb-1">Notes</label>
+                    <textarea id="expenseNotes" aria-label="Expense notes" rows="3" class="w-full rounded-lg border border-slate-700 px-3 py-2"></textarea>
+                </div>
+                <div class="flex gap-3 justify-end">
+                    <button id="cancelExpenseBtn" type="button" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Expense</button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
+</main>
 {% endblock %}
 
 {% block scripts %}

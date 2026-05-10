@@ -5,11 +5,17 @@
     const newBtn = document.getElementById('newReminderBtn');
     const cancelBtn = document.getElementById('cancelReminderBtn');
 
+    function renderLoading(){
+        if (!list) return;
+        list.innerHTML = '<div class="hud-skeleton h-20 rounded-2xl"></div><div class="hud-skeleton h-20 rounded-2xl mt-3"></div>';
+    }
+
     async function load(){
         try{
+            renderLoading();
             const data = await api('/api/reminders');
-            if(!Array.isArray(data)||!data.length){ list.innerHTML = '<p class="text-slate-400">No reminders.</p>'; return; }
-            list.innerHTML = data.map(r=>`<div class="panel flex justify-between items-start"><div><strong>${r.title}</strong><div class="text-sm text-slate-400">${r.message||''}</div><div class="text-xs text-slate-400 mt-2">Due: ${r.due_date||'—'} ${r.repeat_minutes?(' • repeat:'+r.repeat_minutes+'m'):''}</div></div><div class="flex gap-2"><button data-id="${r._id}" class="edit-btn rounded border px-2">Edit</button><button data-id="${r._id}" class="del-btn rounded border px-2">Delete</button></div></div>`).join('');
+            if(!Array.isArray(data)||!data.length){ list.innerHTML = '<p class="hud-empty-state">No reminders.</p>'; return; }
+            list.innerHTML = data.map((r, index)=>`<div class="panel flex justify-between items-start hud-reveal hud-sweep" style="transition-delay:${Math.min(index, 8) * 60}ms"><div><strong>${r.title}</strong><div class="text-sm text-slate-400">${r.message||''}</div><div class="text-xs text-slate-400 mt-2">Due: ${r.due_date||'—'} ${r.repeat_minutes?(' • repeat:'+r.repeat_minutes+'m'):''}</div></div><div class="flex gap-2"><button data-id="${r._id}" class="edit-btn btn btn-secondary px-3 py-1.5 text-xs">Edit</button><button data-id="${r._id}" class="del-btn btn btn-secondary px-3 py-1.5 text-xs">Delete</button></div></div>`).join('');
             list.querySelectorAll('.edit-btn').forEach(b=>b.addEventListener('click', onEdit));
             list.querySelectorAll('.del-btn').forEach(b=>b.addEventListener('click', onDelete));
         }catch(err){ console.error(err); }
@@ -70,17 +76,15 @@
     // Poll for due reminders every 60s
     async function pollDue(){
         try{
-            try{
-                const data = await api('/api/reminders/due');
-                if(Array.isArray(data) && data.length){
-                    data.forEach(r=>{
-                        if(window.showToast) showToast(`${r.title}: ${r.message}`, 'ok');
-                    });
-                    await load();
-                }
-            }catch(err){
-                // ignore polling errors
+            const data = await api('/api/reminders/due');
+            if(Array.isArray(data) && data.length){
+                data.forEach(r=>{
+                    if(window.showToast) showToast(`${r.title}: ${r.message}`, 'info');
+                });
+                await load();
             }
+        }catch(err){
+            // ignore polling errors
         }
     }
 

@@ -62,6 +62,174 @@ html,
 body {
 	background: radial-gradient(circle at 10% 10%, var(--bg-start) 0%, var(--bg-main) 50%, var(--bg-end) 100%);
 	color: var(--body-text);
+	min-height: 100%;
+}
+
+body {
+	position: relative;
+	overflow-x: hidden;
+}
+
+.jarvis-background {
+	position: fixed;
+	inset: 0;
+	z-index: -2;
+	pointer-events: none;
+	overflow: hidden;
+	background:
+		radial-gradient(circle at 50% 45%, rgba(0, 212, 255, 0.08), transparent 22%),
+		radial-gradient(circle at 50% 50%, rgba(0, 136, 204, 0.2), rgba(5, 7, 15, 0.02) 38%, rgba(5, 7, 15, 0) 58%),
+		linear-gradient(180deg, rgba(2, 6, 23, 0.08), rgba(2, 6, 23, 0.5));
+	filter: saturate(1.2);
+}
+
+.jarvis-background::before,
+.jarvis-background::after {
+	content: '';
+	position: absolute;
+	inset: -20%;
+	background-repeat: no-repeat;
+	opacity: 0.8;
+}
+
+.jarvis-background::before {
+	background:
+		radial-gradient(circle at 50% 50%, transparent 0 19%, rgba(0, 212, 255, 0.28) 19.4% 20%, transparent 20.5% 34%, rgba(0, 212, 255, 0.18) 34.4% 35%, transparent 35.6% 47%, rgba(0, 212, 255, 0.12) 47.4% 48%, transparent 48.8%),
+		radial-gradient(circle at 50% 50%, rgba(0, 212, 255, 0.18), transparent 56%);
+	animation: jarvisOrbitPulse 18s ease-in-out infinite;
+}
+
+.jarvis-background::after {
+	background:
+		repeating-linear-gradient(180deg, rgba(0, 212, 255, 0.03) 0, rgba(0, 212, 255, 0.03) 1px, transparent 1px, transparent 38px),
+		repeating-linear-gradient(90deg, rgba(0, 212, 255, 0.018) 0, rgba(0, 212, 255, 0.018) 1px, transparent 1px, transparent 38px);
+	mask-image: radial-gradient(circle at 50% 50%, black 0 45%, transparent 72%);
+	opacity: 0.45;
+	animation: jarvisGridDrift 30s linear infinite;
+}
+
+.jarvis-bg-orbit,
+.jarvis-bg-core,
+.jarvis-bg-grid {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	border-radius: 999px;
+	pointer-events: none;
+}
+
+.jarvis-bg-core {
+	width: 18rem;
+	height: 18rem;
+	background:
+		radial-gradient(circle, rgba(0, 212, 255, 0.9) 0%, rgba(0, 212, 255, 0.5) 18%, rgba(0, 136, 204, 0.28) 34%, transparent 68%);
+	filter: blur(2px);
+	box-shadow:
+		0 0 40px rgba(0, 212, 255, 0.28),
+		0 0 120px rgba(0, 212, 255, 0.12);
+	opacity: 0.55;
+}
+
+.jarvis-bg-core::before,
+.jarvis-bg-core::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: inherit;
+	pointer-events: none;
+}
+
+.jarvis-bg-core::before {
+	background:
+		radial-gradient(circle at center, transparent 0 22%, rgba(0, 212, 255, 0.18) 22.5% 23.2%, transparent 23.8% 40%, rgba(0, 212, 255, 0.1) 40.5% 41.2%, transparent 42%);
+	animation: jarvisCoreSpin 14s linear infinite;
+}
+
+.jarvis-bg-core::after {
+	background:
+		conic-gradient(from 0deg, transparent 0 18%, rgba(0, 212, 255, 0.15) 20%, transparent 24% 46%, rgba(0, 136, 204, 0.14) 50%, transparent 54% 100%);
+	mask-image: radial-gradient(circle at center, black 0 46%, transparent 68%);
+	opacity: 0.85;
+	animation: jarvisCoreSweep 6.5s linear infinite;
+}
+
+.jarvis-bg-grid {
+	width: min(78vw, 58rem);
+	height: min(78vw, 58rem);
+	border: 1px solid rgba(0, 212, 255, 0.12);
+	box-shadow: inset 0 0 0 1px rgba(0, 212, 255, 0.03);
+	background:
+		radial-gradient(circle, transparent 0 49.7%, rgba(0, 212, 255, 0.08) 49.9% 50.2%, transparent 50.4%),
+		repeating-linear-gradient(0deg, transparent 0 26px, rgba(0, 212, 255, 0.04) 26px 27px),
+		repeating-linear-gradient(90deg, transparent 0 26px, rgba(0, 212, 255, 0.04) 26px 27px);
+	opacity: 0.25;
+	animation: jarvisGridSpin 120s linear infinite;
+}
+
+.jarvis-bg-orbit-1 {
+	width: min(72vw, 54rem);
+	height: min(72vw, 54rem);
+	border: 1px solid rgba(0, 212, 255, 0.15);
+	box-shadow: inset 0 0 0 1px rgba(0, 212, 255, 0.03);
+	animation: jarvisRingFloat 14s ease-in-out infinite;
+}
+
+.jarvis-bg-orbit-2 {
+	width: min(58vw, 44rem);
+	height: min(58vw, 44rem);
+	border: 1px solid rgba(0, 136, 204, 0.22);
+	box-shadow: 0 0 40px rgba(0, 212, 255, 0.05);
+	animation: jarvisRingFloatReverse 17s ease-in-out infinite;
+}
+
+.jarvis-bg-orbit-3 {
+	width: min(36vw, 27rem);
+	height: min(36vw, 27rem);
+	border: 1px solid rgba(0, 255, 255, 0.28);
+	box-shadow: 0 0 32px rgba(0, 212, 255, 0.14);
+	animation: jarvisRingPulse 9s ease-in-out infinite;
+}
+
+@keyframes jarvisOrbitPulse {
+	0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.7; }
+	50% { transform: scale(1.03) rotate(1deg); opacity: 0.95; }
+}
+
+@keyframes jarvisGridDrift {
+	from { transform: translateY(0); }
+	to { transform: translateY(40px); }
+}
+
+@keyframes jarvisGridSpin {
+	from { transform: translate(-50%, -50%) rotate(0deg); }
+	to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes jarvisRingFloat {
+	0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.45; }
+	50% { transform: translate(-50%, -50%) scale(1.02); opacity: 0.7; }
+}
+
+@keyframes jarvisRingFloatReverse {
+	0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.38; }
+	50% { transform: translate(-50%, -50%) scale(0.98); opacity: 0.64; }
+}
+
+@keyframes jarvisRingPulse {
+	0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.42; }
+	50% { transform: translate(-50%, -50%) scale(1.06); opacity: 0.88; }
+}
+
+@keyframes jarvisCoreSpin {
+	from { transform: rotate(0deg) scale(1); }
+	50% { transform: rotate(180deg) scale(1.04); }
+	to { transform: rotate(360deg) scale(1); }
+}
+
+@keyframes jarvisCoreSweep {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
 }
 
 /* Ensure form inputs and textareas use readable color in both themes */
@@ -2004,6 +2172,181 @@ html[data-theme='jarvis'] .section-view > .stat-card,
 html[data-theme='jarvis'] .section-view > .panel-title {
 	position: relative;
 	z-index: 1;
+}
+
+html[data-theme='jarvis'] .section-view,
+html[data-theme='jarvis'] main > header,
+html[data-theme='jarvis'] .mobile-quick-nav,
+html[data-theme='jarvis'] .mobile-quick-nav-track {
+	position: relative;
+	z-index: 1;
+}
+
+html[data-theme='jarvis'] main > header {
+	padding: 1rem 1.1rem;
+	margin-bottom: 1.25rem;
+	border: 1px solid rgba(0, 212, 255, 0.16);
+	border-radius: 1rem;
+	background:
+		radial-gradient(circle at left top, rgba(0, 212, 255, 0.08), transparent 36%),
+		linear-gradient(145deg, rgba(10, 14, 39, 0.55), rgba(5, 7, 15, 0.7));
+	box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+	backdrop-filter: blur(10px);
+}
+
+html[data-theme='jarvis'] .mobile-quick-nav {
+	padding: 0.25rem 0 0.65rem;
+}
+
+html[data-theme='jarvis'] .mobile-quick-nav-track {
+	padding: 0.45rem;
+	border: 1px solid rgba(0, 212, 255, 0.12);
+	background: rgba(10, 14, 39, 0.42);
+	backdrop-filter: blur(10px);
+	border-radius: 999px;
+}
+
+html[data-theme='jarvis'] .mobile-nav-btn,
+html[data-theme='jarvis'] .nav-btn {
+	letter-spacing: 0.04em;
+	font-weight: 700;
+}
+
+html[data-theme='jarvis'] .stat-card {
+	min-height: 8.5rem;
+	padding: 1.1rem 1.1rem 1rem;
+	background:
+		radial-gradient(circle at top right, rgba(0, 212, 255, 0.18), transparent 44%),
+		linear-gradient(145deg, rgba(10, 14, 39, 0.92), rgba(5, 7, 15, 0.92));
+	box-shadow:
+		0 0 0 1px rgba(0, 212, 255, 0.08),
+		0 16px 40px rgba(0, 0, 0, 0.36),
+		inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+html[data-theme='jarvis'] .stat-card::after {
+	content: '';
+	position: absolute;
+	inset: auto 1rem 0.85rem 1rem;
+	height: 2px;
+	background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.65), transparent);
+	opacity: 0.75;
+}
+
+html[data-theme='jarvis'] .stat-card p,
+html[data-theme='jarvis'] .stat-card h3 {
+	position: relative;
+	z-index: 1;
+}
+
+html[data-theme='jarvis'] .panel {
+	background:
+		radial-gradient(circle at top right, rgba(0, 212, 255, 0.08), transparent 42%),
+		linear-gradient(145deg, rgba(10, 14, 39, 0.82), rgba(5, 7, 15, 0.9));
+}
+
+html[data-theme='jarvis'] .panel-title {
+	margin-bottom: 0.9rem;
+	color: #9afcff;
+	text-shadow: 0 0 12px rgba(0, 212, 255, 0.28);
+}
+
+html[data-theme='jarvis'] .panel > p,
+html[data-theme='jarvis'] .panel .text-sm,
+html[data-theme='jarvis'] .panel .text-xs {
+	color: #93cfd8;
+}
+
+html[data-theme='jarvis'] .panel canvas {
+	filter: drop-shadow(0 0 18px rgba(0, 212, 255, 0.16));
+}
+
+html[data-theme='jarvis'] .chartjs-render-monitor {
+	color: #8eefff;
+}
+
+html[data-theme='jarvis'] #projectColorLegend > div,
+html[data-theme='jarvis'] #recentActivity > div,
+html[data-theme='jarvis'] #dailyGrid > article,
+html[data-theme='jarvis'] #longTermGrid > article,
+html[data-theme='jarvis'] #manageTableBody tr,
+html[data-theme='jarvis'] #insightTableBody tr {
+	backdrop-filter: blur(6px);
+}
+
+html[data-theme='jarvis'] #manageTableBody tr:hover,
+html[data-theme='jarvis'] #insightTableBody tr:hover {
+	background: rgba(0, 212, 255, 0.05);
+}
+
+html[data-theme='jarvis'] #manageSearch,
+html[data-theme='jarvis'] input,
+html[data-theme='jarvis'] textarea,
+html[data-theme='jarvis'] select {
+	background: rgba(10, 14, 39, 0.75);
+	border-color: rgba(0, 212, 255, 0.24);
+}
+
+/* ========== CINEMATIC MOTION HELPERS ========== */
+
+.hud-reveal {
+	opacity: 0;
+	transform: translateY(14px) scale(0.985);
+	filter: blur(4px);
+	transition: opacity 0.45s ease, transform 0.45s ease, filter 0.45s ease;
+}
+
+.hud-reveal.is-visible {
+	opacity: 1;
+	transform: translateY(0) scale(1);
+	filter: blur(0);
+}
+
+.hud-skeleton {
+	position: relative;
+	overflow: hidden;
+	background: linear-gradient(90deg, rgba(15, 23, 42, 0.7), rgba(34, 211, 238, 0.08), rgba(15, 23, 42, 0.7));
+	background-size: 240% 100%;
+	animation: hudShimmer 1.6s linear infinite;
+}
+
+.hud-empty-state {
+	border: 1px dashed rgba(0, 212, 255, 0.2);
+	background: rgba(10, 14, 39, 0.36);
+	color: var(--text-subtle);
+	padding: 1rem;
+	border-radius: 0.9rem;
+	text-align: center;
+}
+
+.hud-sweep {
+	position: relative;
+	overflow: hidden;
+}
+
+.hud-sweep::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(120deg, transparent 0 42%, rgba(0, 212, 255, 0.12) 48%, transparent 54% 100%);
+	transform: translateX(-120%);
+	animation: hudSweep 4.8s ease-in-out infinite;
+	pointer-events: none;
+}
+
+.hud-glow-text {
+	text-shadow: 0 0 10px rgba(0, 212, 255, 0.24);
+}
+
+@keyframes hudShimmer {
+	0% { background-position: 0% 0; }
+	100% { background-position: 240% 0; }
+}
+
+@keyframes hudSweep {
+	0% { transform: translateX(-120%); }
+	45% { transform: translateX(120%); }
+	100% { transform: translateX(120%); }
 }
 
 html[data-theme='jarvis'] input:focus,

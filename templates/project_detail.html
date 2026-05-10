@@ -5,16 +5,16 @@
 {% block content %}
 <main class="min-h-screen p-4 md:p-8">
 	<div class="max-w-5xl mx-auto space-y-6">
-		<div class="flex flex-wrap items-center justify-between gap-3">
+		<div class="flex flex-wrap items-center justify-between gap-3 panel">
 			<div>
-				<p class="text-xs uppercase tracking-wide text-slate-400">Project Workspace</p>
-				<h1 id="projectTitleHeading" class="text-2xl md:text-3xl font-bold">Project Details</h1>
+				<p class="text-xs uppercase tracking-[0.25em] text-slate-400">Project Workspace</p>
+				<h1 id="projectTitleHeading" class="panel-title text-2xl md:text-3xl mb-0">Project Details</h1>
 			</div>
 			<div class="flex gap-2">
-				<a href="/home" class="rounded-lg border border-slate-700 px-4 py-2 text-sm hover:bg-slate-800 transition">
+				<a href="/home" class="btn btn-secondary px-4 py-2 text-sm">
 					<i class="fa-solid fa-arrow-left mr-2"></i>Back
 				</a>
-				<button id="logoutBtn" class="rounded-lg border border-slate-700 px-4 py-2 text-sm hover:bg-slate-800 transition">
+				<button id="logoutBtn" class="btn btn-secondary px-4 py-2 text-sm">
 					<i class="fa-solid fa-right-from-bracket mr-2"></i>Logout
 				</button>
 			</div>
@@ -108,7 +108,7 @@
 				</div>
 
 				<div class="flex justify-end">
-					<button type="submit" class="rounded-lg bg-cyan-500 text-slate-950 px-4 py-2 font-semibold hover:bg-cyan-400 transition">Save Project Details</button>
+					<button type="submit" class="btn btn-primary px-4 py-2 font-semibold">Save Project Details</button>
 				</div>
 			</form>
 		</section>

@@ -286,12 +286,18 @@ function setActiveSection(sectionKey) {
 function renderCards(targetEl, workflows) {
 	targetEl.innerHTML = '';
 	if (!workflows.length) {
-		targetEl.innerHTML = '<p class="text-slate-400">No workflows found.</p>';
+		targetEl.innerHTML = '<p class="hud-empty-state">No workflows found.</p>';
 		return;
 	}
 
 	workflows.forEach((wf) => {
 		const node = el.cardTemplate.content.cloneNode(true);
+		const card = node.querySelector('.panel');
+		if (card) {
+			card.classList.add('hud-reveal', 'hud-sweep');
+			card.style.transitionDelay = `${Math.min(workflows.indexOf(wf), 8) * 55}ms`;
+			requestAnimationFrame(() => card.classList.add('is-visible'));
+		}
 		const titleLinkEl = node.querySelector('.title-link');
 		titleLinkEl.textContent = wf.title;
 		titleLinkEl.href = `/project/${wf._id}`;
@@ -326,13 +332,14 @@ function renderCards(targetEl, workflows) {
 function renderManageTable(workflows) {
 	el.manageTableBody.innerHTML = '';
 	if (!workflows.length) {
-		el.manageTableBody.innerHTML = '<tr><td colspan="6" class="py-4 text-slate-400">No workflows found.</td></tr>';
+		el.manageTableBody.innerHTML = '<tr><td colspan="6" class="py-4"><div class="hud-empty-state">No workflows found.</div></td></tr>';
 		return;
 	}
 
-	workflows.forEach((wf) => {
+	workflows.forEach((wf, index) => {
 		const tr = document.createElement('tr');
-		tr.className = 'border-b border-slate-800';
+		tr.className = 'border-b border-slate-800 hud-reveal';
+		tr.style.transitionDelay = `${Math.min(index, 10) * 45}ms`;
 		tr.innerHTML = `
 			<td class="py-3 pr-2"><input data-field="title" value="${escapeHtml(wf.title)}" class="table-input w-56" /></td>
 			<td class="py-3 pr-2">
@@ -396,19 +403,21 @@ function renderManageTable(workflows) {
 		});
 
 		el.manageTableBody.appendChild(tr);
+		requestAnimationFrame(() => tr.classList.add('is-visible'));
 	});
 }
 
 function renderRecentActivity(items) {
 	el.recentActivity.innerHTML = '';
 	if (!items.length) {
-		el.recentActivity.innerHTML = '<p class="text-slate-400 text-sm">No activity yet.</p>';
+		el.recentActivity.innerHTML = '<p class="hud-empty-state">No activity yet.</p>';
 		return;
 	}
 
-	items.forEach((item) => {
+	items.forEach((item, index) => {
 		const row = document.createElement('div');
-		row.className = 'rounded-lg border border-slate-800 bg-slate-900/50 p-3';
+		row.className = 'rounded-lg border border-slate-800 bg-slate-900/50 p-3 hud-reveal hud-sweep';
+		row.style.transitionDelay = `${Math.min(index, 8) * 70}ms`;
 		row.innerHTML = `
 			<div class="flex justify-between gap-3">
 				<p class="font-medium">${escapeHtml(item.title)}</p>
@@ -417,6 +426,7 @@ function renderRecentActivity(items) {
 			<p class="text-xs text-slate-400 mt-1">Progress: ${item.progress}%</p>
 		`;
 		el.recentActivity.appendChild(row);
+		requestAnimationFrame(() => row.classList.add('is-visible'));
 	});
 }
 
@@ -439,6 +449,9 @@ async function uploadWorkflowPhotos(workflowId, files) {
 }
 
 async function loadDashboard() {
+	if (el.recentActivity) {
+		el.recentActivity.innerHTML = '<div class="hud-skeleton h-16 rounded-lg"></div><div class="hud-skeleton h-16 rounded-lg mt-3"></div>';
+	}
 	const data = await api('/api/dashboard');
 	el.statTotal.textContent = data.total;
 	el.statDaily.textContent = data.daily;
@@ -470,6 +483,9 @@ async function loadProfile() {
 
 async function loadWorkflows(search = '') {
 	const query = search ? `?q=${encodeURIComponent(search)}` : '';
+	if (el.dailyGrid) el.dailyGrid.innerHTML = '<div class="hud-skeleton h-48 rounded-2xl"></div>';
+	if (el.longTermGrid) el.longTermGrid.innerHTML = '<div class="hud-skeleton h-48 rounded-2xl"></div>';
+	if (el.manageTableBody) el.manageTableBody.innerHTML = '<tr><td colspan="6" class="py-4"><div class="hud-skeleton h-10 rounded-lg"></div></td></tr>';
 	state.workflows = await api(`/api/workflows${query}`);
 	renderCards(el.dailyGrid, state.workflows.filter((w) => w.type === 'Daily'));
 	renderCards(el.longTermGrid, state.workflows.filter((w) => w.type === 'Long-term'));

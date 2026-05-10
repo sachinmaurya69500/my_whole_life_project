@@ -5,11 +5,17 @@
     const newBtn = document.getElementById('newExpenseBtn');
     const cancelBtn = document.getElementById('cancelExpenseBtn');
 
+    function renderLoading(){
+        if (!list) return;
+        list.innerHTML = '<div class="hud-skeleton h-20 rounded-2xl"></div><div class="hud-skeleton h-20 rounded-2xl mt-3"></div>';
+    }
+
     async function load(){
         try{
+            renderLoading();
             const data = await api('/api/expenses');
-            if(!Array.isArray(data)||!data.length){ list.innerHTML = '<p class="text-slate-400">No expenses recorded.</p>'; return; }
-            list.innerHTML = data.map(e=>`<div class="panel flex justify-between items-start"><div><strong>${e.type||'Expense'}</strong><div class="text-sm text-slate-400">${e.vendor||''}</div><div class="text-xs text-slate-400 mt-2">${e.date||''} • ${e.amount} ${e.currency||'USD'}</div></div><div class="flex gap-2"><button data-id="${e._id}" class="del-btn rounded border px-2">Delete</button></div></div>`).join('');
+            if(!Array.isArray(data)||!data.length){ list.innerHTML = '<p class="hud-empty-state">No expenses recorded.</p>'; return; }
+            list.innerHTML = data.map((e, index)=>`<div class="panel flex justify-between items-start hud-reveal hud-sweep" style="transition-delay:${Math.min(index, 8) * 60}ms"><div><strong>${e.type||'Expense'}</strong><div class="text-sm text-slate-400">${e.vendor||''}</div><div class="text-xs text-slate-400 mt-2">${e.date||''} • ${e.amount} ${e.currency||'USD'}</div></div><div class="flex gap-2"><button data-id="${e._id}" class="del-btn btn btn-secondary px-3 py-1.5 text-xs">Delete</button></div></div>`).join('');
             list.querySelectorAll('.del-btn').forEach(b=>b.addEventListener('click', onDelete));
         }catch(err){ console.error(err); }
     }

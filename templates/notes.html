@@ -3,59 +3,64 @@
 {% block title %}Notes - {{ app_name }}{% endblock %}
 
 {% block content %}
-<div class="p-6 max-w-6xl mx-auto">
-    <header class="flex items-center justify-between mb-6">
-        <h2 class="text-2xl font-bold">Notes</h2>
-        <div class="flex gap-2">
-            <button id="newNoteBtn" class="rounded-lg bg-cyan-500 text-slate-950 px-3 py-2 font-semibold">New Note</button>
-            <button id="toggleEditorBtn" class="rounded-lg border border-slate-700 px-3 py-2">Toggle Preview</button>
-        </div>
-    </header>
+<main class="min-h-screen p-4 md:p-8">
+    <div class="max-w-6xl mx-auto space-y-6">
+        <header class="flex flex-wrap items-center justify-between gap-3 panel">
+            <div>
+                <p class="text-xs uppercase tracking-[0.25em] text-slate-400">Jarvis Notebook</p>
+                <h2 class="panel-title text-2xl mb-0">Notes</h2>
+            </div>
+            <div class="flex gap-2">
+                <button id="newNoteBtn" class="btn btn-primary">New Note</button>
+                <button id="toggleEditorBtn" class="btn btn-secondary">Toggle Preview</button>
+            </div>
+        </header>
 
-    <div class="grid md:grid-cols-3 gap-6">
-        <aside class="space-y-3">
-            <div id="notesList" class="space-y-2"></div>
-        </aside>
+        <div class="grid md:grid-cols-3 gap-6">
+            <aside class="space-y-3">
+                <div id="notesList" class="space-y-2"></div>
+            </aside>
 
-        <main class="md:col-span-2">
-            <div id="noteEditor" class="panel p-4">
-                <form id="noteForm">
-                    <input type="hidden" id="noteId" />
-                    <div>
-                        <input id="noteTitle" placeholder="Title" class="w-full rounded-lg border border-slate-700 px-3 py-2 mb-2 text-lg" />
-                    </div>
-                    <div class="mb-3">
-                        <input id="noteTags" placeholder="Tags (comma separated)" class="w-full rounded-lg border border-slate-700 px-3 py-2" />
-                    </div>
-                    <div class="grid md:grid-cols-2 gap-3">
-                        <input id="noteFolder" placeholder="Folder" class="rounded-lg border border-slate-700 px-3 py-2" />
-                        <input id="attachFileInput" type="file" class="rounded-lg" />
-                    </div>
-                    <div class="mt-3">
-                        <textarea id="noteContent" rows="12" class="w-full rounded-lg border border-slate-700 px-3 py-2 font-mono" placeholder="Write markdown here..."></textarea>
-                    </div>
+            <main class="md:col-span-2">
+                <div id="noteEditor" class="panel p-4">
+                    <form id="noteForm">
+                        <input type="hidden" id="noteId" />
+                        <div>
+                            <input id="noteTitle" aria-label="Note title" placeholder="Title" class="w-full rounded-lg border border-slate-700 px-3 py-2 mb-2 text-lg" />
+                        </div>
+                        <div class="mb-3">
+                            <input id="noteTags" aria-label="Note tags" placeholder="Tags (comma separated)" class="w-full rounded-lg border border-slate-700 px-3 py-2" />
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-3">
+                            <input id="noteFolder" aria-label="Note folder" placeholder="Folder" class="rounded-lg border border-slate-700 px-3 py-2" />
+                            <input id="attachFileInput" aria-label="Attach file" type="file" class="rounded-lg" />
+                        </div>
+                        <div class="mt-3">
+                            <textarea id="noteContent" rows="12" class="w-full rounded-lg border border-slate-700 px-3 py-2 font-mono" placeholder="Write markdown here..."></textarea>
+                        </div>
 
                             <div id="templateEditor" class="mt-3 panel p-3 hidden">
                                 <h4 class="font-semibold">Create Template</h4>
-                                <input id="templateName" placeholder="Template name" class="w-full rounded-lg border border-slate-700 px-3 py-2 mt-2" />
+                                <input id="templateName" aria-label="Template name" placeholder="Template name" class="w-full rounded-lg border border-slate-700 px-3 py-2 mt-2" />
                                 <textarea id="templateContent" rows="6" class="w-full rounded-lg border border-slate-700 px-3 py-2 mt-2" placeholder="Template markdown..."></textarea>
                                 <div class="flex justify-end gap-2 mt-2"><button id="saveTemplateBtn" type="button" class="rounded-lg bg-cyan-500 text-slate-950 px-3 py-2">Save Template</button></div>
                             </div>
-                    <div class="flex justify-end gap-2 mt-3">
-                        <button id="cancelNoteBtn" type="button" class="rounded-lg border border-slate-700 px-3 py-2">Cancel</button>
-                        <button type="submit" class="rounded-lg bg-cyan-500 text-slate-950 px-3 py-2">Save Note</button>
-                    </div>
-                </form>
-            </div>
+                        <div class="flex justify-end gap-2 mt-3">
+                            <button id="cancelNoteBtn" type="button" class="btn btn-secondary">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Note</button>
+                        </div>
+                    </form>
+                </div>
 
-            <div id="notePreview" class="panel p-4 mt-4 hidden">
-                <h3 id="previewTitle" class="text-xl font-semibold"></h3>
-                <div id="previewContent" class="prose max-w-none text-slate-200 mt-2"></div>
-                <div id="attachmentsArea" class="mt-3 text-sm text-slate-400"></div>
-            </div>
-        </main>
+                <div id="notePreview" class="panel p-4 mt-4 hidden">
+                    <h3 id="previewTitle" class="text-xl font-semibold"></h3>
+                    <div id="previewContent" class="prose max-w-none text-slate-200 mt-2"></div>
+                    <div id="attachmentsArea" class="mt-3 text-sm text-slate-400"></div>
+                </div>
+            </main>
+        </div>
     </div>
-</div>
+</main>
 {% endblock %}
 
 {% block scripts %}
