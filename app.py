@@ -94,6 +94,8 @@ tasks_col = db["tasks"]
 contacts_col = db["contacts"]
 expenses_col = db["expenses"]
 reminders_col = db["reminders"]
+notes_col = db["notes"]
+templates_col = db["templates"]
 
 
 def login_required(fn):
@@ -168,6 +170,19 @@ def reminder_to_json(doc):
 		"due_date": due.isoformat() if due else "",
 		"repeat_minutes": int(doc.get("repeat_minutes", 0)),
 		"status": doc.get("status", "Pending"),
+		"created_at": doc.get("created_at").isoformat() if doc.get("created_at") else "",
+		"updated_at": doc.get("updated_at").isoformat() if doc.get("updated_at") else "",
+	}
+
+
+def note_to_json(doc):
+	return {
+		"_id": str(doc.get("_id")),
+		"title": doc.get("title", ""),
+		"content": doc.get("content", ""),
+		"tags": doc.get("tags", []),
+		"folder": doc.get("folder", ""),
+		"attachment_file_ids": [str(fid) for fid in (doc.get("attachment_file_ids") or [])],
 		"created_at": doc.get("created_at").isoformat() if doc.get("created_at") else "",
 		"updated_at": doc.get("updated_at").isoformat() if doc.get("updated_at") else "",
 	}
@@ -1533,6 +1548,74 @@ def list_events():
 	return jsonify([event_to_json(d) for d in docs])
 
 
+@app.route('/api/events', methods=['POST'])
+@login_required
+def create_event():
+	data = request.get_json(silent=True) or {}
+	title = (data.get('title') or '').strip()
+	if not title:
+		return jsonify({'error': 'Title is required'}), 400
+	start_at = parse_event_datetime(data.get('start_at') or '')
+	end_at = parse_event_datetime(data.get('end_at') or '')
+	now = utc_now()
+	doc = {
+		'title': title,
+		'description': (data.get('description') or '').strip(),
+		'location': (data.get('location') or '').strip(),
+		'category': (data.get('category') or 'Personal').strip(),
+		'status': (data.get('status') or 'Planned').strip(),
+		'all_day': bool(data.get('all_day', False)),
+		'reminder_minutes': int(data.get('reminder_minutes') or 0),
+		'start_at': start_at,
+		'end_at': end_at,
+		'created_at': now,
+		'updated_at': now,
+	}
+	res = events_col.insert_one(doc)
+	created = events_col.find_one({'_id': res.inserted_id})
+	return jsonify(event_to_json(created)), 201
+
+
+@app.route('/api/events/<event_id>', methods=['PUT'])
+@login_required
+def update_event(event_id):
+	obj_id = to_object_id(event_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid id'}), 400
+	data = request.get_json(silent=True) or {}
+	update = {}
+	if 'title' in data:
+		update['title'] = (data.get('title') or '').strip()
+	if 'description' in data:
+		update['description'] = (data.get('description') or '').strip()
+	if 'start_at' in data:
+		update['start_at'] = parse_event_datetime(data.get('start_at') or '')
+	if 'end_at' in data:
+		update['end_at'] = parse_event_datetime(data.get('end_at') or '')
+	if 'all_day' in data:
+		update['all_day'] = bool(data.get('all_day'))
+	if 'status' in data:
+		update['status'] = (data.get('status') or '').strip()
+	if not update:
+		return jsonify({'error': 'No valid fields provided'}), 400
+	update['updated_at'] = utc_now()
+	events_col.update_one({'_id': obj_id}, {'$set': update})
+	updated = events_col.find_one({'_id': obj_id})
+	if not updated:
+		return jsonify({'error': 'Event not found'}), 404
+	return jsonify(event_to_json(updated))
+
+
+@app.route('/api/events/<event_id>', methods=['DELETE'])
+@login_required
+def delete_event(event_id):
+	obj_id = to_object_id(event_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid id'}), 400
+	events_col.delete_one({'_id': obj_id})
+	return jsonify({'message': 'Event deleted'})
+
+
 @app.route('/reminders')
 @page_login_required
 def reminders_page():
@@ -1627,6 +1710,167 @@ def due_reminders():
 		except Exception:
 			pass
 	return jsonify(out)
+
+
+@app.route('/notes')
+@page_login_required
+def notes_page():
+	return render_template('notes.html', app_name='Sachin Workflow Manager')
+
+
+@app.route('/api/notes', methods=['GET'])
+@login_required
+def list_notes():
+	docs = list(notes_col.find({}).sort('updated_at', -1))
+	return jsonify([note_to_json(d) for d in docs])
+
+
+@app.route('/api/notes', methods=['POST'])
+@login_required
+def create_note():
+	data = request.get_json(silent=True) or {}
+	title = (data.get('title') or '').strip()
+	content = (data.get('content') or '').strip()
+	tags = data.get('tags') if isinstance(data.get('tags'), list) else []
+	folder = (data.get('folder') or '').strip()
+	now = utc_now()
+	doc = {
+		'title': title,
+		'content': content,
+		'tags': tags,
+		'folder': folder,
+		'attachment_file_ids': [],
+		'created_at': now,
+		'updated_at': now,
+	}
+	res = notes_col.insert_one(doc)
+	created = notes_col.find_one({'_id': res.inserted_id})
+	return jsonify(note_to_json(created)), 201
+
+
+@app.route('/api/notes/<note_id>', methods=['GET'])
+@login_required
+def get_note(note_id):
+	obj_id = to_object_id(note_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid id'}), 400
+	doc = notes_col.find_one({'_id': obj_id})
+	if not doc:
+		return jsonify({'error': 'Note not found'}), 404
+	return jsonify(note_to_json(doc))
+
+
+@app.route('/api/notes/<note_id>', methods=['PUT'])
+@login_required
+def update_note(note_id):
+	obj_id = to_object_id(note_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid id'}), 400
+	data = request.get_json(silent=True) or {}
+	update = {}
+	if 'title' in data:
+		update['title'] = (data.get('title') or '').strip()
+	if 'content' in data:
+		update['content'] = (data.get('content') or '').strip()
+	if 'tags' in data and isinstance(data.get('tags'), list):
+		update['tags'] = data.get('tags')
+	if 'folder' in data:
+		update['folder'] = (data.get('folder') or '').strip()
+	if not update:
+		return jsonify({'error': 'No valid fields provided'}), 400
+	update['updated_at'] = utc_now()
+	notes_col.update_one({'_id': obj_id}, {'$set': update})
+	updated = notes_col.find_one({'_id': obj_id})
+	if not updated:
+		return jsonify({'error': 'Note not found'}), 404
+	return jsonify(note_to_json(updated))
+
+
+@app.route('/api/notes/<note_id>', methods=['DELETE'])
+@login_required
+def delete_note(note_id):
+	obj_id = to_object_id(note_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid id'}), 400
+	notes_col.delete_one({'_id': obj_id})
+	return jsonify({'message': 'Note deleted'})
+
+
+@app.route('/api/notes/<note_id>/attachments', methods=['POST'])
+@login_required
+def upload_note_attachment(note_id):
+	obj_id = to_object_id(note_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid id'}), 400
+	note = notes_col.find_one({'_id': obj_id})
+	if not note:
+		return jsonify({'error': 'Note not found'}), 404
+	file = request.files.get('file')
+	if not file:
+		return jsonify({'error': 'No file uploaded'}), 400
+	filename = secure_filename(file.filename or 'attachment')
+	content_type = file.mimetype or 'application/octet-stream'
+	new_file_id = fs_bucket.upload_from_stream(filename, file.stream, metadata={'contentType': content_type, 'owner': str(session.get('user_id')), 'kind': 'note'})
+	notes_col.update_one({'_id': obj_id}, {'$push': {'attachment_file_ids': new_file_id}, '$set': {'updated_at': utc_now()}})
+	updated = notes_col.find_one({'_id': obj_id})
+	return jsonify(note_to_json(updated))
+
+
+@app.route('/api/templates', methods=['GET'])
+@login_required
+def list_templates():
+	docs = list(templates_col.find({}).sort('updated_at', -1))
+	out = []
+	for d in docs:
+		out.append({'_id': str(d.get('_id')), 'name': d.get('name',''), 'content': d.get('content',''), 'created_at': d.get('created_at').isoformat() if d.get('created_at') else '', 'updated_at': d.get('updated_at').isoformat() if d.get('updated_at') else ''})
+	return jsonify(out)
+
+
+@app.route('/api/templates', methods=['POST'])
+@login_required
+def create_template():
+	data = request.get_json(silent=True) or {}
+	name = (data.get('name') or '').strip()
+	content = (data.get('content') or '').strip()
+	if not name:
+		return jsonify({'error': 'Name is required'}), 400
+	now = utc_now()
+	doc = {'name': name, 'content': content, 'created_at': now, 'updated_at': now}
+	res = templates_col.insert_one(doc)
+	created = templates_col.find_one({'_id': res.inserted_id})
+	return jsonify({'_id': str(created['_id']), 'name': created.get('name',''), 'content': created.get('content','')}), 201
+
+
+@app.route('/api/templates/<template_id>', methods=['PUT'])
+@login_required
+def update_template(template_id):
+	obj_id = to_object_id(template_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid id'}), 400
+	data = request.get_json(silent=True) or {}
+	update = {}
+	if 'name' in data:
+		update['name'] = (data.get('name') or '').strip()
+	if 'content' in data:
+		update['content'] = (data.get('content') or '').strip()
+	if not update:
+		return jsonify({'error': 'No valid fields provided'}), 400
+	update['updated_at'] = utc_now()
+	templates_col.update_one({'_id': obj_id}, {'$set': update})
+	updated = templates_col.find_one({'_id': obj_id})
+	if not updated:
+		return jsonify({'error': 'Template not found'}), 404
+	return jsonify({'_id': str(updated['_id']), 'name': updated.get('name',''), 'content': updated.get('content','')})
+
+
+@app.route('/api/templates/<template_id>', methods=['DELETE'])
+@login_required
+def delete_template(template_id):
+	obj_id = to_object_id(template_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid id'}), 400
+	templates_col.delete_one({'_id': obj_id})
+	return jsonify({'message': 'Template deleted'})
 
 
 @app.route("/image/<file_id>")

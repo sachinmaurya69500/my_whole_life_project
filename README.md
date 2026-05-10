@@ -75,12 +75,14 @@ Login behavior:
 ## 4) Run the App
 
 ```bash
+export MONGO_URI="your-mongo-uri"
+export MONGO_DB_NAME="your-db"
+export APP_EMAIL="you@example.com"
+export APP_PASSWORD="secret"
 python app.py
 ```
 
-Open:
-
-- `http://127.0.0.1:5000/login`
+Open: `http://127.0.0.1:5000/login`
 
 Default login:
 
