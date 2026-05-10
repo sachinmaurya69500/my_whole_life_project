@@ -696,38 +696,56 @@ if (el.chatForm) {
 	});
 }
 
-el.navButtons.forEach((btn) => {
-	btn.addEventListener('click', () => {
-		setActiveSection(btn.dataset.section);
-		el.sidebar.classList.add('-translate-x-full');
+if (el.navButtons) {
+	el.navButtons.forEach((btn) => {
+		btn.addEventListener('click', () => {
+			setActiveSection(btn.dataset.section);
+			if (el.sidebar) el.sidebar.classList.add('-translate-x-full');
+			if (el.mobileBackdrop) el.mobileBackdrop.classList.add('hidden');
+		});
+	});
+}
+
+if (el.mobileNavButtons) {
+	el.mobileNavButtons.forEach((btn) => {
+		btn.addEventListener('click', () => {
+			setActiveSection(btn.dataset.section);
+		});
+	});
+}
+
+if (el.menuToggle) {
+	el.menuToggle.addEventListener('click', () => {
+		if (el.sidebar) el.sidebar.classList.toggle('-translate-x-full');
+		if (el.mobileBackdrop) el.mobileBackdrop.classList.toggle('hidden');
+	});
+}
+
+if (el.mobileBackdrop) {
+	el.mobileBackdrop.addEventListener('click', () => {
+		if (el.sidebar) el.sidebar.classList.add('-translate-x-full');
 		el.mobileBackdrop.classList.add('hidden');
 	});
-});
+}
 
-el.mobileNavButtons.forEach((btn) => {
-	btn.addEventListener('click', () => {
-		setActiveSection(btn.dataset.section);
+if (el.wfProgress && el.wfProgressValue) {
+	el.wfProgress.addEventListener('input', () => {
+		el.wfProgressValue.textContent = `${el.wfProgress.value}%`;
 	});
-});
+}
 
-el.menuToggle.addEventListener('click', () => {
-	el.sidebar.classList.toggle('-translate-x-full');
-	el.mobileBackdrop.classList.toggle('hidden');
-});
-
-el.mobileBackdrop.addEventListener('click', () => {
-	el.sidebar.classList.add('-translate-x-full');
-	el.mobileBackdrop.classList.add('hidden');
-});
-
-el.wfProgress.addEventListener('input', () => {
-	el.wfProgressValue.textContent = `${el.wfProgress.value}%`;
-});
-
-el.openAddModalBtn.addEventListener('click', () => openModal());
-el.closeModalBtn.addEventListener('click', closeModal);
-el.cancelModalBtn.addEventListener('click', closeModal);
-el.modalBackdrop.addEventListener('click', closeModal);
+if (el.openAddModalBtn) {
+	el.openAddModalBtn.addEventListener('click', () => openModal());
+}
+if (el.closeModalBtn) {
+	el.closeModalBtn.addEventListener('click', closeModal);
+}
+if (el.cancelModalBtn) {
+	el.cancelModalBtn.addEventListener('click', closeModal);
+}
+if (el.modalBackdrop) {
+	el.modalBackdrop.addEventListener('click', closeModal);
+}
 
 if (el.openAddSiteModalBtn) {
 	el.openAddSiteModalBtn.addEventListener('click', () => openTrackedSiteModal());
@@ -742,77 +760,85 @@ if (el.siteModalBackdrop) {
 	el.siteModalBackdrop.addEventListener('click', closeTrackedSiteModal);
 }
 
-el.workflowForm.addEventListener('submit', async (e) => {
-	e.preventDefault();
+if (el.workflowForm) {
+	el.workflowForm.addEventListener('submit', async (e) => {
+		e.preventDefault();
 
-	const payload = {
-		title: el.wfTitle.value.trim(),
-		type: el.wfType.value,
-		description: el.wfDescription.value.trim(),
-		progress: Number(el.wfProgress.value || 0),
-		status: el.wfStatus.value,
-		start_date: el.wfStartDate.value,
-		due_date: el.wfDueDate.value,
-		notes: el.wfNotes.value.trim(),
-	};
+		const payload = {
+			title: el.wfTitle.value.trim(),
+			type: el.wfType.value,
+			description: el.wfDescription.value.trim(),
+			progress: Number(el.wfProgress.value || 0),
+			status: el.wfStatus.value,
+			start_date: el.wfStartDate.value,
+			due_date: el.wfDueDate.value,
+			notes: el.wfNotes.value.trim(),
+		};
 
-	try {
-		let workflow;
-		if (el.workflowId.value) {
-			workflow = await api(`/api/workflows/${el.workflowId.value}`, {
-				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(payload),
-			});
-		} else {
-			workflow = await api('/api/workflows', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(payload),
-			});
+		try {
+			let workflow;
+			if (el.workflowId.value) {
+				workflow = await api(`/api/workflows/${el.workflowId.value}`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(payload),
+				});
+			} else {
+				workflow = await api('/api/workflows', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(payload),
+				});
+			}
+
+			if (state.selectedFiles.length) {
+				await uploadWorkflowPhotos(workflow._id, state.selectedFiles);
+			}
+
+			showToast('Workflow saved');
+			closeModal();
+			await loadAll();
+		} catch (err) {
+			showToast(err.message, 'error');
 		}
+	});
+}
 
-		if (state.selectedFiles.length) {
-			await uploadWorkflowPhotos(workflow._id, state.selectedFiles);
-		}
+if (el.wfPhotos) {
+	el.wfPhotos.addEventListener('change', (e) => {
+		const firstFile = e.target.files && e.target.files[0] ? [e.target.files[0]] : [];
+		state.selectedFiles = firstFile;
+		refreshSelectedFilesLabel();
+	});
+}
 
-		showToast('Workflow saved');
-		closeModal();
-		await loadAll();
-	} catch (err) {
-		showToast(err.message, 'error');
-	}
-});
+if (el.dropZone) {
+	el.dropZone.addEventListener('dragover', (e) => {
+		e.preventDefault();
+		el.dropZone.classList.add('drag-active');
+	});
 
-el.wfPhotos.addEventListener('change', (e) => {
-	const firstFile = e.target.files && e.target.files[0] ? [e.target.files[0]] : [];
-	state.selectedFiles = firstFile;
-	refreshSelectedFilesLabel();
-});
+	el.dropZone.addEventListener('dragleave', () => {
+		el.dropZone.classList.remove('drag-active');
+	});
 
-el.dropZone.addEventListener('dragover', (e) => {
-	e.preventDefault();
-	el.dropZone.classList.add('drag-active');
-});
+	el.dropZone.addEventListener('drop', (e) => {
+		e.preventDefault();
+		el.dropZone.classList.remove('drag-active');
+		const files = [...(e.dataTransfer.files || [])].filter((f) => f.type.startsWith('image/'));
+		state.selectedFiles = files.length ? [files[0]] : [];
+		refreshSelectedFilesLabel();
+	});
+}
 
-el.dropZone.addEventListener('dragleave', () => {
-	el.dropZone.classList.remove('drag-active');
-});
-
-el.dropZone.addEventListener('drop', (e) => {
-	e.preventDefault();
-	el.dropZone.classList.remove('drag-active');
-	const files = [...(e.dataTransfer.files || [])].filter((f) => f.type.startsWith('image/'));
-	state.selectedFiles = files.length ? [files[0]] : [];
-	refreshSelectedFilesLabel();
-});
-
-el.manageSearch.addEventListener('input', async (e) => {
-	const search = e.target.value.trim();
-	const query = search ? `?q=${encodeURIComponent(search)}` : '';
-	const workflows = await api(`/api/workflows${query}`);
-	renderManageTable(workflows);
-});
+if (el.manageSearch) {
+	el.manageSearch.addEventListener('input', async (e) => {
+		const search = e.target.value.trim();
+		const query = search ? `?q=${encodeURIComponent(search)}` : '';
+		const workflows = await api(`/api/workflows${query}`);
+		renderManageTable(workflows);
+	});
+}
 
 if (el.siteSearch) {
 	el.siteSearch.addEventListener('input', async (e) => {
@@ -823,41 +849,47 @@ if (el.siteSearch) {
 	});
 }
 
-el.profileForm.addEventListener('submit', async (e) => {
-	e.preventDefault();
-	await api('/api/profile', {
-		method: 'PUT',
-		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({
-			display_name: el.profileName.value.trim(),
-			location: el.profileLocation.value.trim(),
-			bio: el.profileBio.value.trim(),
-		}),
+if (el.profileForm) {
+	el.profileForm.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		await api('/api/profile', {
+			method: 'PUT',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				display_name: el.profileName.value.trim(),
+				location: el.profileLocation.value.trim(),
+				bio: el.profileBio.value.trim(),
+			}),
+		});
+		showToast('Profile updated');
+		await loadProfile();
 	});
-	showToast('Profile updated');
-	await loadProfile();
-});
+}
 
-el.uploadProfileBtn.addEventListener('click', async () => {
-	const file = el.profilePhotoInput.files[0];
-	if (!file) {
-		showToast('Please select an image first', 'error');
-		return;
-	}
-	const fd = new FormData();
-	fd.append('photo', file);
-	await api('/api/profile/photo', {
-		method: 'POST',
-		body: fd,
+if (el.uploadProfileBtn) {
+	el.uploadProfileBtn.addEventListener('click', async () => {
+		const file = el.profilePhotoInput.files[0];
+		if (!file) {
+			showToast('Please select an image first', 'error');
+			return;
+		}
+		const fd = new FormData();
+		fd.append('photo', file);
+		await api('/api/profile/photo', {
+			method: 'POST',
+			body: fd,
+		});
+		showToast('Profile photo updated');
+		await loadProfile();
 	});
-	showToast('Profile photo updated');
-	await loadProfile();
-});
+}
 
-el.logoutBtn.addEventListener('click', async () => {
-	await api('/logout', { method: 'POST' });
-	window.location.href = '/login';
-});
+if (el.logoutBtn) {
+	el.logoutBtn.addEventListener('click', async () => {
+		await api('/logout', { method: 'POST' });
+		window.location.href = '/login';
+	});
+}
 
 if (el.siteForm) {
 	el.siteForm.addEventListener('submit', async (e) => {
