@@ -619,8 +619,14 @@ def update_password():
 	if len(new_password) < 6:
 		return jsonify({"error": "Password must be at least 6 characters"}), 400
 
-	users_col.update_one(
-		{"_id": user_id},
+	user = users_col.find_one({"_id": user_id}) if user_id else None
+	if not user and session.get("email"):
+		user = users_col.find_one({"email": normalize_email(session["email"])} )
+	if not user:
+		return jsonify({"error": "User not found"}), 404
+
+	result = users_col.update_one(
+		{"_id": user["_id"]},
 		{
 			"$set": {
 				"password_hash": generate_password_hash(new_password),
@@ -629,6 +635,9 @@ def update_password():
 			}
 		},
 	)
+	if result.matched_count == 0:
+		return jsonify({"error": "Password reset failed"}), 500
+
 	return jsonify({"message": "Password updated successfully"})
 
 
