@@ -64,6 +64,11 @@ body {
 	color: var(--body-text);
 }
 
+/* Ensure form inputs and textareas use readable color in both themes */
+input, textarea, select {
+	color: var(--body-text);
+}
+
 .theme-toggle {
 	position: fixed;
 	top: 1rem;

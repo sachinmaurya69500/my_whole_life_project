@@ -21,9 +21,10 @@
     }
 
     async function load(){
-        const res = await fetch('/api/events', {credentials:'same-origin'});
-        const events = await res.json();
-        render(events);
+        try{
+            const events = await api('/api/events');
+            render(events);
+        }catch(err){ console.error(err); showToast(err.message || 'Unable to load events', 'error'); }
     }
 
     // Drop target: container; when user drops, prompt for new datetime
@@ -36,10 +37,10 @@
         if(!newStart) return;
         // naive: keep same duration
         try{
-            const res = await fetch(`/api/events/${id}`, {method:'PUT', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body:JSON.stringify({start_at:newStart})});
-            if(!res.ok) throw new Error('Failed to move');
+            await api(`/api/events/${id}`, { method: 'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify({start_at:newStart}) });
+            showToast('Event rescheduled');
             await load();
-        }catch(err){ alert('Unable to reschedule event'); }
+        }catch(err){ console.error(err); showToast(err.message || 'Unable to reschedule event', 'error'); }
     });
 
     // Time-block creation: double-click to create
@@ -50,10 +51,10 @@
         if(!start) return;
         const end = prompt('End datetime (YYYY-MM-DDThh:mm)');
         try{
-            const res = await fetch('/api/events', {method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body:JSON.stringify({title, start_at:start, end_at:end})});
-            if(!res.ok) throw new Error('Create failed');
+            await api('/api/events', { method: 'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({title, start_at:start, end_at:end}) });
+            showToast('Time block created');
             await load();
-        }catch(err){ alert('Unable to create block'); }
+        }catch(err){ console.error(err); showToast(err.message || 'Unable to create block', 'error'); }
     });
 
     load();

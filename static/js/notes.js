@@ -27,12 +27,11 @@
 
     async function load(){
         try{
-            const res = await fetch('/api/notes', {credentials:'same-origin'});
-            const data = await res.json();
+            const data = await api('/api/notes');
             if(!Array.isArray(data)||!data.length){ list.innerHTML = '<p class="text-slate-400">No notes yet.</p>'; return; }
             list.innerHTML = data.map(n=>`<button class="w-full text-left panel p-3 note-item" data-id="${n._id}"><strong>${n.title||'Untitled'}</strong><div class="text-xs text-slate-400">${(n.tags||[]).join(', ')}</div></button>`).join('');
             document.querySelectorAll('.note-item').forEach(b=>b.addEventListener('click', onOpen));
-        }catch(err){ console.error(err); }
+        }catch(err){ console.error(err); showToast(err.message || 'Unable to load notes', 'error'); }
     }
 
     function resetForm(){
@@ -51,9 +50,7 @@
     async function onOpen(e){
         const id = e.currentTarget.dataset.id;
         try{
-            const res = await fetch(`/api/notes/${id}`, {credentials:'same-origin'});
-            if(!res.ok) return;
-            const n = await res.json();
+            const n = await api(`/api/notes/${id}`);
             document.getElementById('noteId').value = n._id;
             document.getElementById('noteTitle').value = n.title||'';
             document.getElementById('noteTags').value = (n.tags||[]).join(',');
@@ -73,25 +70,39 @@
     // Templates integration
     async function loadTemplates(){
         try{
-            const res = await fetch('/api/templates', {credentials:'same-origin'});
-            const t = await res.json();
+            const t = await api('/api/templates');
             const area = document.createElement('div');
             area.className = 'mt-3';
-            area.innerHTML = '<h4 class="font-semibold">Templates</h4>' + (Array.isArray(t) && t.length ? t.map(x=>`<div class="text-sm"><button data-id="${x._id}" class="apply-template text-cyan-300">${x.name}</button></div>`).join('') : '<div class="text-slate-400">No templates</div>');
+            area.innerHTML = '<h4 class="font-semibold">Templates</h4>';
+            const listWrap = document.createElement('div');
+            listWrap.className = 'space-y-1';
+            if(Array.isArray(t) && t.length){
+                t.forEach((x)=>{
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'apply-template text-cyan-300 text-sm';
+                    btn.dataset.id = x._id;
+                    btn.dataset.content = x.content || '';
+                    btn.textContent = x.name || 'Template';
+                    const row = document.createElement('div');
+                    row.className = 'text-sm';
+                    row.appendChild(btn);
+                    listWrap.appendChild(row);
+                });
+            } else {
+                listWrap.innerHTML = '<div class="text-slate-400">No templates</div>';
+            }
+            area.appendChild(listWrap);
             const editor = document.getElementById('noteEditor');
             const existing = document.getElementById('templateArea');
             if(existing) existing.remove();
             area.id = 'templateArea';
             editor.prepend(area);
-            area.querySelectorAll('.apply-template').forEach(b=>b.addEventListener('click', async (ev)=>{
-                const id = ev.currentTarget.dataset.id;
-                const res = await fetch('/api/templates', {credentials:'same-origin'});
-                const all = await res.json();
-                const tpl = all.find(x=>x._id===id);
-                if(!tpl) return;
-                document.getElementById('noteContent').value = tpl.content || document.getElementById('noteContent').value;
+            area.querySelectorAll('.apply-template').forEach(b=>b.addEventListener('click', (ev)=>{
+                const content = ev.currentTarget.dataset.content || '';
+                document.getElementById('noteContent').value = content || document.getElementById('noteContent').value;
             }));
-        }catch(err){console.error(err)}
+        }catch(err){console.error(err);}
     }
 
     await loadTemplates();
@@ -105,19 +116,18 @@
             tags: document.getElementById('noteTags').value.split(',').map(s=>s.trim()).filter(Boolean),
             folder: document.getElementById('noteFolder').value.trim(),
         };
-        const url = id? `/api/notes/${id}` : '/api/notes';
-        const method = id? 'PUT' : 'POST';
-        const res = await fetch(url, {method, headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload), credentials:'same-origin'});
-        if(!res.ok){ alert('Save failed'); return; }
-        const saved = await res.json();
-        // upload attachment if file selected
-        const fileInput = document.getElementById('attachFileInput');
-        if(fileInput.files && fileInput.files[0]){
-            const fd = new FormData(); fd.append('file', fileInput.files[0]);
-            await fetch(`/api/notes/${saved._id}/attachments`, {method:'POST', body:fd, credentials:'same-origin'});
-        }
-        await load();
-        resetForm();
+        try{
+            const saved = await api(id? `/api/notes/${id}` : '/api/notes', { method: id? 'PUT' : 'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+            // upload attachment if file selected
+            const fileInput = document.getElementById('attachFileInput');
+            if(fileInput.files && fileInput.files[0]){
+                const fd = new FormData(); fd.append('file', fileInput.files[0]);
+                await api(`/api/notes/${saved._id}/attachments`, { method: 'POST', body: fd });
+            }
+            await load();
+            resetForm();
+            showToast('Note saved');
+        }catch(err){ console.error(err); showToast(err.message || 'Save failed', 'error'); }
     });
 
     // Template creation handlers
@@ -127,13 +137,15 @@
     saveTemplateBtn.addEventListener('click', async ()=>{
         const name = document.getElementById('templateName').value.trim();
         const content = document.getElementById('templateContent').value;
-        if(!name) return alert('Template name required');
-        const res = await fetch('/api/templates', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name, content}), credentials:'same-origin'});
-        if(!res.ok) return alert('Failed to save template');
-        document.getElementById('templateName').value='';
-        document.getElementById('templateContent').value='';
-        templateEditor.classList.add('hidden');
-        await loadTemplates();
+        if(!name) return showToast('Template name required', 'error');
+        try{
+            await api('/api/templates', { method: 'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name, content}) });
+            document.getElementById('templateName').value='';
+            document.getElementById('templateContent').value='';
+            templateEditor.classList.add('hidden');
+            await loadTemplates();
+            showToast('Template saved');
+        }catch(err){ console.error(err); showToast(err.message || 'Failed to save template', 'error'); }
     });
 
     await load();

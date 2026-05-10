@@ -7,8 +7,7 @@
 
     async function load(){
         try{
-            const res = await fetch('/api/expenses', {credentials:'same-origin'});
-            const data = await res.json();
+            const data = await api('/api/expenses');
             if(!Array.isArray(data)||!data.length){ list.innerHTML = '<p class="text-slate-400">No expenses recorded.</p>'; return; }
             list.innerHTML = data.map(e=>`<div class="panel flex justify-between items-start"><div><strong>${e.type||'Expense'}</strong><div class="text-sm text-slate-400">${e.vendor||''}</div><div class="text-xs text-slate-400 mt-2">${e.date||''} • ${e.amount} ${e.currency||'USD'}</div></div><div class="flex gap-2"><button data-id="${e._id}" class="del-btn rounded border px-2">Delete</button></div></div>`).join('');
             list.querySelectorAll('.del-btn').forEach(b=>b.addEventListener('click', onDelete));
@@ -23,8 +22,11 @@
     async function onDelete(e){
         const id = e.currentTarget.dataset.id;
         if(!confirm('Delete this expense?')) return;
-        await fetch(`/api/expenses/${id}`, {method:'DELETE', credentials:'same-origin'});
-        await load();
+        try{
+            await api(`/api/expenses/${id}`, { method: 'DELETE' });
+            showToast('Expense deleted');
+            await load();
+        }catch(err){ console.error(err); showToast(err.message || 'Delete failed', 'error'); }
     }
 
     form.addEventListener('submit', async (ev)=>{
@@ -37,11 +39,12 @@
             vendor: document.getElementById('expenseVendor').value.trim(),
             notes: document.getElementById('expenseNotes').value.trim(),
         };
-        const opts = {method: 'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload), credentials:'same-origin'};
-        const res = await fetch('/api/expenses', opts);
-        if(!res.ok){ alert('Save failed'); return; }
-        hideForm();
-        await load();
+        try{
+            await api('/api/expenses', { method: 'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+            hideForm();
+            showToast('Expense saved');
+            await load();
+        }catch(err){ console.error(err); showToast(err.message || 'Save failed', 'error'); }
     });
 
     await load();

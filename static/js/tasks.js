@@ -9,8 +9,7 @@
 
     async function load(){
         try{
-            const res = await fetch('/api/tasks', {credentials:'same-origin'});
-            const data = await res.json();
+            const data = await api('/api/tasks');
             if(!Array.isArray(data)||!data.length){ list.innerHTML = '<p class="text-slate-400">No tasks yet.</p>'; return; }
             list.innerHTML = data.map(t=>`<div class="panel flex justify-between items-start"><div><strong>${t.title}</strong><div class="text-sm text-slate-400">${t.description||''}</div><div class="text-xs text-slate-400 mt-2">Priority: ${t.priority} • Status: ${t.status} • Due: ${t.due_date||'—'}</div></div><div class="flex gap-2"><button data-id="${t._id}" class="edit-btn rounded border px-2">Edit</button><button data-id="${t._id}" class="del-btn rounded border px-2">Delete</button></div></div>`).join('');
             list.querySelectorAll('.edit-btn').forEach(b=>b.addEventListener('click', onEdit));
@@ -26,8 +25,7 @@
     async function onEdit(e){
         const id = e.currentTarget.dataset.id;
         try{
-            const res = await fetch(`/api/tasks` , {credentials:'same-origin'});
-            const all = await res.json();
+            const all = await api('/api/tasks');
             const t = all.find(x=>x._id===id);
             if(!t) return;
             document.getElementById('taskId').value = t._id;
@@ -42,8 +40,11 @@
     async function onDelete(e){
         const id = e.currentTarget.dataset.id;
         if(!confirm('Delete this task?')) return;
-        await fetch(`/api/tasks/${id}`, {method:'DELETE', credentials:'same-origin'});
-        await load();
+        try{
+            await api(`/api/tasks/${id}`, { method: 'DELETE' });
+            showToast('Task deleted');
+            await load();
+        }catch(err){ console.error(err); showToast(err.message || 'Delete failed', 'error'); }
     }
 
     form.addEventListener('submit', async (ev)=>{
@@ -56,12 +57,12 @@
             status: document.getElementById('taskStatus').value,
             due_date: document.getElementById('taskDueDate').value,
         };
-        const opts = {method: id? 'PUT':'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload), credentials:'same-origin'};
-        const url = id? `/api/tasks/${id}` : '/api/tasks';
-        const res = await fetch(url, opts);
-        if(!res.ok){ alert('Save failed'); return; }
-        hideForm();
-        await load();
+        try{
+            await api(id? `/api/tasks/${id}` : '/api/tasks', { method: id? 'PUT' : 'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+            hideForm();
+            showToast('Task saved');
+            await load();
+        }catch(err){ console.error(err); showToast(err.message || 'Save failed', 'error'); }
     });
 
     await load();
