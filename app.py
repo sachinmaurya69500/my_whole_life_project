@@ -825,6 +825,12 @@ def calendar_page():
 	return render_template('calendar.html', app_name='Sachin Workflow Manager')
 
 
+@app.route('/my-research')
+@page_login_required
+def my_research_page():
+	return render_template('my_research.html', app_name='Sachin Workflow Manager')
+
+
 @app.route("/api/profile", methods=["GET"])
 @login_required
 def get_profile():

@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}MY RESEARCH - {{ app_name }}{% endblock %}
+
+{% block content %}
+<main class="min-h-screen p-4 md:p-8">
+	<div class="max-w-7xl mx-auto space-y-6">
+		<header class="spacex-page-header">
+			<div class="min-w-0">
+				<div class="spacex-page-kicker">Knowledge Ops</div>
+				<h2 class="spacex-page-title">MY RESEARCH</h2>
+				<p class="spacex-page-subtitle">A dedicated research portal with its own home, dashboard, and tracking workspace.</p>
+			</div>
+			<div class="spacex-header-actions">
+				<a href="/home" class="btn btn-secondary px-4 py-2 font-semibold text-sm whitespace-nowrap">
+					<i class="fa-solid fa-arrow-left mr-2"></i>Back to Dashboard
+				</a>
+				<button id="openAddSiteModalBtn" class="btn btn-primary px-4 py-2 font-semibold text-sm whitespace-nowrap">
+					<i class="fa-solid fa-plus mr-2"></i>Add Website
+				</button>
+			</div>
+		</header>
+
+		<section class="panel !py-3">
+			<div class="flex flex-wrap gap-2">
+				<button class="research-nav-btn active rounded-lg border border-cyan-700 bg-cyan-900/20 px-3 py-1.5 text-sm" data-section="home">Home</button>
+				<button class="research-nav-btn rounded-lg border border-slate-700 px-3 py-1.5 text-sm hover:bg-slate-800 transition" data-section="board">Research Board</button>
+				<button class="research-nav-btn rounded-lg border border-slate-700 px-3 py-1.5 text-sm hover:bg-slate-800 transition" data-section="about">About Portal</button>
+			</div>
+		</section>
+
+		<section id="portalHomeSection" class="portal-section space-y-4">
+			<div class="grid gap-4 sm:grid-cols-3">
+				<article class="stat-card"><p>Total Sources</p><h3 id="rsStatTotal">0</h3></article>
+				<article class="stat-card"><p>Active</p><h3 id="rsStatActive">0</h3></article>
+				<article class="stat-card"><p>Paused</p><h3 id="rsStatPaused">0</h3></article>
+			</div>
+			<div class="panel">
+				<h3 class="panel-title !mb-0">Portal Home</h3>
+				<p class="text-sm text-slate-300 mt-2">Welcome to your MY RESEARCH portal. Use this tab as your research home page, and switch to Research Board to manage sources.</p>
+			</div>
+		</section>
+
+		<section id="portalBoardSection" class="portal-section hidden space-y-4">
+			<section class="panel">
+				<div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+					<div>
+						<h3 class="panel-title !mb-0">MY RESEARCH Admin Panel</h3>
+						<p class="text-sm text-slate-400 mt-1">Add websites you want to watch, including journals, tools, labs, and references.</p>
+					</div>
+					<div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+						<input id="siteSearch" aria-label="Search research websites" placeholder="Search name, url, notes..." class="w-full sm:w-96 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+					</div>
+				</div>
+			</section>
+
+			<section class="panel overflow-x-auto">
+				<table class="w-full min-w-[1120px] text-sm">
+					<thead>
+						<tr class="text-left text-slate-400 border-b border-slate-800">
+							<th class="py-3 pr-2">Name</th>
+							<th class="py-3 pr-2">URL</th>
+							<th class="py-3 pr-2">Category</th>
+							<th class="py-3 pr-2">Status</th>
+							<th class="py-3 pr-2">Frequency</th>
+							<th class="py-3 pr-2">Notes</th>
+							<th class="py-3 pr-2">Actions</th>
+						</tr>
+					</thead>
+					<tbody id="siteTableBody"></tbody>
+				</table>
+			</section>
+		</section>
+
+		<section id="portalAboutSection" class="portal-section hidden">
+			<div class="panel">
+				<h3 class="panel-title !mb-0">About This Portal</h3>
+				<p class="text-sm text-slate-300 mt-2">MY RESEARCH runs as a separate tab experience, with its own home page and dedicated board for source tracking. Add links, classify them, and keep notes for your investigation workflow.</p>
+			</div>
+		</section>
+	</div>
+</main>
+
+<div id="siteModal" class="fixed inset-0 z-50 hidden">
+	<div class="absolute inset-0 bg-black/60" id="siteModalBackdrop"></div>
+	<div class="relative min-h-screen grid place-items-center p-4 overflow-y-auto">
+		<div class="w-full max-w-2xl panel border-slate-700 max-h-[calc(100vh-2rem)] overflow-y-auto">
+			<div class="flex items-center justify-between mb-4">
+				<h3 id="siteModalTitle" class="text-xl font-semibold">Add Tracked Website</h3>
+				<button id="closeSiteModalBtn" class="h-9 w-9 rounded-lg hover:bg-slate-800"><i class="fa-solid fa-xmark"></i></button>
+			</div>
+
+			<form id="siteForm" class="space-y-4">
+				<input type="hidden" id="siteId" />
+				<div class="grid md:grid-cols-2 gap-4">
+					<div>
+						<label for="siteName" class="block text-sm mb-1">Website Name</label>
+						<input id="siteName" required class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" />
+					</div>
+					<div>
+						<label for="siteUrl" class="block text-sm mb-1">Website URL</label>
+						<input id="siteUrl" required placeholder="https://example.com" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" />
+					</div>
+				</div>
+
+				<div class="grid md:grid-cols-3 gap-4">
+					<div>
+						<label for="siteCategory" class="block text-sm mb-1">Category</label>
+						<input id="siteCategory" placeholder="Research" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" />
+					</div>
+					<div>
+						<label for="siteStatus" class="block text-sm mb-1">Status</label>
+						<select id="siteStatus" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2">
+							<option>Active</option>
+							<option>Paused</option>
+						</select>
+					</div>
+					<div>
+						<label for="siteFrequency" class="block text-sm mb-1">Check Frequency</label>
+						<select id="siteFrequency" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2">
+							<option>Manual</option>
+							<option>Daily</option>
+							<option>Weekly</option>
+						</select>
+					</div>
+				</div>
+
+				<div>
+					<label for="siteNotes" class="block text-sm mb-1">Notes</label>
+					<textarea id="siteNotes" rows="4" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"></textarea>
+				</div>
+
+				<div class="flex justify-end gap-3 pt-2">
+					<button type="button" id="cancelSiteModalBtn" class="rounded-lg border border-slate-700 px-4 py-2 hover:bg-slate-800">Cancel</button>
+					<button type="submit" class="rounded-lg bg-cyan-500 text-slate-950 px-4 py-2 font-semibold hover:bg-cyan-400">Save Website</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/my_research.js') }}"></script>
+{% endblock %}

@@ -40,6 +40,9 @@
 			<button class="nav-btn" data-section="long-term"><i class="fa-solid fa-mountain"></i>Long-term Projects</button>
 			<button class="nav-btn" data-section="manage"><i class="fa-solid fa-table-list"></i>Manage Workflows</button>
 			<button class="nav-btn" data-section="sites"><i class="fa-solid fa-globe"></i>Tracked Websites</button>
+			<a href="/my-research" target="_blank" rel="noopener noreferrer" class="block rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 transition">
+				<i class="fa-solid fa-flask-vial mr-2"></i>MY RESEARCH
+			</a>
 			<button class="nav-btn" data-section="profile"><i class="fa-solid fa-user"></i>Profile</button>
 		</nav>
 
@@ -229,18 +232,18 @@
 
 				<div class="grid md:grid-cols-3 gap-4">
 					<div>
-						<label class="block text-sm mb-1">Category</label>
+						<label for="siteCategory" class="block text-sm mb-1">Category</label>
 						<input id="siteCategory" placeholder="Space" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2" />
 					</div>
 					<div>
-						<label class="block text-sm mb-1">Status</label>
+						<label for="siteStatus" class="block text-sm mb-1">Status</label>
 						<select id="siteStatus" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2">
 							<option>Active</option>
 							<option>Paused</option>
 						</select>
 					</div>
 					<div>
-						<label class="block text-sm mb-1">Check Frequency</label>
+						<label for="siteFrequency" class="block text-sm mb-1">Check Frequency</label>
 						<select id="siteFrequency" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2">
 							<option>Manual</option>
 							<option>Daily</option>
@@ -250,7 +253,7 @@
 				</div>
 
 				<div>
-					<label class="block text-sm mb-1">Notes</label>
+					<label for="siteNotes" class="block text-sm mb-1">Notes</label>
 					<textarea id="siteNotes" rows="4" class="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2"></textarea>
 				</div>
 
