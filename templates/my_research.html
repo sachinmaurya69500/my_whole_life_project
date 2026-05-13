@@ -2,34 +2,138 @@
 
 {% block title %}MY RESEARCH - {{ app_name }}{% endblock %}
 
+{% block head_extras %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,600;6..72,700&display=swap" rel="stylesheet">
+<style>
+	.research-verse {
+		font-family: 'Manrope', sans-serif;
+		background:
+			radial-gradient(1100px 520px at 8% 8%, rgba(201, 126, 56, 0.16), transparent 62%),
+			radial-gradient(900px 480px at 92% 0%, rgba(31, 111, 85, 0.14), transparent 58%),
+			linear-gradient(180deg, #0f1514, #12100d);
+	}
+
+	.research-verse .spacex-page-title,
+	.research-verse .panel-title,
+	.research-verse .research-portal-brand {
+		font-family: 'Newsreader', serif;
+		letter-spacing: 0.01em;
+	}
+
+	.research-verse .panel {
+		background: rgba(23, 21, 16, 0.74);
+		border-color: rgba(214, 169, 108, 0.28);
+		box-shadow: 0 20px 40px rgba(0, 0, 0, 0.34);
+	}
+
+	.research-verse .stat-card {
+		background: linear-gradient(155deg, rgba(26, 22, 16, 0.95), rgba(18, 28, 24, 0.94));
+		border-color: rgba(214, 169, 108, 0.22);
+	}
+
+	.research-verse .research-portal-link {
+		transition: all 0.22s ease;
+	}
+
+	.research-verse .research-portal-link:hover {
+		border-color: rgba(214, 169, 108, 0.55);
+		background: rgba(214, 169, 108, 0.09);
+	}
+
+	.research-verse .research-portal-link.border-cyan-700 {
+		border-color: rgba(214, 169, 108, 0.75) !important;
+		background: rgba(214, 169, 108, 0.14) !important;
+		color: #f8dfb7 !important;
+	}
+
+	.research-verse .btn-primary {
+		background: linear-gradient(135deg, #d7b273, #be8857);
+		border-color: rgba(214, 169, 108, 0.7);
+		color: #21180f;
+	}
+
+	.research-verse .btn-secondary {
+		border-color: rgba(214, 169, 108, 0.4);
+		color: #ecd8b7;
+	}
+
+	.research-verse .text-cyan-300,
+	.research-verse .text-cyan-200 {
+		color: #e7c88d !important;
+	}
+
+	.research-verse .status-chip.chip-green {
+		color: #8fe0b4;
+		border-color: rgba(70, 186, 128, 0.44);
+		background: rgba(70, 186, 128, 0.14);
+	}
+
+	.research-verse .status-chip.chip-amber {
+		color: #f5d49a;
+		border-color: rgba(214, 169, 108, 0.5);
+		background: rgba(214, 169, 108, 0.18);
+	}
+</style>
+{% endblock %}
+
 {% block content %}
-<main class="min-h-screen p-4 md:p-8">
-	<div class="max-w-7xl mx-auto space-y-6">
-		<header class="spacex-page-header">
-			<div class="min-w-0">
-				<div class="spacex-page-kicker">Knowledge Ops</div>
-				<h2 class="spacex-page-title">MY RESEARCH</h2>
-				<p class="spacex-page-subtitle">A dedicated research portal with its own home, dashboard, and tracking workspace.</p>
+<main class="min-h-screen p-4 md:p-8 research-verse">
+	<div id="researchPortalRoot" data-initial-section="{{ research_section or 'home' }}" class="max-w-7xl mx-auto grid gap-6 lg:grid-cols-[260px_1fr]">
+		<aside class="panel h-max lg:sticky lg:top-6">
+			<div class="flex items-center gap-3 mb-5">
+				<div class="h-11 w-11 rounded-xl border border-cyan-700/60 bg-cyan-900/20 grid place-items-center text-cyan-300">
+					<i class="fa-solid fa-flask-vial"></i>
+				</div>
+				<div>
+					<p class="text-xs uppercase tracking-wide text-slate-400">Independent Portal</p>
+					<h2 class="font-semibold text-lg research-portal-brand">MY RESEARCH</h2>
+				</div>
 			</div>
-			<div class="spacex-header-actions">
-				<a href="/home" class="btn btn-secondary px-4 py-2 font-semibold text-sm whitespace-nowrap">
-					<i class="fa-solid fa-arrow-left mr-2"></i>Back to Dashboard
+
+			<p class="text-sm text-slate-400 mb-4">A standalone research workspace with its own navigation, home, and source board.</p>
+
+			<nav class="space-y-2">
+				<a href="/my-research/home" class="research-portal-link block rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 transition" data-section="home">
+					<i class="fa-solid fa-house mr-2"></i>Home
 				</a>
-				<button id="openAddSiteModalBtn" class="btn btn-primary px-4 py-2 font-semibold text-sm whitespace-nowrap">
-					<i class="fa-solid fa-plus mr-2"></i>Add Website
-				</button>
-			</div>
-		</header>
+				<a href="/my-research/board" class="research-portal-link block rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 transition" data-section="board">
+					<i class="fa-solid fa-globe mr-2"></i>Research Board
+				</a>
+				<a href="/my-research/about" class="research-portal-link block rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:bg-slate-800 transition" data-section="about">
+					<i class="fa-solid fa-circle-info mr-2"></i>About Portal
+				</a>
+			</nav>
 
-		<section class="panel !py-3">
-			<div class="flex flex-wrap gap-2">
-				<button class="research-nav-btn active rounded-lg border border-cyan-700 bg-cyan-900/20 px-3 py-1.5 text-sm" data-section="home">Home</button>
-				<button class="research-nav-btn rounded-lg border border-slate-700 px-3 py-1.5 text-sm hover:bg-slate-800 transition" data-section="board">Research Board</button>
-				<button class="research-nav-btn rounded-lg border border-slate-700 px-3 py-1.5 text-sm hover:bg-slate-800 transition" data-section="about">About Portal</button>
-			</div>
-		</section>
+			<a href="/home" class="mt-6 inline-flex items-center justify-center w-full rounded-lg border border-slate-700 px-3 py-2 text-sm hover:bg-slate-800 transition">
+				<i class="fa-solid fa-arrow-left mr-2"></i>Back to Main App
+			</a>
+		</aside>
 
-		<section id="portalHomeSection" class="portal-section space-y-4">
+		<div class="space-y-6">
+			<header class="spacex-page-header">
+				<div class="min-w-0">
+					<div class="spacex-page-kicker">Knowledge Ops</div>
+					<h2 class="spacex-page-title">MY RESEARCH PORTAL</h2>
+					<p class="spacex-page-subtitle">This tab works like an independent website space for your research workflow.</p>
+				</div>
+				<div class="spacex-header-actions">
+					<button id="openAddSiteModalBtn" class="btn btn-primary px-4 py-2 font-semibold text-sm whitespace-nowrap">
+						<i class="fa-solid fa-plus mr-2"></i>Add Website
+					</button>
+				</div>
+			</header>
+
+			<section class="panel !py-3 lg:hidden">
+				<div class="flex flex-wrap gap-2">
+					<a href="/my-research/home" class="research-portal-link rounded-lg border border-slate-700 px-3 py-1.5 text-sm hover:bg-slate-800 transition" data-section="home">Home</a>
+					<a href="/my-research/board" class="research-portal-link rounded-lg border border-slate-700 px-3 py-1.5 text-sm hover:bg-slate-800 transition" data-section="board">Research Board</a>
+					<a href="/my-research/about" class="research-portal-link rounded-lg border border-slate-700 px-3 py-1.5 text-sm hover:bg-slate-800 transition" data-section="about">About</a>
+				</div>
+			</section>
+
+			<section id="portalHomeSection" class="portal-section space-y-4">
 			<div class="grid gap-4 sm:grid-cols-3">
 				<article class="stat-card"><p>Total Sources</p><h3 id="rsStatTotal">0</h3></article>
 				<article class="stat-card"><p>Active</p><h3 id="rsStatActive">0</h3></article>
@@ -37,11 +141,15 @@
 			</div>
 			<div class="panel">
 				<h3 class="panel-title !mb-0">Portal Home</h3>
-				<p class="text-sm text-slate-300 mt-2">Welcome to your MY RESEARCH portal. Use this tab as your research home page, and switch to Research Board to manage sources.</p>
+				<p class="text-sm text-slate-300 mt-2">Welcome to your independent research homepage. This portal is your dedicated place to collect, classify, and revisit knowledge sources.</p>
 			</div>
-		</section>
+			<div class="panel">
+				<h3 class="panel-title !mb-0">Quick Launch</h3>
+				<p class="text-sm text-slate-400 mt-2">Use Research Board to add new links and maintain notes for each source.</p>
+			</div>
+			</section>
 
-		<section id="portalBoardSection" class="portal-section hidden space-y-4">
+			<section id="portalBoardSection" class="portal-section hidden space-y-4">
 			<section class="panel">
 				<div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
 					<div>
@@ -70,14 +178,16 @@
 					<tbody id="siteTableBody"></tbody>
 				</table>
 			</section>
-		</section>
+			</section>
 
-		<section id="portalAboutSection" class="portal-section hidden">
+			<section id="portalAboutSection" class="portal-section hidden">
 			<div class="panel">
 				<h3 class="panel-title !mb-0">About This Portal</h3>
-				<p class="text-sm text-slate-300 mt-2">MY RESEARCH runs as a separate tab experience, with its own home page and dedicated board for source tracking. Add links, classify them, and keep notes for your investigation workflow.</p>
+				<p class="text-sm text-slate-300 mt-2">MY RESEARCH is intentionally separated from the core dashboard, so you get a cleaner and focused environment for deep work and source management.</p>
+				<p class="text-sm text-slate-400 mt-2">Routes available: /my-research/home, /my-research/board, and /my-research/about.</p>
 			</div>
-		</section>
+			</section>
+		</div>
 	</div>
 </main>
 

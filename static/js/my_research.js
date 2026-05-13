@@ -1,5 +1,7 @@
 const researchEl = {
+	portalRoot: document.getElementById('researchPortalRoot'),
 	navButtons: document.querySelectorAll('.research-nav-btn'),
+	portalLinks: document.querySelectorAll('.research-portal-link'),
 	sections: {
 		home: document.getElementById('portalHomeSection'),
 		board: document.getElementById('portalBoardSection'),
@@ -85,6 +87,15 @@ function setResearchSection(sectionKey) {
 		btn.classList.toggle('bg-cyan-900/20', isActive);
 		btn.classList.toggle('border-slate-700', !isActive);
 		btn.classList.toggle('hover:bg-slate-800', !isActive);
+	});
+
+	researchEl.portalLinks.forEach((link) => {
+		const isActive = link.dataset.section === sectionKey;
+		link.classList.toggle('border-cyan-700', isActive);
+		link.classList.toggle('bg-cyan-900/20', isActive);
+		link.classList.toggle('text-cyan-200', isActive);
+		link.classList.toggle('border-slate-700', !isActive);
+		link.classList.toggle('text-slate-200', !isActive);
 	});
 }
 
@@ -252,4 +263,5 @@ if (researchEl.siteForm) {
 }
 
 loadResearchSites().catch((err) => researchShowToast(err.message, 'error'));
-setResearchSection('home');
+const initialSection = researchEl.portalRoot?.dataset.initialSection || 'home';
+setResearchSection(initialSection);

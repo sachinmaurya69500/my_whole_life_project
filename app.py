@@ -97,6 +97,8 @@ reminders_col = db["reminders"]
 notes_col = db["notes"]
 tracked_sites_col = db["tracked_sites"]
 templates_col = db["templates"]
+future_journey_milestones_col = db["future_journey_milestones"]
+future_journey_settings_col = db["future_journey_settings"]
 
 
 def login_required(fn):
@@ -229,6 +231,18 @@ def tracked_site_to_json(doc):
 		"check_frequency": doc.get("check_frequency", "Manual"),
 		"last_checked_at": last_checked_at.isoformat() if last_checked_at else "",
 		"last_check_result": doc.get("last_check_result", ""),
+		"created_at": doc.get("created_at").isoformat() if doc.get("created_at") else "",
+		"updated_at": doc.get("updated_at").isoformat() if doc.get("updated_at") else "",
+	}
+
+
+def future_journey_milestone_to_json(doc):
+	target_date = doc.get("target_date")
+	return {
+		"_id": str(doc.get("_id")),
+		"title": doc.get("title", ""),
+		"target_date": target_date.date().isoformat() if target_date else "",
+		"status": doc.get("status", "Planned"),
 		"created_at": doc.get("created_at").isoformat() if doc.get("created_at") else "",
 		"updated_at": doc.get("updated_at").isoformat() if doc.get("updated_at") else "",
 	}
@@ -828,7 +842,169 @@ def calendar_page():
 @app.route('/my-research')
 @page_login_required
 def my_research_page():
-	return render_template('my_research.html', app_name='Sachin Workflow Manager')
+	return redirect(url_for('my_research_home_page'))
+
+
+@app.route('/my-research/home')
+@page_login_required
+def my_research_home_page():
+	return render_template('my_research.html', app_name='Sachin Workflow Manager', research_section='home')
+
+
+@app.route('/my-research/board')
+@page_login_required
+def my_research_board_page():
+	return render_template('my_research.html', app_name='Sachin Workflow Manager', research_section='board')
+
+
+@app.route('/my-research/about')
+@page_login_required
+def my_research_about_page():
+	return render_template('my_research.html', app_name='Sachin Workflow Manager', research_section='about')
+
+
+@app.route('/my-future-journey')
+@page_login_required
+def my_future_journey_page():
+	return render_template('my_future_journey.html', app_name='Sachin Workflow Manager')
+
+
+@app.route('/api/future-journey/milestones', methods=['GET'])
+@login_required
+def list_future_journey_milestones():
+	user_id = to_object_id(session.get('user_id'))
+	if not user_id:
+		return jsonify({'error': 'Unauthorized'}), 401
+
+	docs = list(future_journey_milestones_col.find({'owner_user_id': user_id}).sort('target_date', 1).sort('updated_at', -1))
+	return jsonify([future_journey_milestone_to_json(d) for d in docs])
+
+
+@app.route('/api/future-journey/milestones', methods=['POST'])
+@login_required
+def create_future_journey_milestone():
+	user_id = to_object_id(session.get('user_id'))
+	if not user_id:
+		return jsonify({'error': 'Unauthorized'}), 401
+
+	data = request.get_json(silent=True) or {}
+	title = (data.get('title') or '').strip()
+	target_date = parse_iso_or_none(data.get('target_date') or '')
+	status = (data.get('status') or 'Planned').strip() or 'Planned'
+
+	if not title:
+		return jsonify({'error': 'Milestone title is required'}), 400
+	if not target_date:
+		return jsonify({'error': 'Valid target date is required'}), 400
+	if status not in {'Planned', 'In Progress', 'Completed'}:
+		return jsonify({'error': 'Invalid milestone status'}), 400
+
+	now = utc_now()
+	doc = {
+		'owner_user_id': user_id,
+		'title': title,
+		'target_date': target_date,
+		'status': status,
+		'created_at': now,
+		'updated_at': now,
+	}
+	res = future_journey_milestones_col.insert_one(doc)
+	created = future_journey_milestones_col.find_one({'_id': res.inserted_id})
+	return jsonify(future_journey_milestone_to_json(created)), 201
+
+
+@app.route('/api/future-journey/milestones/<milestone_id>', methods=['PUT'])
+@login_required
+def update_future_journey_milestone(milestone_id):
+	user_id = to_object_id(session.get('user_id'))
+	if not user_id:
+		return jsonify({'error': 'Unauthorized'}), 401
+
+	obj_id = to_object_id(milestone_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid milestone id'}), 400
+
+	data = request.get_json(silent=True) or {}
+	update = {}
+
+	if 'title' in data:
+		title = (data.get('title') or '').strip()
+		if not title:
+			return jsonify({'error': 'Milestone title cannot be empty'}), 400
+		update['title'] = title
+
+	if 'target_date' in data:
+		target_date = parse_iso_or_none(data.get('target_date') or '')
+		if not target_date:
+			return jsonify({'error': 'Valid target date is required'}), 400
+		update['target_date'] = target_date
+
+	if 'status' in data:
+		status = (data.get('status') or '').strip()
+		if status not in {'Planned', 'In Progress', 'Completed'}:
+			return jsonify({'error': 'Invalid milestone status'}), 400
+		update['status'] = status
+
+	if not update:
+		return jsonify({'error': 'No valid fields provided'}), 400
+
+	update['updated_at'] = utc_now()
+	result = future_journey_milestones_col.update_one({'_id': obj_id, 'owner_user_id': user_id}, {'$set': update})
+	if result.matched_count == 0:
+		return jsonify({'error': 'Milestone not found'}), 404
+
+	updated = future_journey_milestones_col.find_one({'_id': obj_id, 'owner_user_id': user_id})
+	return jsonify(future_journey_milestone_to_json(updated))
+
+
+@app.route('/api/future-journey/milestones/<milestone_id>', methods=['DELETE'])
+@login_required
+def delete_future_journey_milestone(milestone_id):
+	user_id = to_object_id(session.get('user_id'))
+	if not user_id:
+		return jsonify({'error': 'Unauthorized'}), 401
+
+	obj_id = to_object_id(milestone_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid milestone id'}), 400
+
+	result = future_journey_milestones_col.delete_one({'_id': obj_id, 'owner_user_id': user_id})
+	if result.deleted_count == 0:
+		return jsonify({'error': 'Milestone not found'}), 404
+
+	return jsonify({'message': 'Milestone deleted'})
+
+
+@app.route('/api/future-journey/north-star', methods=['GET'])
+@login_required
+def get_future_journey_north_star():
+	user_id = to_object_id(session.get('user_id'))
+	if not user_id:
+		return jsonify({'error': 'Unauthorized'}), 401
+
+	settings = future_journey_settings_col.find_one({'owner_user_id': user_id}) or {}
+	return jsonify({'north_star': settings.get('north_star', '')})
+
+
+@app.route('/api/future-journey/north-star', methods=['PUT'])
+@login_required
+def update_future_journey_north_star():
+	user_id = to_object_id(session.get('user_id'))
+	if not user_id:
+		return jsonify({'error': 'Unauthorized'}), 401
+
+	data = request.get_json(silent=True) or {}
+	north_star = (data.get('north_star') or '').strip()
+	if not north_star:
+		return jsonify({'error': 'North star text is required'}), 400
+
+	now = utc_now()
+	future_journey_settings_col.update_one(
+		{'owner_user_id': user_id},
+		{'$set': {'north_star': north_star, 'updated_at': now}, '$setOnInsert': {'created_at': now}},
+		upsert=True,
+	)
+	return jsonify({'north_star': north_star, 'updated_at': now.isoformat()})
 
 
 @app.route("/api/profile", methods=["GET"])
