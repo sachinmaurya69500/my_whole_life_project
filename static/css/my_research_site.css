@@ -1,11 +1,11 @@
 :root {
-	--bg: #f6f4ef;
-	--ink: #111111;
-	--ink-soft: #4d4d4d;
+	--bg: #ffffff;
+	--ink: #0b1a2b;
+	--ink-soft: #546b79;
 	--panel: #ffffff;
-	--line: #e7e2d8;
-	--accent: #1250d3;
-	--accent-soft: #e8efff;
+	--line: #e6eef6;
+	--accent: #0078b5;
+	--accent-soft: #eaf6fc;
 	--good: #0f766e;
 	--warn: #a16207;
 }
@@ -16,9 +16,18 @@
 
 body {
 	margin: 0;
-	font-family: 'Manrope', sans-serif;
+	font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
 	color: var(--ink);
-	background: radial-gradient(1200px 500px at 80% -10%, #e4ebff, transparent 60%), var(--bg);
+	background: var(--bg);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+/* Slight page container to echo ScienceOpen spacing */
+.scienceopen-inspired .site-shell {
+	max-width: 1180px;
+	margin: 0 auto;
+	padding: 2rem;
 }
 
 .site-shell {
@@ -28,11 +37,11 @@ body {
 }
 
 .site-header {
-	display: grid;
-	grid-template-columns: auto 1fr auto;
+	display: flex;
 	align-items: center;
 	gap: 1rem;
-	padding: 0.8rem 0;
+	padding: 1rem 0 1.2rem;
+	border-bottom: 1px solid var(--line);
 }
 
 .site-pill,
@@ -50,19 +59,19 @@ body {
 	display: inline-flex;
 	align-items: center;
 	gap: 0.45rem;
-	border: 1px solid var(--line);
-	background: #fff;
-	color: var(--ink);
-	padding: 0.45rem 0.7rem;
-	border-radius: 999px;
-	font-size: 0.84rem;
+	background: transparent;
+	color: var(--ink-soft);
+	padding: 0.35rem 0.6rem;
+	border-radius: 0.5rem;
+	font-size: 0.85rem;
 	font-weight: 600;
 }
 
 .site-brand h1 {
 	margin: 0;
-	font-family: 'Fraunces', serif;
-	font-size: clamp(1.3rem, 2.3vw, 2rem);
+	font-family: 'Merriweather', serif;
+	font-size: clamp(1.25rem, 2.1vw, 1.9rem);
+	color: var(--ink);
 }
 
 .site-kicker {
@@ -75,13 +84,13 @@ body {
 }
 
 .site-cta {
-	border: 1px solid var(--accent);
+	border: none;
 	background: var(--accent);
 	color: #fff;
-	border-radius: 999px;
-	padding: 0.56rem 0.95rem;
-	font-weight: 700;
-	font-size: 0.85rem;
+	border-radius: 0.5rem;
+	padding: 0.6rem 0.9rem;
+	font-weight: 600;
+	font-size: 0.88rem;
 	display: inline-flex;
 	align-items: center;
 	gap: 0.45rem;
@@ -89,30 +98,26 @@ body {
 
 .site-nav {
 	display: flex;
-	gap: 0.55rem;
-	padding: 0.55rem;
-	background: var(--panel);
-	border: 1px solid var(--line);
-	border-radius: 999px;
+	gap: 0.6rem;
+	padding: 0.4rem;
+	background: transparent;
+	border-radius: 0.5rem;
 	width: max-content;
-	max-width: 100%;
-	overflow-x: auto;
 }
 
 .site-nav-link {
-	padding: 0.43rem 0.85rem;
-	border-radius: 999px;
-	border: 1px solid transparent;
-	font-size: 0.82rem;
-	font-weight: 700;
+	padding: 0.45rem 0.75rem;
+	border-radius: 0.5rem;
+	border: none;
+	font-size: 0.9rem;
+	font-weight: 600;
 	color: var(--ink-soft);
 	white-space: nowrap;
 }
 
 .site-nav-link.active {
-	color: var(--accent);
-	background: var(--accent-soft);
-	border-color: #b6caf9;
+	color: white;
+	background: var(--accent);
 }
 
 .site-main {
@@ -129,9 +134,10 @@ body {
 .board-toolbar,
 .table-wrap,
 .featured-item {
-	background: var(--panel);
+	background: #fbfdff;
 	border: 1px solid var(--line);
-	border-radius: 1rem;
+	border-radius: 0.75rem;
+	box-shadow: 0 8px 20px rgba(12, 36, 64, 0.04);
 }
 
 .hero-card {
@@ -203,21 +209,24 @@ body {
 .featured-grid {
 	display: grid;
 	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 0.8rem;
+	gap: 1rem;
 }
 
 .featured-item {
-	padding: 0.85rem;
+	padding: 1rem;
+	border-left: 4px solid rgba(0,0,0,0.02);
 }
 
 .featured-item h4 {
 	margin: 0;
-	font-size: 0.95rem;
+	font-size: 1rem;
+	font-weight: 700;
+	color: var(--ink);
 }
 
 .featured-item p {
-	margin: 0.45rem 0 0;
-	font-size: 0.8rem;
+	margin: 0.4rem 0 0;
+	font-size: 0.9rem;
 	color: var(--ink-soft);
 }
 
@@ -425,6 +434,7 @@ td a {
 	background: var(--accent);
 	border-color: var(--accent);
 	color: #fff;
+	box-shadow: 0 6px 18px rgba(0,120,181,0.14);
 }
 
 .btn-secondary {
@@ -437,11 +447,11 @@ td a {
 	position: fixed;
 	right: 1rem;
 	bottom: 1rem;
-	background: #111827;
+	background: rgba(11,26,43,0.95);
 	color: #fff;
 	padding: 0.68rem 0.82rem;
-	border-radius: 0.65rem;
-	font-size: 0.82rem;
+	border-radius: 0.5rem;
+	font-size: 0.86rem;
 	z-index: 60;
 }
 
