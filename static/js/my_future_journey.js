@@ -9,6 +9,16 @@
 		northStarText: document.getElementById('northStarText'),
 		northStarInput: document.getElementById('northStarInput'),
 		saveNorthStarBtn: document.getElementById('saveNorthStarBtn'),
+		clearNorthStarBtn: document.getElementById('clearNorthStarBtn'),
+		roadmapForm: document.getElementById('roadmapForm'),
+		roadmapItemId: document.getElementById('roadmapItemId'),
+		roadmapTitle: document.getElementById('roadmapTitle'),
+		roadmapDescription: document.getElementById('roadmapDescription'),
+		roadmapHorizon: document.getElementById('roadmapHorizon'),
+		roadmapStatus: document.getElementById('roadmapStatus'),
+		saveRoadmapBtn: document.getElementById('saveRoadmapBtn'),
+		cancelRoadmapEditBtn: document.getElementById('cancelRoadmapEditBtn'),
+		roadmapList: document.getElementById('roadmapList'),
 		milestoneForm: document.getElementById('milestoneForm'),
 		milestoneId: document.getElementById('milestoneId'),
 		milestoneTitle: document.getElementById('milestoneTitle'),
@@ -18,11 +28,14 @@
 		cancelMilestoneEditBtn: document.getElementById('cancelMilestoneEditBtn'),
 		milestoneList: document.getElementById('milestoneList'),
 		milestoneCount: document.getElementById('milestoneCount'),
+		roadmapCount: document.getElementById('roadmapCount'),
 		domainCount: document.getElementById('domainCount'),
 	};
 
 	const state = {
 		milestones: [],
+		roadmapItems: [],
+		editingRoadmapItemId: '',
 		editingMilestoneId: '',
 	};
 
@@ -46,6 +59,63 @@
 		});
 		el.navButtons.forEach((btn) => {
 			btn.classList.toggle('active', btn.dataset.section === sectionKey);
+		});
+	}
+
+	function renderRoadmapItems() {
+		if (!el.roadmapList) return;
+		if (el.roadmapCount) el.roadmapCount.textContent = String(state.roadmapItems.length);
+		if (!state.roadmapItems.length) {
+			el.roadmapList.innerHTML = '<div class="future-card text-sm text-slate-300">No roadmap items yet. Add your first theme.</div>';
+			return;
+		}
+
+		el.roadmapList.innerHTML = state.roadmapItems
+			.map((item, index) => `
+				<article class="journey-list-item flex items-start justify-between gap-3">
+					<div>
+						<h4 class="font-semibold text-slate-100">${escapeHtml(item.title)}</h4>
+						<p class="text-xs text-slate-400 mt-1">${escapeHtml(item.description || 'No description')}</p>
+						<p class="text-xs mt-1"><span class="future-chip">${escapeHtml(item.horizon || 'Near-term')}</span> <span class="future-chip">${escapeHtml(item.status || 'Planned')}</span></p>
+					</div>
+					<div class="flex gap-2">
+						<button class="btn btn-secondary text-xs px-2 py-1 edit-roadmap-btn" data-index="${index}">Edit</button>
+						<button class="btn btn-secondary text-xs px-2 py-1 delete-roadmap-btn" data-index="${index}">Delete</button>
+					</div>
+				</article>
+			`)
+			.join('');
+
+		el.roadmapList.querySelectorAll('.edit-roadmap-btn').forEach((btn) => {
+			btn.addEventListener('click', () => {
+				const index = Number(btn.dataset.index);
+				const item = state.roadmapItems[index];
+				if (!item) return;
+				state.editingRoadmapItemId = item._id;
+				if (el.roadmapItemId) el.roadmapItemId.value = item._id;
+				if (el.roadmapTitle) el.roadmapTitle.value = item.title || '';
+				if (el.roadmapDescription) el.roadmapDescription.value = item.description || '';
+				if (el.roadmapHorizon) el.roadmapHorizon.value = item.horizon || 'Near-term';
+				if (el.roadmapStatus) el.roadmapStatus.value = item.status || 'Planned';
+				if (el.saveRoadmapBtn) el.saveRoadmapBtn.textContent = 'Update';
+				if (el.cancelRoadmapEditBtn) el.cancelRoadmapEditBtn.classList.remove('hidden');
+			});
+		});
+
+		el.roadmapList.querySelectorAll('.delete-roadmap-btn').forEach((btn) => {
+			btn.addEventListener('click', async () => {
+				const index = Number(btn.dataset.index);
+				const item = state.roadmapItems[index];
+				if (!item || !item._id) return;
+				if (!confirm(`Delete roadmap item "${item.title}"?`)) return;
+				try {
+					await fjApi(`/api/future-journey/roadmap-items/${item._id}`, { method: 'DELETE' });
+					if (typeof showToast === 'function') showToast('Roadmap item deleted');
+					await loadRoadmapItems();
+				} catch (err) {
+					if (typeof showToast === 'function') showToast(err.message || 'Delete failed', 'error');
+				}
+			});
 		});
 	}
 
@@ -117,6 +187,16 @@
 		if (el.cancelMilestoneEditBtn) el.cancelMilestoneEditBtn.classList.add('hidden');
 	}
 
+	function resetRoadmapForm() {
+		state.editingRoadmapItemId = '';
+		if (el.roadmapForm) el.roadmapForm.reset();
+		if (el.roadmapItemId) el.roadmapItemId.value = '';
+		if (el.roadmapHorizon) el.roadmapHorizon.value = 'Near-term';
+		if (el.roadmapStatus) el.roadmapStatus.value = 'Planned';
+		if (el.saveRoadmapBtn) el.saveRoadmapBtn.textContent = 'Add';
+		if (el.cancelRoadmapEditBtn) el.cancelRoadmapEditBtn.classList.add('hidden');
+	}
+
 	async function loadMilestones() {
 		const items = await fjApi('/api/future-journey/milestones');
 		if (!items) return;
@@ -130,6 +210,19 @@
 		if (el.northStarText && data.north_star) {
 			el.northStarText.textContent = data.north_star;
 		}
+	}
+
+	async function loadRoadmapItems() {
+		if (el.roadmapList) {
+			el.roadmapList.innerHTML = [
+				'<div class="journey-skeleton" aria-hidden="true"></div>',
+				'<div class="journey-skeleton" aria-hidden="true"></div>'
+			].join('');
+		}
+		const items = await fjApi('/api/future-journey/roadmap-items');
+		if (!items) return;
+		state.roadmapItems = Array.isArray(items) ? items : [];
+		renderRoadmapItems();
 	}
 
 	function escapeHtml(value) {
@@ -164,6 +257,59 @@
 				if (typeof showToast === 'function') showToast('North star updated');
 			} catch (err) {
 				if (typeof showToast === 'function') showToast(err.message || 'Update failed', 'error');
+			}
+		});
+	}
+
+	if (el.clearNorthStarBtn && el.northStarText) {
+		el.clearNorthStarBtn.addEventListener('click', async () => {
+			try {
+				await fjApi('/api/future-journey/north-star', { method: 'DELETE' });
+				el.northStarText.textContent = 'Set your north star statement to guide every major decision.';
+				if (typeof showToast === 'function') showToast('North star cleared');
+			} catch (err) {
+				if (typeof showToast === 'function') showToast(err.message || 'Clear failed', 'error');
+			}
+		});
+	}
+
+	if (el.cancelRoadmapEditBtn) {
+		el.cancelRoadmapEditBtn.addEventListener('click', () => {
+			resetRoadmapForm();
+		});
+	}
+
+	if (el.roadmapForm && el.roadmapTitle && el.roadmapHorizon && el.roadmapStatus) {
+		el.roadmapForm.addEventListener('submit', async (e) => {
+			e.preventDefault();
+			const payload = {
+				title: (el.roadmapTitle.value || '').trim(),
+				description: (el.roadmapDescription.value || '').trim(),
+				horizon: (el.roadmapHorizon.value || 'Near-term').trim() || 'Near-term',
+				status: (el.roadmapStatus.value || 'Planned').trim() || 'Planned',
+			};
+			if (!payload.title) return;
+
+			try {
+				if (state.editingRoadmapItemId) {
+					await fjApi(`/api/future-journey/roadmap-items/${state.editingRoadmapItemId}`, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(payload),
+					});
+					if (typeof showToast === 'function') showToast('Roadmap item updated');
+				} else {
+					await fjApi('/api/future-journey/roadmap-items', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(payload),
+					});
+					if (typeof showToast === 'function') showToast('Roadmap item added');
+				}
+				resetRoadmapForm();
+				await loadRoadmapItems();
+			} catch (err) {
+				if (typeof showToast === 'function') showToast(err.message || 'Save failed', 'error');
 			}
 		});
 	}
@@ -208,9 +354,13 @@
 
 	if (el.domainCount) el.domainCount.textContent = '4';
 	setFutureSection('home');
+	resetRoadmapForm();
 	resetMilestoneForm();
 	loadNorthStar().catch((err) => {
 		if (typeof showToast === 'function') showToast(err.message || 'Unable to load north star', 'error');
+	});
+	loadRoadmapItems().catch((err) => {
+		if (typeof showToast === 'function') showToast(err.message || 'Unable to load roadmap', 'error');
 	});
 	loadMilestones().catch((err) => {
 		if (typeof showToast === 'function') showToast(err.message || 'Unable to load milestones', 'error');

@@ -96,9 +96,13 @@ expenses_col = db["expenses"]
 reminders_col = db["reminders"]
 notes_col = db["notes"]
 tracked_sites_col = db["tracked_sites"]
+research_links_col = db["research_links"]
+research_home_highlights_col = db["research_home_highlights"]
+research_about_items_col = db["research_about_items"]
 templates_col = db["templates"]
 future_journey_milestones_col = db["future_journey_milestones"]
 future_journey_settings_col = db["future_journey_settings"]
+future_journey_roadmap_items_col = db["future_journey_roadmap_items"]
 
 
 def login_required(fn):
@@ -236,12 +240,59 @@ def tracked_site_to_json(doc):
 	}
 
 
+def research_link_to_json(doc):
+	return {
+		"_id": str(doc.get("_id")),
+		"name": doc.get("name", ""),
+		"url": doc.get("url", ""),
+		"category": doc.get("category", "General"),
+		"notes": doc.get("notes", ""),
+		"status": doc.get("status", "Active"),
+		"check_frequency": doc.get("check_frequency", "Manual"),
+		"created_at": doc.get("created_at").isoformat() if doc.get("created_at") else "",
+		"updated_at": doc.get("updated_at").isoformat() if doc.get("updated_at") else "",
+	}
+
+
+def research_home_highlight_to_json(doc):
+	return {
+		"_id": str(doc.get("_id")),
+		"title": doc.get("title", ""),
+		"summary": doc.get("summary", ""),
+		"link": doc.get("link", ""),
+		"created_at": doc.get("created_at").isoformat() if doc.get("created_at") else "",
+		"updated_at": doc.get("updated_at").isoformat() if doc.get("updated_at") else "",
+	}
+
+
+def research_about_item_to_json(doc):
+	return {
+		"_id": str(doc.get("_id")),
+		"title": doc.get("title", ""),
+		"content": doc.get("content", ""),
+		"created_at": doc.get("created_at").isoformat() if doc.get("created_at") else "",
+		"updated_at": doc.get("updated_at").isoformat() if doc.get("updated_at") else "",
+	}
+
+
 def future_journey_milestone_to_json(doc):
 	target_date = doc.get("target_date")
 	return {
 		"_id": str(doc.get("_id")),
 		"title": doc.get("title", ""),
 		"target_date": target_date.date().isoformat() if target_date else "",
+		"status": doc.get("status", "Planned"),
+		"created_at": doc.get("created_at").isoformat() if doc.get("created_at") else "",
+		"updated_at": doc.get("updated_at").isoformat() if doc.get("updated_at") else "",
+	}
+
+
+def future_journey_roadmap_item_to_json(doc):
+	return {
+		"_id": str(doc.get("_id")),
+		"title": doc.get("title", ""),
+		"description": doc.get("description", ""),
+		"horizon": doc.get("horizon", "Near-term"),
 		"status": doc.get("status", "Planned"),
 		"created_at": doc.get("created_at").isoformat() if doc.get("created_at") else "",
 		"updated_at": doc.get("updated_at").isoformat() if doc.get("updated_at") else "",
@@ -1007,6 +1058,129 @@ def update_future_journey_north_star():
 	return jsonify({'north_star': north_star, 'updated_at': now.isoformat()})
 
 
+@app.route('/api/future-journey/north-star', methods=['DELETE'])
+@login_required
+def delete_future_journey_north_star():
+	user_id = to_object_id(session.get('user_id'))
+	if not user_id:
+		return jsonify({'error': 'Unauthorized'}), 401
+
+	future_journey_settings_col.delete_one({'owner_user_id': user_id})
+	return jsonify({'message': 'North star cleared'})
+
+
+@app.route('/api/future-journey/roadmap-items', methods=['GET'])
+@login_required
+def list_future_journey_roadmap_items():
+	user_id = to_object_id(session.get('user_id'))
+	if not user_id:
+		return jsonify({'error': 'Unauthorized'}), 401
+
+	docs = list(future_journey_roadmap_items_col.find({'owner_user_id': user_id}).sort('updated_at', -1))
+	return jsonify([future_journey_roadmap_item_to_json(d) for d in docs])
+
+
+@app.route('/api/future-journey/roadmap-items', methods=['POST'])
+@login_required
+def create_future_journey_roadmap_item():
+	user_id = to_object_id(session.get('user_id'))
+	if not user_id:
+		return jsonify({'error': 'Unauthorized'}), 401
+
+	data = request.get_json(silent=True) or {}
+	title = (data.get('title') or '').strip()
+	if not title:
+		return jsonify({'error': 'Roadmap title is required'}), 400
+
+	description = (data.get('description') or '').strip()
+	horizon = (data.get('horizon') or 'Near-term').strip() or 'Near-term'
+	status = (data.get('status') or 'Planned').strip() or 'Planned'
+
+	if horizon not in {'Near-term', 'Mid-term', 'Long-term'}:
+		return jsonify({'error': 'Invalid roadmap horizon'}), 400
+	if status not in {'Planned', 'In Progress', 'Completed'}:
+		return jsonify({'error': 'Invalid roadmap status'}), 400
+
+	now = utc_now()
+	doc = {
+		'owner_user_id': user_id,
+		'title': title,
+		'description': description,
+		'horizon': horizon,
+		'status': status,
+		'created_at': now,
+		'updated_at': now,
+	}
+	res = future_journey_roadmap_items_col.insert_one(doc)
+	created = future_journey_roadmap_items_col.find_one({'_id': res.inserted_id})
+	return jsonify(future_journey_roadmap_item_to_json(created)), 201
+
+
+@app.route('/api/future-journey/roadmap-items/<item_id>', methods=['PUT'])
+@login_required
+def update_future_journey_roadmap_item(item_id):
+	user_id = to_object_id(session.get('user_id'))
+	if not user_id:
+		return jsonify({'error': 'Unauthorized'}), 401
+
+	obj_id = to_object_id(item_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid roadmap item id'}), 400
+
+	data = request.get_json(silent=True) or {}
+	update = {}
+
+	if 'title' in data:
+		title = (data.get('title') or '').strip()
+		if not title:
+			return jsonify({'error': 'Roadmap title cannot be empty'}), 400
+		update['title'] = title
+
+	if 'description' in data:
+		update['description'] = (data.get('description') or '').strip()
+
+	if 'horizon' in data:
+		horizon = (data.get('horizon') or '').strip()
+		if horizon not in {'Near-term', 'Mid-term', 'Long-term'}:
+			return jsonify({'error': 'Invalid roadmap horizon'}), 400
+		update['horizon'] = horizon
+
+	if 'status' in data:
+		status = (data.get('status') or '').strip()
+		if status not in {'Planned', 'In Progress', 'Completed'}:
+			return jsonify({'error': 'Invalid roadmap status'}), 400
+		update['status'] = status
+
+	if not update:
+		return jsonify({'error': 'No valid fields provided'}), 400
+
+	update['updated_at'] = utc_now()
+	result = future_journey_roadmap_items_col.update_one({'_id': obj_id, 'owner_user_id': user_id}, {'$set': update})
+	if result.matched_count == 0:
+		return jsonify({'error': 'Roadmap item not found'}), 404
+
+	updated = future_journey_roadmap_items_col.find_one({'_id': obj_id, 'owner_user_id': user_id})
+	return jsonify(future_journey_roadmap_item_to_json(updated))
+
+
+@app.route('/api/future-journey/roadmap-items/<item_id>', methods=['DELETE'])
+@login_required
+def delete_future_journey_roadmap_item(item_id):
+	user_id = to_object_id(session.get('user_id'))
+	if not user_id:
+		return jsonify({'error': 'Unauthorized'}), 401
+
+	obj_id = to_object_id(item_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid roadmap item id'}), 400
+
+	result = future_journey_roadmap_items_col.delete_one({'_id': obj_id, 'owner_user_id': user_id})
+	if result.deleted_count == 0:
+		return jsonify({'error': 'Roadmap item not found'}), 404
+
+	return jsonify({'message': 'Roadmap item deleted'})
+
+
 @app.route("/api/profile", methods=["GET"])
 @login_required
 def get_profile():
@@ -1445,6 +1619,338 @@ def delete_tracked_site(site_id):
 
 	tracked_sites_col.delete_one({"_id": obj_id})
 	return jsonify({"message": "Tracked site deleted"})
+
+
+@app.route("/api/research-links", methods=["GET"])
+@login_required
+def list_research_links():
+	q = request.args.get("q", "").strip()
+	user_id = to_object_id(session.get("user_id"))
+	if not user_id:
+		return jsonify({"error": "Unauthorized"}), 401
+
+	mongo_query = {"owner_user_id": user_id}
+	if q:
+		mongo_query["$or"] = [
+			{"name": {"$regex": q, "$options": "i"}},
+			{"url": {"$regex": q, "$options": "i"}},
+			{"category": {"$regex": q, "$options": "i"}},
+			{"notes": {"$regex": q, "$options": "i"}},
+		]
+
+	docs = list(research_links_col.find(mongo_query).sort("updated_at", -1))
+	return jsonify([research_link_to_json(doc) for doc in docs])
+
+
+@app.route("/api/research-links", methods=["POST"])
+@login_required
+def create_research_link():
+	user_id = to_object_id(session.get("user_id"))
+	if not user_id:
+		return jsonify({"error": "Unauthorized"}), 401
+
+	data = request.get_json(silent=True) or {}
+
+	name = (data.get("name") or "").strip()
+	url = normalize_site_url(data.get("url") or "")
+	category = (data.get("category") or "General").strip() or "General"
+	notes = (data.get("notes") or "").strip()
+	status = (data.get("status") or "Active").strip()
+	check_frequency = (data.get("check_frequency") or "Manual").strip() or "Manual"
+
+	if not name:
+		return jsonify({"error": "Source name is required"}), 400
+	if not url:
+		return jsonify({"error": "Source URL is required"}), 400
+	if status not in {"Active", "Paused"}:
+		return jsonify({"error": "Invalid status"}), 400
+	if check_frequency not in {"Manual", "Daily", "Weekly"}:
+		return jsonify({"error": "Invalid check frequency"}), 400
+
+	now = utc_now()
+	doc = {
+		"owner_user_id": user_id,
+		"name": name,
+		"url": url,
+		"category": category,
+		"notes": notes,
+		"status": status,
+		"check_frequency": check_frequency,
+		"created_at": now,
+		"updated_at": now,
+	}
+	result = research_links_col.insert_one(doc)
+	created = research_links_col.find_one({"_id": result.inserted_id})
+	return jsonify(research_link_to_json(created)), 201
+
+
+@app.route("/api/research-links/<link_id>", methods=["PUT"])
+@login_required
+def update_research_link(link_id):
+	user_id = to_object_id(session.get("user_id"))
+	if not user_id:
+		return jsonify({"error": "Unauthorized"}), 401
+
+	obj_id = to_object_id(link_id)
+	if not obj_id:
+		return jsonify({"error": "Invalid research link id"}), 400
+
+	data = request.get_json(silent=True) or {}
+	update_payload = {}
+
+	if "name" in data:
+		name = (data.get("name") or "").strip()
+		if not name:
+			return jsonify({"error": "Source name cannot be empty"}), 400
+		update_payload["name"] = name
+
+	if "url" in data:
+		url = normalize_site_url(data.get("url") or "")
+		if not url:
+			return jsonify({"error": "Source URL cannot be empty"}), 400
+		update_payload["url"] = url
+
+	if "category" in data:
+		update_payload["category"] = (data.get("category") or "General").strip() or "General"
+
+	if "notes" in data:
+		update_payload["notes"] = (data.get("notes") or "").strip()
+
+	if "status" in data:
+		status = (data.get("status") or "").strip()
+		if status not in {"Active", "Paused"}:
+			return jsonify({"error": "Invalid status"}), 400
+		update_payload["status"] = status
+
+	if "check_frequency" in data:
+		check_frequency = (data.get("check_frequency") or "").strip()
+		if check_frequency not in {"Manual", "Daily", "Weekly"}:
+			return jsonify({"error": "Invalid check frequency"}), 400
+		update_payload["check_frequency"] = check_frequency
+
+	if not update_payload:
+		return jsonify({"error": "No valid fields provided"}), 400
+
+	update_payload["updated_at"] = utc_now()
+	result = research_links_col.update_one(
+		{"_id": obj_id, "owner_user_id": user_id},
+		{"$set": update_payload},
+	)
+	if result.matched_count == 0:
+		return jsonify({"error": "Research link not found"}), 404
+
+	updated = research_links_col.find_one({"_id": obj_id, "owner_user_id": user_id})
+	return jsonify(research_link_to_json(updated))
+
+
+@app.route("/api/research-links/<link_id>", methods=["DELETE"])
+@login_required
+def delete_research_link(link_id):
+	user_id = to_object_id(session.get("user_id"))
+	if not user_id:
+		return jsonify({"error": "Unauthorized"}), 401
+
+	obj_id = to_object_id(link_id)
+	if not obj_id:
+		return jsonify({"error": "Invalid research link id"}), 400
+
+	result = research_links_col.delete_one({"_id": obj_id, "owner_user_id": user_id})
+	if result.deleted_count == 0:
+		return jsonify({"error": "Research link not found"}), 404
+
+	return jsonify({"message": "Research link deleted"})
+
+
+@app.route("/api/research-home-highlights", methods=["GET"])
+@login_required
+def list_research_home_highlights():
+	user_id = to_object_id(session.get("user_id"))
+	if not user_id:
+		return jsonify({"error": "Unauthorized"}), 401
+
+	docs = list(research_home_highlights_col.find({"owner_user_id": user_id}).sort("updated_at", -1))
+	return jsonify([research_home_highlight_to_json(d) for d in docs])
+
+
+@app.route("/api/research-home-highlights", methods=["POST"])
+@login_required
+def create_research_home_highlight():
+	user_id = to_object_id(session.get("user_id"))
+	if not user_id:
+		return jsonify({"error": "Unauthorized"}), 401
+
+	data = request.get_json(silent=True) or {}
+	title = (data.get("title") or "").strip()
+	if not title:
+		return jsonify({"error": "Highlight title is required"}), 400
+
+	summary = (data.get("summary") or "").strip()
+	link = normalize_site_url(data.get("link") or "") if (data.get("link") or "").strip() else ""
+
+	now = utc_now()
+	doc = {
+		"owner_user_id": user_id,
+		"title": title,
+		"summary": summary,
+		"link": link,
+		"created_at": now,
+		"updated_at": now,
+	}
+	res = research_home_highlights_col.insert_one(doc)
+	created = research_home_highlights_col.find_one({"_id": res.inserted_id})
+	return jsonify(research_home_highlight_to_json(created)), 201
+
+
+@app.route("/api/research-home-highlights/<item_id>", methods=["PUT"])
+@login_required
+def update_research_home_highlight(item_id):
+	user_id = to_object_id(session.get("user_id"))
+	if not user_id:
+		return jsonify({"error": "Unauthorized"}), 401
+
+	obj_id = to_object_id(item_id)
+	if not obj_id:
+		return jsonify({"error": "Invalid highlight id"}), 400
+
+	data = request.get_json(silent=True) or {}
+	update = {}
+
+	if "title" in data:
+		title = (data.get("title") or "").strip()
+		if not title:
+			return jsonify({"error": "Highlight title cannot be empty"}), 400
+		update["title"] = title
+
+	if "summary" in data:
+		update["summary"] = (data.get("summary") or "").strip()
+
+	if "link" in data:
+		raw_link = (data.get("link") or "").strip()
+		update["link"] = normalize_site_url(raw_link) if raw_link else ""
+
+	if not update:
+		return jsonify({"error": "No valid fields provided"}), 400
+
+	update["updated_at"] = utc_now()
+	result = research_home_highlights_col.update_one({"_id": obj_id, "owner_user_id": user_id}, {"$set": update})
+	if result.matched_count == 0:
+		return jsonify({"error": "Highlight not found"}), 404
+
+	updated = research_home_highlights_col.find_one({"_id": obj_id, "owner_user_id": user_id})
+	return jsonify(research_home_highlight_to_json(updated))
+
+
+@app.route("/api/research-home-highlights/<item_id>", methods=["DELETE"])
+@login_required
+def delete_research_home_highlight(item_id):
+	user_id = to_object_id(session.get("user_id"))
+	if not user_id:
+		return jsonify({"error": "Unauthorized"}), 401
+
+	obj_id = to_object_id(item_id)
+	if not obj_id:
+		return jsonify({"error": "Invalid highlight id"}), 400
+
+	result = research_home_highlights_col.delete_one({"_id": obj_id, "owner_user_id": user_id})
+	if result.deleted_count == 0:
+		return jsonify({"error": "Highlight not found"}), 404
+
+	return jsonify({"message": "Highlight deleted"})
+
+
+@app.route("/api/research-about-items", methods=["GET"])
+@login_required
+def list_research_about_items():
+	user_id = to_object_id(session.get("user_id"))
+	if not user_id:
+		return jsonify({"error": "Unauthorized"}), 401
+
+	docs = list(research_about_items_col.find({"owner_user_id": user_id}).sort("updated_at", -1))
+	return jsonify([research_about_item_to_json(d) for d in docs])
+
+
+@app.route("/api/research-about-items", methods=["POST"])
+@login_required
+def create_research_about_item():
+	user_id = to_object_id(session.get("user_id"))
+	if not user_id:
+		return jsonify({"error": "Unauthorized"}), 401
+
+	data = request.get_json(silent=True) or {}
+	title = (data.get("title") or "").strip()
+	content = (data.get("content") or "").strip()
+	if not title:
+		return jsonify({"error": "About title is required"}), 400
+	if not content:
+		return jsonify({"error": "About content is required"}), 400
+
+	now = utc_now()
+	doc = {
+		"owner_user_id": user_id,
+		"title": title,
+		"content": content,
+		"created_at": now,
+		"updated_at": now,
+	}
+	res = research_about_items_col.insert_one(doc)
+	created = research_about_items_col.find_one({"_id": res.inserted_id})
+	return jsonify(research_about_item_to_json(created)), 201
+
+
+@app.route("/api/research-about-items/<item_id>", methods=["PUT"])
+@login_required
+def update_research_about_item(item_id):
+	user_id = to_object_id(session.get("user_id"))
+	if not user_id:
+		return jsonify({"error": "Unauthorized"}), 401
+
+	obj_id = to_object_id(item_id)
+	if not obj_id:
+		return jsonify({"error": "Invalid about item id"}), 400
+
+	data = request.get_json(silent=True) or {}
+	update = {}
+
+	if "title" in data:
+		title = (data.get("title") or "").strip()
+		if not title:
+			return jsonify({"error": "About title cannot be empty"}), 400
+		update["title"] = title
+
+	if "content" in data:
+		content = (data.get("content") or "").strip()
+		if not content:
+			return jsonify({"error": "About content cannot be empty"}), 400
+		update["content"] = content
+
+	if not update:
+		return jsonify({"error": "No valid fields provided"}), 400
+
+	update["updated_at"] = utc_now()
+	result = research_about_items_col.update_one({"_id": obj_id, "owner_user_id": user_id}, {"$set": update})
+	if result.matched_count == 0:
+		return jsonify({"error": "About item not found"}), 404
+
+	updated = research_about_items_col.find_one({"_id": obj_id, "owner_user_id": user_id})
+	return jsonify(research_about_item_to_json(updated))
+
+
+@app.route("/api/research-about-items/<item_id>", methods=["DELETE"])
+@login_required
+def delete_research_about_item(item_id):
+	user_id = to_object_id(session.get("user_id"))
+	if not user_id:
+		return jsonify({"error": "Unauthorized"}), 401
+
+	obj_id = to_object_id(item_id)
+	if not obj_id:
+		return jsonify({"error": "Invalid about item id"}), 400
+
+	result = research_about_items_col.delete_one({"_id": obj_id, "owner_user_id": user_id})
+	if result.deleted_count == 0:
+		return jsonify({"error": "About item not found"}), 404
+
+	return jsonify({"message": "About item deleted"})
 
 
 @app.route("/api/workflows", methods=["GET"])

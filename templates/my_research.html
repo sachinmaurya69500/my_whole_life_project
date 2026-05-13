@@ -48,6 +48,26 @@
 					</div>
 					<div id="featuredSources" class="featured-grid"></div>
 				</section>
+
+				<section class="board-toolbar" style="margin-top: 1rem;">
+					<div>
+						<h3>Home Highlights</h3>
+						<p>Manage the highlight cards shown on your research homepage. Total: <span id="homeHighlightCount">0</span></p>
+					</div>
+				</section>
+				<section class="table-wrap" style="padding: 0.9rem; margin-top: -0.3rem;">
+					<form id="highlightForm" class="field-grid three" style="margin-bottom: 0.8rem;">
+						<input type="hidden" id="highlightId" />
+						<label for="highlightTitle">Title<input id="highlightTitle" required /></label>
+						<label for="highlightSummary">Summary<input id="highlightSummary" required /></label>
+						<label for="highlightLink">Link<input id="highlightLink" placeholder="https://example.com/article" /></label>
+						<div style="display: flex; gap: 0.45rem; align-items: end;">
+							<button id="saveHighlightBtn" type="submit" class="btn-primary">Add Highlight</button>
+							<button id="cancelHighlightEditBtn" type="button" class="btn-secondary">Cancel</button>
+						</div>
+					</form>
+					<div id="homeHighlightsList" class="featured-grid"></div>
+				</section>
 			</section>
 
 			<section id="portalBoardSection" class="portal-section hidden">
@@ -88,6 +108,20 @@
 						<li>Editorial card-based homepage</li>
 						<li>Full tracked-source CRUD board</li>
 					</ul>
+				</article>
+				<article class="about-card" style="margin-top: 0.9rem;">
+					<h3>About Items (CRUD)</h3>
+					<p class="hero-sub">Total items: <span id="aboutItemCount">0</span></p>
+					<form id="aboutItemForm" class="field-grid two" style="margin-top: 0.8rem;">
+						<input type="hidden" id="aboutItemId" />
+						<label for="aboutItemTitle">Title<input id="aboutItemTitle" required /></label>
+						<label for="aboutItemContent">Content<input id="aboutItemContent" required /></label>
+						<div style="display: flex; gap: 0.45rem; align-items: end;">
+							<button id="saveAboutItemBtn" type="submit" class="btn-primary">Add Item</button>
+							<button id="cancelAboutItemEditBtn" type="button" class="btn-secondary">Cancel</button>
+						</div>
+					</form>
+					<div id="aboutItemsList" class="featured-grid" style="margin-top: 0.8rem;"></div>
 				</article>
 			</section>
 		</main>

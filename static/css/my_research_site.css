@@ -459,6 +459,21 @@ td a {
 	color: var(--ink-soft);
 }
 
+.skeleton-card {
+	border-radius: 0.8rem;
+	border: 1px solid var(--line);
+	background: linear-gradient(110deg, #f4efe5 8%, #ffffff 18%, #f4efe5 33%);
+	background-size: 220% 100%;
+	animation: researchSkeleton 1.2s linear infinite;
+	height: 96px;
+}
+
+@keyframes researchSkeleton {
+	to {
+		background-position-x: -220%;
+	}
+}
+
 @media (max-width: 900px) {
 	.featured-grid {
 		grid-template-columns: 1fr;

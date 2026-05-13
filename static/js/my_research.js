@@ -10,6 +10,23 @@ const researchEl = {
 	rsStatActive: document.getElementById('rsStatActive'),
 	rsStatPaused: document.getElementById('rsStatPaused'),
 	featuredSources: document.getElementById('featuredSources'),
+	homeHighlightsList: document.getElementById('homeHighlightsList'),
+	homeHighlightCount: document.getElementById('homeHighlightCount'),
+	highlightForm: document.getElementById('highlightForm'),
+	highlightId: document.getElementById('highlightId'),
+	highlightTitle: document.getElementById('highlightTitle'),
+	highlightSummary: document.getElementById('highlightSummary'),
+	highlightLink: document.getElementById('highlightLink'),
+	saveHighlightBtn: document.getElementById('saveHighlightBtn'),
+	cancelHighlightEditBtn: document.getElementById('cancelHighlightEditBtn'),
+	aboutItemsList: document.getElementById('aboutItemsList'),
+	aboutItemCount: document.getElementById('aboutItemCount'),
+	aboutItemForm: document.getElementById('aboutItemForm'),
+	aboutItemId: document.getElementById('aboutItemId'),
+	aboutItemTitle: document.getElementById('aboutItemTitle'),
+	aboutItemContent: document.getElementById('aboutItemContent'),
+	saveAboutItemBtn: document.getElementById('saveAboutItemBtn'),
+	cancelAboutItemEditBtn: document.getElementById('cancelAboutItemEditBtn'),
 	openAddSiteModalBtn: document.getElementById('openAddSiteModalBtn'),
 	siteSearch: document.getElementById('siteSearch'),
 	siteTableBody: document.getElementById('siteTableBody'),
@@ -32,6 +49,10 @@ const researchEl = {
 const state = {
 	currentSection: 'home',
 	sites: [],
+	highlights: [],
+	aboutItems: [],
+	editingHighlightId: '',
+	editingAboutItemId: '',
 };
 
 function showToast(message, kind = 'ok') {
@@ -65,6 +86,13 @@ function escapeHtml(value) {
 		.replaceAll('>', '&gt;')
 		.replaceAll('"', '&quot;')
 		.replaceAll("'", '&#39;');
+}
+
+function renderLoadingSkeletons(target, count = 3) {
+	if (!target) return;
+	target.innerHTML = Array.from({ length: count })
+		.map(() => '<article class="skeleton-card" aria-hidden="true"></article>')
+		.join('');
 }
 
 function sectionToPath(section) {
@@ -125,7 +153,7 @@ function renderTable(sites) {
 	if (!researchEl.siteTableBody) return;
 	researchEl.siteTableBody.innerHTML = '';
 	if (!sites.length) {
-		researchEl.siteTableBody.innerHTML = '<tr><td colspan="7"><div class="empty-state">No tracked websites found.</div></td></tr>';
+		researchEl.siteTableBody.innerHTML = '<tr><td colspan="7"><div class="empty-state">No research sources found.</div></td></tr>';
 		return;
 	}
 
@@ -148,9 +176,9 @@ function renderTable(sites) {
 
 		tr.querySelector('.edit-site-btn').addEventListener('click', () => openModal(site));
 		tr.querySelector('.delete-site-btn').addEventListener('click', async () => {
-			if (!confirm(`Delete tracked website "${site.name}"?`)) return;
+			if (!confirm(`Delete research source "${site.name}"?`)) return;
 			try {
-				await researchApi(`/api/tracked-sites/${site._id}`, { method: 'DELETE' });
+				await researchApi(`/api/research-links/${site._id}`, { method: 'DELETE' });
 				showToast('Source deleted');
 				await loadSites();
 			} catch (err) {
@@ -160,6 +188,120 @@ function renderTable(sites) {
 
 		researchEl.siteTableBody.appendChild(tr);
 	});
+}
+
+function renderHighlights() {
+	if (!researchEl.homeHighlightsList) return;
+	if (researchEl.homeHighlightCount) {
+		researchEl.homeHighlightCount.textContent = String(state.highlights.length);
+	}
+	if (!state.highlights.length) {
+		researchEl.homeHighlightsList.innerHTML = '<article class="featured-item"><h4>No highlights yet</h4><p>Add a highlight to enrich your Home page.</p></article>';
+		return;
+	}
+
+	researchEl.homeHighlightsList.innerHTML = state.highlights
+		.map((item) => `
+			<article class="featured-item">
+				<h4>${escapeHtml(item.title)}</h4>
+				<p>${escapeHtml(item.summary || '')}</p>
+				${item.link ? `<p><a href="${escapeHtml(item.link)}" target="_blank" rel="noreferrer">${escapeHtml(item.link)}</a></p>` : ''}
+				<div class="table-actions" style="margin-top:0.5rem;">
+					<button class="table-btn edit-highlight-btn" data-id="${item._id}">Edit</button>
+					<button class="table-btn danger delete-highlight-btn" data-id="${item._id}">Delete</button>
+				</div>
+			</article>
+		`)
+		.join('');
+
+	researchEl.homeHighlightsList.querySelectorAll('.edit-highlight-btn').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const item = state.highlights.find((x) => x._id === btn.dataset.id);
+			if (!item) return;
+			state.editingHighlightId = item._id;
+			researchEl.highlightId.value = item._id;
+			researchEl.highlightTitle.value = item.title || '';
+			researchEl.highlightSummary.value = item.summary || '';
+			researchEl.highlightLink.value = item.link || '';
+			researchEl.saveHighlightBtn.textContent = 'Update Highlight';
+		});
+	});
+
+	researchEl.homeHighlightsList.querySelectorAll('.delete-highlight-btn').forEach((btn) => {
+		btn.addEventListener('click', async () => {
+			if (!confirm('Delete this highlight?')) return;
+			try {
+				await researchApi(`/api/research-home-highlights/${btn.dataset.id}`, { method: 'DELETE' });
+				showToast('Highlight deleted');
+				await loadHighlights();
+			} catch (err) {
+				showToast(err.message || 'Delete failed', 'error');
+			}
+		});
+	});
+}
+
+function renderAboutItems() {
+	if (!researchEl.aboutItemsList) return;
+	if (researchEl.aboutItemCount) {
+		researchEl.aboutItemCount.textContent = String(state.aboutItems.length);
+	}
+	if (!state.aboutItems.length) {
+		researchEl.aboutItemsList.innerHTML = '<article class="featured-item"><h4>No about items yet</h4><p>Add items that describe this portal.</p></article>';
+		return;
+	}
+
+	researchEl.aboutItemsList.innerHTML = state.aboutItems
+		.map((item) => `
+			<article class="featured-item">
+				<h4>${escapeHtml(item.title)}</h4>
+				<p>${escapeHtml(item.content)}</p>
+				<div class="table-actions" style="margin-top:0.5rem;">
+					<button class="table-btn edit-about-item-btn" data-id="${item._id}">Edit</button>
+					<button class="table-btn danger delete-about-item-btn" data-id="${item._id}">Delete</button>
+				</div>
+			</article>
+		`)
+		.join('');
+
+	researchEl.aboutItemsList.querySelectorAll('.edit-about-item-btn').forEach((btn) => {
+		btn.addEventListener('click', () => {
+			const item = state.aboutItems.find((x) => x._id === btn.dataset.id);
+			if (!item) return;
+			state.editingAboutItemId = item._id;
+			researchEl.aboutItemId.value = item._id;
+			researchEl.aboutItemTitle.value = item.title || '';
+			researchEl.aboutItemContent.value = item.content || '';
+			researchEl.saveAboutItemBtn.textContent = 'Update Item';
+		});
+	});
+
+	researchEl.aboutItemsList.querySelectorAll('.delete-about-item-btn').forEach((btn) => {
+		btn.addEventListener('click', async () => {
+			if (!confirm('Delete this about item?')) return;
+			try {
+				await researchApi(`/api/research-about-items/${btn.dataset.id}`, { method: 'DELETE' });
+				showToast('About item deleted');
+				await loadAboutItems();
+			} catch (err) {
+				showToast(err.message || 'Delete failed', 'error');
+			}
+		});
+	});
+}
+
+function resetHighlightForm() {
+	state.editingHighlightId = '';
+	if (researchEl.highlightForm) researchEl.highlightForm.reset();
+	if (researchEl.highlightId) researchEl.highlightId.value = '';
+	if (researchEl.saveHighlightBtn) researchEl.saveHighlightBtn.textContent = 'Add Highlight';
+}
+
+function resetAboutItemForm() {
+	state.editingAboutItemId = '';
+	if (researchEl.aboutItemForm) researchEl.aboutItemForm.reset();
+	if (researchEl.aboutItemId) researchEl.aboutItemId.value = '';
+	if (researchEl.saveAboutItemBtn) researchEl.saveAboutItemBtn.textContent = 'Add Item';
 }
 
 function openModal(site = null) {
@@ -192,12 +334,28 @@ function closeModal() {
 
 async function loadSites(search = '') {
 	const query = search ? `?q=${encodeURIComponent(search)}` : '';
-	const sites = await researchApi(`/api/tracked-sites${query}`);
+	const sites = await researchApi(`/api/research-links${query}`);
 	if (!sites) return;
 	state.sites = sites;
 	renderStats();
 	renderFeatured();
 	renderTable(sites);
+}
+
+async function loadHighlights() {
+	renderLoadingSkeletons(researchEl.homeHighlightsList, 3);
+	const items = await researchApi('/api/research-home-highlights');
+	if (!items) return;
+	state.highlights = Array.isArray(items) ? items : [];
+	renderHighlights();
+}
+
+async function loadAboutItems() {
+	renderLoadingSkeletons(researchEl.aboutItemsList, 2);
+	const items = await researchApi('/api/research-about-items');
+	if (!items) return;
+	state.aboutItems = Array.isArray(items) ? items : [];
+	renderAboutItems();
 }
 
 if (researchEl.navLinks) {
@@ -252,14 +410,14 @@ if (researchEl.siteForm) {
 
 		try {
 			if (researchEl.siteId.value) {
-				await researchApi(`/api/tracked-sites/${researchEl.siteId.value}`, {
+				await researchApi(`/api/research-links/${researchEl.siteId.value}`, {
 					method: 'PUT',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(payload),
 				});
 				showToast('Source updated');
 			} else {
-				await researchApi('/api/tracked-sites', {
+				await researchApi('/api/research-links', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify(payload),
@@ -274,6 +432,89 @@ if (researchEl.siteForm) {
 	});
 }
 
+if (researchEl.highlightForm) {
+	researchEl.highlightForm.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		const payload = {
+			title: (researchEl.highlightTitle?.value || '').trim(),
+			summary: (researchEl.highlightSummary?.value || '').trim(),
+			link: (researchEl.highlightLink?.value || '').trim(),
+		};
+		if (!payload.title || !payload.summary) return;
+
+		try {
+			if (state.editingHighlightId) {
+				await researchApi(`/api/research-home-highlights/${state.editingHighlightId}`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(payload),
+				});
+				showToast('Highlight updated');
+			} else {
+				await researchApi('/api/research-home-highlights', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(payload),
+				});
+				showToast('Highlight added');
+			}
+			resetHighlightForm();
+			await loadHighlights();
+		} catch (err) {
+			showToast(err.message || 'Save failed', 'error');
+		}
+	});
+}
+
+if (researchEl.cancelHighlightEditBtn) {
+	researchEl.cancelHighlightEditBtn.addEventListener('click', () => {
+		resetHighlightForm();
+	});
+}
+
+if (researchEl.aboutItemForm) {
+	researchEl.aboutItemForm.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		const payload = {
+			title: (researchEl.aboutItemTitle?.value || '').trim(),
+			content: (researchEl.aboutItemContent?.value || '').trim(),
+		};
+		if (!payload.title || !payload.content) return;
+
+		try {
+			if (state.editingAboutItemId) {
+				await researchApi(`/api/research-about-items/${state.editingAboutItemId}`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(payload),
+				});
+				showToast('About item updated');
+			} else {
+				await researchApi('/api/research-about-items', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify(payload),
+				});
+				showToast('About item added');
+			}
+			resetAboutItemForm();
+			await loadAboutItems();
+		} catch (err) {
+			showToast(err.message || 'Save failed', 'error');
+		}
+	});
+}
+
+if (researchEl.cancelAboutItemEditBtn) {
+	researchEl.cancelAboutItemEditBtn.addEventListener('click', () => {
+		resetAboutItemForm();
+	});
+}
+
 const initialSection = researchEl.body?.dataset.initialSection || 'home';
 setSection(initialSection, false);
-loadSites().catch((err) => showToast(err.message || 'Unable to load sources', 'error'));
+resetHighlightForm();
+resetAboutItemForm();
+Promise.all([loadSites(), loadHighlights(), loadAboutItems()]).catch((err) => {
+	showToast(err.message || 'Unable to load research data', 'error');
+});
