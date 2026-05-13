@@ -48,37 +48,55 @@
 				window.location.href = '/login';
 				return null;
 			}
-
-			// Draw SVG connectors inside each column block connecting roadmap-card centers
-			function drawConnectors() {
-				const columnBlocks = el.roadmapList.querySelectorAll('.roadmap-column-block');
-				columnBlocks.forEach((col) => {
-					const svg = col.querySelector('svg.roadmap-svg');
-					if (!svg) return;
-					// size svg to column
-					svg.setAttribute('width', col.clientWidth);
-					svg.setAttribute('height', col.clientHeight);
-					// gather card centers
-					const cards = Array.from(col.querySelectorAll('.roadmap-card'));
-					if (cards.length < 2) return;
-					const points = cards.map((card) => {
-						const cRect = card.getBoundingClientRect();
-						const pRect = col.getBoundingClientRect();
-						const x = 12; // near left where dots are
-						const y = cRect.top - pRect.top + cRect.height / 2;
-						return { x, y };
-					});
-					// build path
-					const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-					const d = points.map((pt, i) => (i === 0 ? `M ${pt.x} ${pt.y}` : `L ${pt.x} ${pt.y}`)).join(' ');
-					path.setAttribute('d', d);
-					path.classList.add('roadmap-connector');
-					svg.appendChild(path);
-				});
-			}
 			throw new Error(data.error || 'Request failed');
 		}
 		return data;
+	}
+
+	function renderRoadmapShell(isLoading = false) {
+		if (!el.roadmapList) return;
+		if (isLoading) {
+			el.roadmapList.innerHTML = `
+				<div id="roadmapColumns" class="roadmap-columns">
+					<div class="roadmap-column" id="roadmapNear"><h4 class="roadmap-column-title">Near-term</h4><div class="roadmap-column-list"><div class="journey-skeleton" aria-hidden="true"></div></div></div>
+					<div class="roadmap-column" id="roadmapMid"><h4 class="roadmap-column-title">Mid-term</h4><div class="roadmap-column-list"><div class="journey-skeleton" aria-hidden="true"></div></div></div>
+					<div class="roadmap-column" id="roadmapLong"><h4 class="roadmap-column-title">Long-term</h4><div class="roadmap-column-list"><div class="journey-skeleton" aria-hidden="true"></div></div></div>
+				</div>`;
+			return;
+		}
+		if (!el.roadmapList.querySelector('#roadmapColumns')) {
+			el.roadmapList.innerHTML = `
+				<div id="roadmapColumns" class="roadmap-columns">
+					<div class="roadmap-column" id="roadmapNear"><h4 class="roadmap-column-title">Near-term</h4><div class="roadmap-column-list"></div></div>
+					<div class="roadmap-column" id="roadmapMid"><h4 class="roadmap-column-title">Mid-term</h4><div class="roadmap-column-list"></div></div>
+					<div class="roadmap-column" id="roadmapLong"><h4 class="roadmap-column-title">Long-term</h4><div class="roadmap-column-list"></div></div>
+				</div>`;
+		}
+	}
+
+	// Draw SVG connectors inside each column block connecting roadmap-card centers
+	function drawConnectors() {
+		if (!el.roadmapList) return;
+		const columnBlocks = el.roadmapList.querySelectorAll('.roadmap-column-block');
+		columnBlocks.forEach((col) => {
+			const svg = col.querySelector('svg.roadmap-svg');
+			if (!svg) return;
+			const cards = Array.from(col.querySelectorAll('.roadmap-card'));
+			while (svg.firstChild) svg.removeChild(svg.firstChild);
+			if (cards.length < 2) return;
+			svg.setAttribute('width', col.clientWidth);
+			svg.setAttribute('height', col.clientHeight);
+			const pRect = col.getBoundingClientRect();
+			const points = cards.map((card) => {
+				const cRect = card.getBoundingClientRect();
+				return { x: 12, y: cRect.top - pRect.top + cRect.height / 2 };
+			});
+			const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+			const d = points.map((pt, i) => (i === 0 ? `M ${pt.x} ${pt.y}` : `L ${pt.x} ${pt.y}`)).join(' ');
+			path.setAttribute('d', d);
+			path.classList.add('roadmap-connector');
+			svg.appendChild(path);
+		});
 	}
 
 	function setFutureSection(sectionKey) {
@@ -121,8 +139,18 @@
 				<div class="roadmap-column-block">${long.map(renderCard).join('')}</div>
 			</div>`;
 
-		const columnsContainer = el.roadmapList.querySelector('#roadmapColumns');
-		if (columnsContainer) columnsContainer.innerHTML = columnsHtml;
+		let columnsContainer = el.roadmapList.querySelector('#roadmapColumns');
+		if (!columnsContainer) {
+			el.roadmapList.innerHTML = `
+				<div id="roadmapColumns" class="roadmap-columns">
+					<div class="roadmap-column" id="roadmapNear"><h4 class="roadmap-column-title">Near-term</h4><div class="roadmap-column-list"></div></div>
+					<div class="roadmap-column" id="roadmapMid"><h4 class="roadmap-column-title">Mid-term</h4><div class="roadmap-column-list"></div></div>
+					<div class="roadmap-column" id="roadmapLong"><h4 class="roadmap-column-title">Long-term</h4><div class="roadmap-column-list"></div></div>
+				</div>`;
+			columnsContainer = el.roadmapList.querySelector('#roadmapColumns');
+		}
+		if (!columnsContainer) return;
+		columnsContainer.innerHTML = columnsHtml;
 
 		// Ensure each column block has an SVG for connectors
 		const columnBlocks = el.roadmapList.querySelectorAll('.roadmap-column-block');
@@ -390,12 +418,7 @@
 	}
 
 	async function loadRoadmapItems() {
-		if (el.roadmapList) {
-			el.roadmapList.innerHTML = [
-				'<div class="journey-skeleton" aria-hidden="true"></div>',
-				'<div class="journey-skeleton" aria-hidden="true"></div>'
-			].join('');
-		}
+		renderRoadmapShell(true);
 		const items = await fjApi('/api/future-journey/roadmap-items');
 		if (!items) return;
 		state.roadmapItems = Array.isArray(items) ? items : [];
