@@ -48,6 +48,34 @@
 				window.location.href = '/login';
 				return null;
 			}
+
+			// Draw SVG connectors inside each column block connecting roadmap-card centers
+			function drawConnectors() {
+				const columnBlocks = el.roadmapList.querySelectorAll('.roadmap-column-block');
+				columnBlocks.forEach((col) => {
+					const svg = col.querySelector('svg.roadmap-svg');
+					if (!svg) return;
+					// size svg to column
+					svg.setAttribute('width', col.clientWidth);
+					svg.setAttribute('height', col.clientHeight);
+					// gather card centers
+					const cards = Array.from(col.querySelectorAll('.roadmap-card'));
+					if (cards.length < 2) return;
+					const points = cards.map((card) => {
+						const cRect = card.getBoundingClientRect();
+						const pRect = col.getBoundingClientRect();
+						const x = 12; // near left where dots are
+						const y = cRect.top - pRect.top + cRect.height / 2;
+						return { x, y };
+					});
+					// build path
+					const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+					const d = points.map((pt, i) => (i === 0 ? `M ${pt.x} ${pt.y}` : `L ${pt.x} ${pt.y}`)).join(' ');
+					path.setAttribute('d', d);
+					path.classList.add('roadmap-connector');
+					svg.appendChild(path);
+				});
+			}
 			throw new Error(data.error || 'Request failed');
 		}
 		return data;
@@ -71,26 +99,54 @@
 			return;
 		}
 
-		el.roadmapList.innerHTML = state.roadmapItems
-			.map((item, index) => `
-				<article class="journey-list-item flex items-start justify-between gap-3">
-					<div>
-						<h4 class="font-semibold text-slate-100">${escapeHtml(item.title)}</h4>
-						<p class="text-xs text-slate-400 mt-1">${escapeHtml(item.description || 'No description')}</p>
-						<p class="text-xs mt-1"><span class="future-chip">${escapeHtml(item.horizon || 'Near-term')}</span> <span class="future-chip">${escapeHtml(item.status || 'Planned')}</span></p>
-					</div>
-					<div class="flex gap-2">
-						<button class="btn btn-secondary text-xs px-2 py-1 edit-roadmap-btn" data-index="${index}">Edit</button>
-						<button class="btn btn-secondary text-xs px-2 py-1 delete-roadmap-btn" data-index="${index}">Delete</button>
-					</div>
-				</article>
-			`)
-			.join('');
+		// Group by horizon
+		const near = state.roadmapItems.filter((i) => (i.horizon || 'Near-term') === 'Near-term');
+		const mid = state.roadmapItems.filter((i) => (i.horizon || '') === 'Mid-term');
+		const long = state.roadmapItems.filter((i) => (i.horizon || '') === 'Long-term');
 
+		const renderCard = (item) => `
+			<article class="roadmap-card" data-id="${item._id}" draggable="true" tabindex="0">
+				<h5>${escapeHtml(item.title)}</h5>
+				<p>${escapeHtml(item.description || '')}</p>
+				<div class="roadmap-actions">
+					<button class="btn btn-secondary edit-roadmap-btn" data-id="${item._id}">Edit</button>
+					<button class="btn btn-secondary delete-roadmap-btn" data-id="${item._id}">Delete</button>
+				</div>
+			</article>`;
+
+		const columnsHtml = `
+			<div class="roadmap-columns-inner">
+				<div class="roadmap-column-block">${near.map(renderCard).join('')}</div>
+				<div class="roadmap-column-block">${mid.map(renderCard).join('')}</div>
+				<div class="roadmap-column-block">${long.map(renderCard).join('')}</div>
+			</div>`;
+
+		const columnsContainer = el.roadmapList.querySelector('#roadmapColumns');
+		if (columnsContainer) columnsContainer.innerHTML = columnsHtml;
+
+		// Ensure each column block has an SVG for connectors
+		const columnBlocks = el.roadmapList.querySelectorAll('.roadmap-column-block');
+		columnBlocks.forEach((col) => {
+			let svg = col.querySelector('svg.roadmap-svg');
+			if (!svg) {
+				svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+				svg.classList.add('roadmap-svg');
+				col.insertBefore(svg, col.firstChild);
+			}
+			// clear existing
+			while (svg.firstChild) svg.removeChild(svg.firstChild);
+		});
+
+		// After DOM painted, draw connectors
+		requestAnimationFrame(() => {
+			drawConnectors();
+		});
+
+		// Attach handlers by data-id
 		el.roadmapList.querySelectorAll('.edit-roadmap-btn').forEach((btn) => {
 			btn.addEventListener('click', () => {
-				const index = Number(btn.dataset.index);
-				const item = state.roadmapItems[index];
+				const id = btn.dataset.id;
+				const item = state.roadmapItems.find((x) => x._id === id);
 				if (!item) return;
 				state.editingRoadmapItemId = item._id;
 				if (el.roadmapItemId) el.roadmapItemId.value = item._id;
@@ -105,8 +161,8 @@
 
 		el.roadmapList.querySelectorAll('.delete-roadmap-btn').forEach((btn) => {
 			btn.addEventListener('click', async () => {
-				const index = Number(btn.dataset.index);
-				const item = state.roadmapItems[index];
+				const id = btn.dataset.id;
+				const item = state.roadmapItems.find((x) => x._id === id);
 				if (!item || !item._id) return;
 				if (!confirm(`Delete roadmap item "${item.title}"?`)) return;
 				try {
@@ -115,6 +171,126 @@
 					await loadRoadmapItems();
 				} catch (err) {
 					if (typeof showToast === 'function') showToast(err.message || 'Delete failed', 'error');
+				}
+			});
+		});
+
+		// Setup drag-and-drop and keyboard handlers
+		const cardEls = el.roadmapList.querySelectorAll('.roadmap-card');
+		cardEls.forEach((card) => {
+			card.addEventListener('dragstart', (e) => {
+				card.classList.add('dragging');
+				e.dataTransfer.setData('text/plain', card.dataset.id);
+				e.dataTransfer.effectAllowed = 'move';
+			});
+			card.addEventListener('dragend', () => {
+				card.classList.remove('dragging');
+			});
+			// keyboard move handlers
+			card.addEventListener('keydown', async (ev) => {
+				const id = card.dataset.id;
+				const item = state.roadmapItems.find((x) => x._id === id);
+				if (!item) return;
+				if (ev.key === 'ArrowLeft' || ev.key === 'ArrowRight') {
+					ev.preventDefault();
+					const horizons = ['Near-term', 'Mid-term', 'Long-term'];
+					const cur = horizons.indexOf(item.horizon || 'Near-term');
+					const next = ev.key === 'ArrowLeft' ? Math.max(0, cur - 1) : Math.min(horizons.length - 1, cur + 1);
+					const newHorizon = horizons[next];
+					if (newHorizon === item.horizon) return;
+					try {
+						await fjApi(`/api/future-journey/roadmap-items/${item._id}`, {
+							method: 'PUT',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ horizon: newHorizon }),
+						});
+						await loadRoadmapItems();
+						card.focus();
+						if (typeof showToast === 'function') showToast('Moved roadmap item');
+					} catch (err) {
+						if (typeof showToast === 'function') showToast(err.message || 'Move failed', 'error');
+					}
+				} else if (ev.key === 'ArrowUp' || ev.key === 'ArrowDown') {
+					// reorder within column
+					ev.preventDefault();
+					const col = (item.horizon || 'Near-term');
+					const colItems = state.roadmapItems.filter((x) => (x.horizon || 'Near-term') === col).sort((a,b)=> (a.position||0)-(b.position||0));
+					const idx = colItems.findIndex((x) => x._id === id);
+					if (idx === -1) return;
+					const newIdx = ev.key === 'ArrowUp' ? Math.max(0, idx - 1) : Math.min(colItems.length - 1, idx + 1);
+					if (newIdx === idx) return;
+					// swap positions
+					const target = colItems[newIdx];
+					try {
+						await Promise.all([
+							fjApi(`/api/future-journey/roadmap-items/${item._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ position: newIdx }) }),
+							fjApi(`/api/future-journey/roadmap-items/${target._id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ position: idx }) })
+						]);
+						await loadRoadmapItems();
+						if (typeof showToast === 'function') showToast('Reordered roadmap item');
+					} catch (err) {
+						if (typeof showToast === 'function') showToast(err.message || 'Reorder failed', 'error');
+					}
+				}
+			});
+		});
+
+		const columnBlocks = el.roadmapList.querySelectorAll('.roadmap-column-block');
+		columnBlocks.forEach((col, idx) => {
+			col.addEventListener('dragover', (e) => {
+				e.preventDefault();
+				col.classList.add('over');
+				e.dataTransfer.dropEffect = 'move';
+			});
+			col.addEventListener('dragleave', () => col.classList.remove('over'));
+			col.addEventListener('drop', async (e) => {
+				e.preventDefault();
+				col.classList.remove('over');
+				const id = e.dataTransfer.getData('text/plain');
+				if (!id) return;
+				const item = state.roadmapItems.find((x) => x._id === id);
+				if (!item) return;
+				// determine target horizon by column index
+				const horizon = idx === 0 ? 'Near-term' : idx === 1 ? 'Mid-term' : 'Long-term';
+
+				// determine drop index by y position
+				const children = Array.from(col.querySelectorAll('.roadmap-card'));
+				let targetIndex = children.length; // default append
+				const rect = col.getBoundingClientRect();
+				const y = e.clientY - rect.top;
+				for (let i = 0; i < children.length; i++) {
+					const cRect = children[i].getBoundingClientRect();
+					const relY = cRect.top - rect.top + cRect.height / 2;
+					if (y < relY) { targetIndex = i; break; }
+				}
+
+				// build new ordering for target column
+				const targetColItems = state.roadmapItems.filter((x) => (x.horizon || 'Near-term') === horizon).sort((a,b)=> (a.position||0)-(b.position||0));
+
+				// remove from original column list if exists
+				const originalColItems = state.roadmapItems.filter((x) => (x.horizon || 'Near-term') === (item.horizon || 'Near-term')).sort((a,b)=> (a.position||0)-(b.position||0));
+
+				// if moving within same column we will reposition
+				if (item.horizon === horizon) {
+					const curIdx = originalColItems.findIndex((x) => x._id === item._id);
+					if (curIdx !== -1) originalColItems.splice(curIdx, 1);
+				}
+
+				// insert into target array at targetIndex
+				targetColItems.splice(targetIndex, 0, item);
+
+				// prepare updates: set new positions for target column items
+				const updates = targetColItems.map((it, i) => ({ id: it._id, position: i, horizon }));
+
+				try {
+					// send updates in parallel
+					await Promise.all(updates.map((u) => fjApi(`/api/future-journey/roadmap-items/${u.id}`, {
+						method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ position: u.position, horizon: u.horizon })
+					})));
+					await loadRoadmapItems();
+					if (typeof showToast === 'function') showToast('Moved and reordered roadmap items');
+				} catch (err) {
+					if (typeof showToast === 'function') showToast(err.message || 'Move failed', 'error');
 				}
 			});
 		});
@@ -335,16 +511,35 @@
 	// Import inspired AI Engineer roadmap (client-side only, original wording)
 	if (el.importAiRoadmapBtn) {
 		el.importAiRoadmapBtn.addEventListener('click', async () => {
-			if (!confirm('Import an AI-engineer-style roadmap (inspired)? This will populate the Roadmap list in this session.')) return;
+			if (!confirm('Import an AI-engineer-style roadmap (inspired) and save to your roadmap?')) return;
+			const originalText = el.importAiRoadmapBtn.textContent;
 			try {
+				el.importAiRoadmapBtn.disabled = true;
+				el.importAiRoadmapBtn.textContent = 'Importing...';
 				const items = getInspiredAiRoadmap();
-				// Place into state and re-render; do not auto-save to server
-				state.roadmapItems = items.map((it, idx) => ({ ...it, _id: `insp-${Date.now()}-${idx}` }));
-				renderRoadmapItems();
+				// Persist each item to the server
+				for (const it of items) {
+					const payload = {
+						title: it.title,
+						description: it.description,
+						horizon: it.horizon,
+						status: it.status,
+					};
+					await fjApi('/api/future-journey/roadmap-items', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(payload),
+					});
+				}
+				// Reload from server to get canonical IDs
+				await loadRoadmapItems();
 				if (el.roadmapCount) el.roadmapCount.textContent = String(state.roadmapItems.length);
-				if (typeof showToast === 'function') showToast('Imported AI-engineer-inspired roadmap (not saved)');
+				if (typeof showToast === 'function') showToast('Imported and saved AI-engineer-inspired roadmap');
 			} catch (err) {
 				if (typeof showToast === 'function') showToast(err.message || 'Import failed', 'error');
+			} finally {
+				el.importAiRoadmapBtn.disabled = false;
+				el.importAiRoadmapBtn.textContent = originalText;
 			}
 		});
 	}
