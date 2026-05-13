@@ -19,6 +19,7 @@
 		saveRoadmapBtn: document.getElementById('saveRoadmapBtn'),
 		cancelRoadmapEditBtn: document.getElementById('cancelRoadmapEditBtn'),
 		roadmapList: document.getElementById('roadmapList'),
+		importAiRoadmapBtn: document.getElementById('importAiRoadmapBtn'),
 		milestoneForm: document.getElementById('milestoneForm'),
 		milestoneId: document.getElementById('milestoneId'),
 		milestoneTitle: document.getElementById('milestoneTitle'),
@@ -234,6 +235,23 @@
 			.replaceAll("'", '&#39;');
 	}
 
+	function getInspiredAiRoadmap() {
+		return [
+			{ title: 'Programming & Software Engineering', description: 'Python, testing, data structures, algorithms, software design and Git.', horizon: 'Near-term', status: 'Planned' },
+			{ title: 'Math Foundations', description: 'Linear algebra, probability, statistics, and optimization for ML.', horizon: 'Near-term', status: 'Planned' },
+			{ title: 'Data Engineering', description: 'Data pipelines, ETL, databases, data cleaning and feature stores.', horizon: 'Near-term', status: 'Planned' },
+			{ title: 'Machine Learning Fundamentals', description: 'Supervised/unsupervised learning, model selection, evaluation metrics.', horizon: 'Mid-term', status: 'Planned' },
+			{ title: 'Deep Learning', description: 'Neural networks, CNNs, RNNs/Transformers, architectures and training techniques.', horizon: 'Mid-term', status: 'Planned' },
+			{ title: 'Model Evaluation & Experimentation', description: 'A/B testing, experiment tracking, bias/variance analysis and reproducibility.', horizon: 'Mid-term', status: 'Planned' },
+			{ title: 'MLOps & Deployment', description: 'Containerization, CI/CD, model serving, monitoring and versioning.', horizon: 'Mid-term', status: 'Planned' },
+			{ title: 'Cloud Platforms & Infrastructure', description: 'AWS/GCP/Azure fundamentals for ML workloads and managed services.', horizon: 'Mid-term', status: 'Planned' },
+			{ title: 'Tools & Frameworks', description: 'TensorFlow/PyTorch, scikit-learn, MLflow, kubeflow and helpful libraries.', horizon: 'Near-term', status: 'Planned' },
+			{ title: 'Security, Privacy & Ethics', description: 'Data privacy, secure model serving, fairness and ethical considerations.', horizon: 'Long-term', status: 'Planned' },
+			{ title: 'Specializations', description: 'Choose a focus: NLP, Computer Vision, Reinforcement Learning, or Systems.', horizon: 'Long-term', status: 'Planned' },
+			{ title: 'Research & Advanced Topics', description: 'Read, reproduce, and contribute to current ML research.', horizon: 'Long-term', status: 'Planned' }
+		];
+	}
+
 	if (el.navButtons) {
 		el.navButtons.forEach((btn) => {
 			btn.addEventListener('click', () => {
@@ -310,6 +328,23 @@
 				await loadRoadmapItems();
 			} catch (err) {
 				if (typeof showToast === 'function') showToast(err.message || 'Save failed', 'error');
+			}
+		});
+	}
+
+	// Import inspired AI Engineer roadmap (client-side only, original wording)
+	if (el.importAiRoadmapBtn) {
+		el.importAiRoadmapBtn.addEventListener('click', async () => {
+			if (!confirm('Import an AI-engineer-style roadmap (inspired)? This will populate the Roadmap list in this session.')) return;
+			try {
+				const items = getInspiredAiRoadmap();
+				// Place into state and re-render; do not auto-save to server
+				state.roadmapItems = items.map((it, idx) => ({ ...it, _id: `insp-${Date.now()}-${idx}` }));
+				renderRoadmapItems();
+				if (el.roadmapCount) el.roadmapCount.textContent = String(state.roadmapItems.length);
+				if (typeof showToast === 'function') showToast('Imported AI-engineer-inspired roadmap (not saved)');
+			} catch (err) {
+				if (typeof showToast === 'function') showToast(err.message || 'Import failed', 'error');
 			}
 		});
 	}
