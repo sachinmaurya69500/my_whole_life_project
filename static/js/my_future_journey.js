@@ -103,10 +103,16 @@
 		Object.entries(el.sections).forEach(([key, sectionEl]) => {
 			if (!sectionEl) return;
 			sectionEl.classList.toggle('hidden', key !== sectionKey);
+			sectionEl.style.display = key === sectionKey ? '' : 'none';
 		});
 		el.navButtons.forEach((btn) => {
 			btn.classList.toggle('active', btn.dataset.section === sectionKey);
 		});
+		if (sectionKey === 'roadmap') {
+			loadRoadmapItems().catch((err) => {
+				if (typeof showToast === 'function') showToast(err.message || 'Unable to load roadmap', 'error');
+			});
+		}
 	}
 
 	function renderRoadmapItems() {
@@ -453,7 +459,8 @@
 
 	if (el.navButtons) {
 		el.navButtons.forEach((btn) => {
-			btn.addEventListener('click', () => {
+			btn.addEventListener('click', (event) => {
+				event.preventDefault();
 				setFutureSection(btn.dataset.section || 'home');
 			});
 		});
