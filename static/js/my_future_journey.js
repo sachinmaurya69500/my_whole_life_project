@@ -269,8 +269,8 @@
 			});
 		});
 
-		const columnBlocks = el.roadmapList.querySelectorAll('.roadmap-column-block');
-		columnBlocks.forEach((col, idx) => {
+		const dropZones = el.roadmapList.querySelectorAll('.roadmap-column-block');
+		dropZones.forEach((col, idx) => {
 			col.addEventListener('dragover', (e) => {
 				e.preventDefault();
 				col.classList.add('over');
