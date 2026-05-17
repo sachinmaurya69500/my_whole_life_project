@@ -309,6 +309,7 @@ function setActiveSection(sectionKey) {
 }
 
 function renderCards(targetEl, workflows) {
+	if (!targetEl || !el.cardTemplate || !el.cardTemplate.content) return;
 	targetEl.innerHTML = '';
 	if (!workflows.length) {
 		targetEl.innerHTML = '<p class="hud-empty-state">No workflows found.</p>';
@@ -355,6 +356,7 @@ function renderCards(targetEl, workflows) {
 }
 
 function renderManageTable(workflows) {
+	if (!el.manageTableBody) return;
 	el.manageTableBody.innerHTML = '';
 	if (!workflows.length) {
 		el.manageTableBody.innerHTML = '<tr><td colspan="6" class="py-4"><div class="hud-empty-state">No workflows found.</div></td></tr>';
@@ -470,6 +472,7 @@ function closeTrackedSiteModal() {
 }
 
 function renderTrackedSitesTable(sites) {
+	if (!el.siteTableBody) return;
 	el.siteTableBody.innerHTML = '';
 	if (!sites.length) {
 		el.siteTableBody.innerHTML = '<tr><td colspan="7" class="py-4"><div class="hud-empty-state">No tracked websites yet.</div></td></tr>';
@@ -512,6 +515,7 @@ function renderTrackedSitesTable(sites) {
 }
 
 function renderRecentActivity(items) {
+	if (!el.recentActivity) return;
 	el.recentActivity.innerHTML = '';
 	if (!items.length) {
 		el.recentActivity.innerHTML = '<p class="hud-empty-state">No activity yet.</p>';
@@ -553,6 +557,7 @@ async function uploadWorkflowPhotos(workflowId, files) {
 }
 
 async function loadDashboard() {
+	if (!el.statTotal || !el.statDaily || !el.statLongTerm || !el.statAvg || !el.recentActivity) return;
 	if (el.recentActivity) {
 		el.recentActivity.innerHTML = '<div class="hud-skeleton h-16 rounded-lg"></div><div class="hud-skeleton h-16 rounded-lg mt-3"></div>';
 	}
@@ -568,6 +573,7 @@ async function loadDashboard() {
 }
 
 async function loadProfile() {
+	if (!el.profileName || !el.profileLocation || !el.profileBio || !el.profileImage) return;
 	const profile = await api('/api/profile');
 	const imageVersion = profile.profile_image_updated_at ? encodeURIComponent(profile.profile_image_updated_at) : Date.now();
 	const imageUrl = profile.profile_image_url
@@ -589,17 +595,19 @@ async function loadProfile() {
 }
 
 async function loadWorkflows(search = '') {
+	if (!el.dailyGrid && !el.longTermGrid && !el.manageTableBody) return;
 	const query = search ? `?q=${encodeURIComponent(search)}` : '';
 	if (el.dailyGrid) el.dailyGrid.innerHTML = '<div class="hud-skeleton h-48 rounded-2xl"></div>';
 	if (el.longTermGrid) el.longTermGrid.innerHTML = '<div class="hud-skeleton h-48 rounded-2xl"></div>';
 	if (el.manageTableBody) el.manageTableBody.innerHTML = '<tr><td colspan="6" class="py-4"><div class="hud-skeleton h-10 rounded-lg"></div></td></tr>';
 	state.workflows = await api(`/api/workflows${query}`);
-	renderCards(el.dailyGrid, state.workflows.filter((w) => w.type === 'Daily'));
-	renderCards(el.longTermGrid, state.workflows.filter((w) => w.type === 'Long-term'));
-	renderManageTable(state.workflows);
+	if (el.dailyGrid) renderCards(el.dailyGrid, state.workflows.filter((w) => w.type === 'Daily'));
+	if (el.longTermGrid) renderCards(el.longTermGrid, state.workflows.filter((w) => w.type === 'Long-term'));
+	if (el.manageTableBody) renderManageTable(state.workflows);
 }
 
 async function loadTrackedSites(search = '') {
+	if (!el.siteTableBody) return;
 	const query = search ? `?q=${encodeURIComponent(search)}` : '';
 	if (el.siteTableBody) {
 		el.siteTableBody.innerHTML = '<tr><td colspan="7" class="py-4"><div class="hud-skeleton h-10 rounded-lg"></div></td></tr>';
@@ -609,6 +617,7 @@ async function loadTrackedSites(search = '') {
 }
 
 async function loadAll() {
+	if (!el.recentActivity && !el.dailyGrid && !el.longTermGrid && !el.manageTableBody && !el.siteTableBody && !el.profileForm && !el.chatMessages) return;
 	await Promise.all([loadDashboard(), loadWorkflows(), loadTrackedSites(), loadProfile(), loadChatHistory()]);
 }
 
