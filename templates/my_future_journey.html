@@ -518,6 +518,15 @@ html[data-theme='spacex'] .future-journey .future-nav-btn.active {
 			</div>
 			<div class="spacex-header-actions">
 				<a href="/home" class="btn btn-secondary"><i class="fa-solid fa-arrow-left mr-2"></i>Main App</a>
+				<div class="ml-2 flex items-center gap-2">
+					<label for="themePicker" class="text-sm text-slate-400">Theme</label>
+					<select id="themePicker" class="future-input" aria-label="Theme picker">
+						<option value="spacex">SpaceX</option>
+						<option value="dark">Dark</option>
+						<option value="light">Light</option>
+						<option value="jarvis">Jarvis</option>
+					</select>
+				</div>
 			</div>
 		</header>
 
@@ -633,4 +642,27 @@ html[data-theme='spacex'] .future-journey .future-nav-btn.active {
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/my_future_journey.js') }}"></script>
+<script>
+(function(){
+	try {
+		const picker = document.getElementById('themePicker');
+		if (!picker) return;
+		const html = document.documentElement;
+		const current = html.getAttribute('data-theme') || localStorage.getItem('swm-theme') || 'spacex';
+		picker.value = current;
+		picker.addEventListener('change', function(){
+			const theme = picker.value;
+			html.setAttribute('data-theme', theme);
+			localStorage.setItem('swm-theme', theme);
+			// update global themeToggle icon if present
+			const themeToggle = document.getElementById('themeToggle');
+			if (themeToggle) {
+				const icons = { light: 'fa-moon', dark: 'fa-sun', spacex: 'fa-rocket', jarvis: 'fa-microchip' };
+				themeToggle.innerHTML = `<i class="fa-solid ${icons[theme] || 'fa-circle-half-stroke'}"></i>`;
+				themeToggle.title = `Theme: ${theme.toUpperCase()}`;
+			}
+		});
+	} catch (e) { /* ignore */ }
+})();
+</script>
 {% endblock %}
