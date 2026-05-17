@@ -288,12 +288,17 @@ def future_journey_milestone_to_json(doc):
 
 
 def future_journey_roadmap_item_to_json(doc):
+	updated_at = doc.get("updated_at")
+	background_image_file_id = doc.get("background_image_file_id")
 	return {
 		"_id": str(doc.get("_id")),
 		"title": doc.get("title", ""),
 		"description": doc.get("description", ""),
 		"horizon": doc.get("horizon", "Near-term"),
 		"status": doc.get("status", "Planned"),
+		"theme": doc.get("theme", "aurora"),
+		"background_image_file_id": str(background_image_file_id) if background_image_file_id else "",
+		"background_image_url": f"/image/{str(background_image_file_id)}?v={int(updated_at.timestamp() * 1000) if updated_at else 0}" if background_image_file_id else "",
 		"created_at": doc.get("created_at").isoformat() if doc.get("created_at") else "",
 		"updated_at": doc.get("updated_at").isoformat() if doc.get("updated_at") else "",
 	}
@@ -1108,12 +1113,71 @@ def create_future_journey_roadmap_item():
 		'description': description,
 		'horizon': horizon,
 		'status': status,
+		'theme': 'aurora',
+		'background_image_file_id': None,
 		'created_at': now,
 		'updated_at': now,
 	}
 	res = future_journey_roadmap_items_col.insert_one(doc)
 	created = future_journey_roadmap_items_col.find_one({'_id': res.inserted_id})
 	return jsonify(future_journey_roadmap_item_to_json(created)), 201
+
+
+@app.route('/api/future-journey/roadmap-items/<item_id>/background-image', methods=['POST'])
+@login_required
+def upload_future_journey_roadmap_background_image(item_id):
+	user_id = to_object_id(session.get('user_id'))
+	if not user_id:
+		return jsonify({'error': 'Unauthorized'}), 401
+
+	obj_id = to_object_id(item_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid roadmap item id'}), 400
+
+	item = future_journey_roadmap_items_col.find_one({'_id': obj_id, 'owner_user_id': user_id})
+	if not item:
+		return jsonify({'error': 'Roadmap item not found'}), 404
+
+	file = request.files.get('background_image')
+	if not file:
+		return jsonify({'error': 'No file uploaded'}), 400
+
+	content_type = file.mimetype or 'application/octet-stream'
+	if not content_type.startswith('image/'):
+		return jsonify({'error': 'Only image files are allowed'}), 400
+
+	file_bytes = file.read()
+	if not file_bytes:
+		return jsonify({'error': 'Uploaded file is empty'}), 400
+
+	filename = secure_filename(file.filename or 'roadmap-background')
+	new_file_id = fs_bucket.upload_from_stream(
+		filename,
+		BytesIO(file_bytes),
+		metadata={
+			'contentType': content_type,
+			'owner': str(user_id),
+			'kind': 'roadmap-background',
+			'roadmap_item_id': str(obj_id),
+		},
+	)
+
+	old_file_id = item.get('background_image_file_id')
+	future_journey_roadmap_items_col.update_one(
+		{'_id': obj_id, 'owner_user_id': user_id},
+		{'$set': {'background_image_file_id': new_file_id, 'updated_at': utc_now()}},
+	)
+
+	if old_file_id:
+		old_obj_id = old_file_id if isinstance(old_file_id, ObjectId) else to_object_id(str(old_file_id))
+		if old_obj_id and old_obj_id != new_file_id:
+			try:
+				fs_bucket.delete(old_obj_id)
+			except PyMongoError:
+				pass
+
+	updated = future_journey_roadmap_items_col.find_one({'_id': obj_id, 'owner_user_id': user_id})
+	return jsonify(future_journey_roadmap_item_to_json(updated))
 
 
 @app.route('/api/future-journey/roadmap-items/<item_id>', methods=['PUT'])
@@ -1150,6 +1214,12 @@ def update_future_journey_roadmap_item(item_id):
 		if status not in {'Planned', 'In Progress', 'Completed'}:
 			return jsonify({'error': 'Invalid roadmap status'}), 400
 		update['status'] = status
+
+	if 'theme' in data:
+		theme = (data.get('theme') or '').strip()
+		if theme not in {'aurora', 'nebula', 'midnight', 'sunrise'}:
+			return jsonify({'error': 'Invalid roadmap theme'}), 400
+		update['theme'] = theme
 
 	if not update:
 		return jsonify({'error': 'No valid fields provided'}), 400

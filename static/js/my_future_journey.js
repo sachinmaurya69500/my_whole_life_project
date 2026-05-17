@@ -16,6 +16,9 @@
 		roadmapDescription: document.getElementById('roadmapDescription'),
 		roadmapHorizon: document.getElementById('roadmapHorizon'),
 		roadmapStatus: document.getElementById('roadmapStatus'),
+		roadmapTheme: document.getElementById('roadmapTheme'),
+		roadmapBackgroundImage: document.getElementById('roadmapBackgroundImage'),
+		roadmapBackgroundImageLabel: document.getElementById('roadmapBackgroundImageLabel'),
 		saveRoadmapBtn: document.getElementById('saveRoadmapBtn'),
 		cancelRoadmapEditBtn: document.getElementById('cancelRoadmapEditBtn'),
 		roadmapList: document.getElementById('roadmapList'),
@@ -38,6 +41,7 @@
 		roadmapItems: [],
 		editingRoadmapItemId: '',
 		editingMilestoneId: '',
+		selectedRoadmapBackgroundImage: null,
 	};
 
 	async function fjApi(path, options = {}) {
@@ -129,7 +133,8 @@
 		const long = state.roadmapItems.filter((i) => (i.horizon || '') === 'Long-term');
 
 		const renderCard = (item) => `
-			<article class="roadmap-card" data-id="${item._id}" draggable="true" tabindex="0">
+			<article class="roadmap-card theme-${escapeHtml(item.theme || 'aurora')}" data-id="${item._id}" data-bg-url="${escapeHtml(item.background_image_url || '')}" draggable="true" tabindex="0">
+				<span class="roadmap-theme-badge">${escapeHtml(item.theme || 'aurora')}</span>
 				<h5>${escapeHtml(item.title)}</h5>
 				<p>${escapeHtml(item.description || '')}</p>
 				<div class="roadmap-actions">
@@ -157,6 +162,21 @@
 		}
 		if (!columnsContainer) return;
 		columnsContainer.innerHTML = columnsHtml;
+
+		el.roadmapList.querySelectorAll('.roadmap-card').forEach((card) => {
+			const bgUrl = card.dataset.bgUrl;
+			if (bgUrl) {
+				card.style.background = `linear-gradient(180deg, rgba(2, 6, 23, 0.70), rgba(2, 6, 23, 0.94)), url("${bgUrl}")`;
+				card.style.backgroundSize = 'cover';
+				card.style.backgroundPosition = 'center';
+				card.style.backgroundRepeat = 'no-repeat';
+			} else {
+				card.style.background = '';
+				card.style.backgroundSize = '';
+				card.style.backgroundPosition = '';
+				card.style.backgroundRepeat = '';
+			}
+		});
 
 		// Ensure each column block has an SVG for connectors
 		const columnBlocks = el.roadmapList.querySelectorAll('.roadmap-column-block');
@@ -188,6 +208,12 @@
 				if (el.roadmapDescription) el.roadmapDescription.value = item.description || '';
 				if (el.roadmapHorizon) el.roadmapHorizon.value = item.horizon || 'Near-term';
 				if (el.roadmapStatus) el.roadmapStatus.value = item.status || 'Planned';
+				if (el.roadmapTheme) el.roadmapTheme.value = item.theme || 'aurora';
+				state.selectedRoadmapBackgroundImage = null;
+				if (el.roadmapBackgroundImage) el.roadmapBackgroundImage.value = '';
+				if (el.roadmapBackgroundImageLabel) {
+					el.roadmapBackgroundImageLabel.textContent = item.background_image_url ? 'Current background image is set. Choose a new file to replace it.' : 'No background image selected.';
+				}
 				if (el.saveRoadmapBtn) el.saveRoadmapBtn.textContent = 'Update';
 				if (el.cancelRoadmapEditBtn) el.cancelRoadmapEditBtn.classList.remove('hidden');
 			});
@@ -400,12 +426,26 @@
 
 	function resetRoadmapForm() {
 		state.editingRoadmapItemId = '';
+		state.selectedRoadmapBackgroundImage = null;
 		if (el.roadmapForm) el.roadmapForm.reset();
 		if (el.roadmapItemId) el.roadmapItemId.value = '';
 		if (el.roadmapHorizon) el.roadmapHorizon.value = 'Near-term';
 		if (el.roadmapStatus) el.roadmapStatus.value = 'Planned';
+		if (el.roadmapTheme) el.roadmapTheme.value = 'aurora';
+		if (el.roadmapBackgroundImage) el.roadmapBackgroundImage.value = '';
+		if (el.roadmapBackgroundImageLabel) el.roadmapBackgroundImageLabel.textContent = 'No background image selected.';
 		if (el.saveRoadmapBtn) el.saveRoadmapBtn.textContent = 'Add';
 		if (el.cancelRoadmapEditBtn) el.cancelRoadmapEditBtn.classList.add('hidden');
+	}
+
+	async function uploadRoadmapBackgroundImage(itemId, file) {
+		if (!file) return;
+		const formData = new FormData();
+		formData.append('background_image', file);
+		await fjApi(`/api/future-journey/roadmap-items/${itemId}/background-image`, {
+			method: 'POST',
+			body: formData,
+		});
 	}
 
 	async function loadMilestones() {
@@ -503,6 +543,16 @@
 		});
 	}
 
+	if (el.roadmapBackgroundImage) {
+		el.roadmapBackgroundImage.addEventListener('change', (e) => {
+			const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+			state.selectedRoadmapBackgroundImage = file;
+			if (el.roadmapBackgroundImageLabel) {
+				el.roadmapBackgroundImageLabel.textContent = file ? `Selected: ${file.name}` : 'No background image selected.';
+			}
+		});
+	}
+
 	if (el.roadmapForm && el.roadmapTitle && el.roadmapHorizon && el.roadmapStatus) {
 		el.roadmapForm.addEventListener('submit', async (e) => {
 			e.preventDefault();
@@ -511,6 +561,7 @@
 				description: (el.roadmapDescription.value || '').trim(),
 				horizon: (el.roadmapHorizon.value || 'Near-term').trim() || 'Near-term',
 				status: (el.roadmapStatus.value || 'Planned').trim() || 'Planned',
+				theme: (el.roadmapTheme && el.roadmapTheme.value ? el.roadmapTheme.value : 'aurora'),
 			};
 			if (!payload.title) return;
 
@@ -521,13 +572,19 @@
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify(payload),
 					});
+					if (state.selectedRoadmapBackgroundImage) {
+						await uploadRoadmapBackgroundImage(state.editingRoadmapItemId, state.selectedRoadmapBackgroundImage);
+					}
 					if (typeof showToast === 'function') showToast('Roadmap item updated');
 				} else {
-					await fjApi('/api/future-journey/roadmap-items', {
+					const createdItem = await fjApi('/api/future-journey/roadmap-items', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify(payload),
 					});
+					if (state.selectedRoadmapBackgroundImage && createdItem && createdItem._id) {
+						await uploadRoadmapBackgroundImage(createdItem._id, state.selectedRoadmapBackgroundImage);
+					}
 					if (typeof showToast === 'function') showToast('Roadmap item added');
 				}
 				resetRoadmapForm();
