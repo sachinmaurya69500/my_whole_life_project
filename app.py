@@ -1424,6 +1424,20 @@ def dashboard_stats():
 	)
 
 
+def expense_to_json(doc):
+	return {
+		'_id': str(doc.get('_id')),
+		'date': doc.get('date').isoformat() if doc.get('date') else '',
+		'type': doc.get('type', ''),
+		'amount': float(doc.get('amount', 0)),
+		'currency': doc.get('currency', 'USD'),
+		'vendor': doc.get('vendor', ''),
+		'notes': doc.get('notes', ''),
+		'created_at': doc.get('created_at').isoformat() if doc.get('created_at') else '',
+		'updated_at': doc.get('updated_at').isoformat() if doc.get('updated_at') else '',
+	}
+
+
 @app.route("/api/insights", methods=["GET"])
 @login_required
 def insights_data():
@@ -2481,18 +2495,7 @@ def delete_contact(contact_id):
 @login_required
 def list_expenses():
 	docs = list(expenses_col.find({}).sort('date', -1))
-	out = []
-	for d in docs:
-		out.append({
-			'_id': str(d.get('_id')),
-			'date': d.get('date').isoformat() if d.get('date') else '',
-			'type': d.get('type', ''),
-			'amount': float(d.get('amount', 0)),
-			'currency': d.get('currency', 'USD'),
-			'vendor': d.get('vendor', ''),
-			'notes': d.get('notes', ''),
-		})
-	return jsonify(out)
+	return jsonify([expense_to_json(d) for d in docs])
 
 
 @app.route('/api/expenses', methods=['POST'])
@@ -2516,7 +2519,7 @@ def create_expense():
 	}
 	res = expenses_col.insert_one(doc)
 	created = expenses_col.find_one({'_id': res.inserted_id})
-	return jsonify({'_id': str(created['_id'])}), 201
+	return jsonify(expense_to_json(created)), 201
 
 
 @app.route('/api/expenses/<expense_id>', methods=['DELETE'])

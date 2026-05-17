@@ -1,7 +1,71 @@
 (function(){
     // Minimal calendar time-blocking + drag to move implementation
     const container = document.getElementById('eventsList');
+    const newBtn = document.getElementById('newEventBtn');
+    const modal = document.getElementById('createEventModal');
+    const backdrop = document.getElementById('createEventBackdrop');
+    const closeBtn = document.getElementById('closeEventModalBtn');
+    const form = document.getElementById('eventForm');
     if(!container) return;
+
+    function openModal(){
+        if(!modal) return;
+        modal.classList.remove('hidden');
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeModal(){
+        if(!modal) return;
+        modal.classList.add('hidden');
+        modal.setAttribute('aria-hidden', 'true');
+        if (form) form.reset();
+    }
+
+    if (newBtn) newBtn.addEventListener('click', openModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (backdrop) backdrop.addEventListener('click', closeModal);
+
+    if (form) {
+        form.addEventListener('submit', async (ev) => {
+            ev.preventDefault();
+            const title = document.getElementById('eventTitle')?.value?.trim();
+            const startAt = document.getElementById('eventStart')?.value;
+            const endAt = document.getElementById('eventEnd')?.value;
+            const description = document.getElementById('eventDescription')?.value?.trim() || '';
+            const allDay = document.getElementById('eventAllDay')?.checked || false;
+
+            if (!title || !startAt || !endAt) {
+                showToast('Title, start time, and end time are required', 'error');
+                return;
+            }
+
+            try {
+                await api('/api/events', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title,
+                        start_at: startAt,
+                        end_at: endAt,
+                        description,
+                        all_day: allDay,
+                    }),
+                });
+                showToast('Event created');
+                closeModal();
+                await load();
+            } catch (err) {
+                console.error(err);
+                showToast(err.message || 'Unable to create event', 'error');
+            }
+        });
+    }
+
+    document.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
+            closeModal();
+        }
+    });
 
     function render(events){
         container.innerHTML = '';
