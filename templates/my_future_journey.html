@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Alegreya:wght@500;700&display=swap" rel="stylesheet">
 <style>
-	/* Ensure readable black text for Future Journey page */
+	/* Force Dark styling for Future Journey page */
 	.future-journey,
 	.future-journey h1,
 	.future-journey h2,
@@ -20,15 +20,16 @@
 	.future-journey .roadmap-card p,
 	.future-journey .roadmap-column-title,
 	.future-journey .future-chip {
-		color: #000 !important;
+		color: #e6f7ff !important;
 	}
 
 	.future-journey {
 		font-family: 'Sora', sans-serif;
 		background:
-			radial-gradient(900px 420px at 12% 0%, rgba(13, 110, 253, 0.1), transparent 62%),
-			radial-gradient(850px 420px at 100% 8%, rgba(13, 110, 253, 0.06), transparent 58%),
-			linear-gradient(180deg, #f8fbfe 0%, #eef4fb 42%, #f7fafe 100%);
+			radial-gradient(800px 380px at 8% 2%, rgba(2,10,18,0.6), transparent 40%),
+			radial-gradient(700px 360px at 95% 8%, rgba(6,18,32,0.6), transparent 42%),
+			linear-gradient(180deg, #02060b 0%, #041025 48%, #071428 100%);
+		color: #e6f7ff;
 	}
 
 	.future-journey .hero-title,
@@ -67,7 +68,9 @@
 	font-size: 1rem;
 }
 
-.roadmap-card {
+.html-theme-dark .future-journey .roadmap-card,
+html[data-theme='spacex'] .future-journey .roadmap-card,
+html[data-theme='jarvis'] .future-journey .roadmap-card {
 	padding: 1.1rem;
 	border-radius: 1rem;
 	box-shadow: 0 10px 30px rgba(2,6,23,0.6);
@@ -77,24 +80,32 @@
 	color: #e6f7ff;
 }
 
-.roadmap-card:hover {
+html[data-theme='spacex'] .future-journey .roadmap-card:hover,
+html[data-theme='jarvis'] .future-journey .roadmap-card:hover,
+.html-theme-dark .future-journey .roadmap-card:hover {
 	transform: translateY(-6px);
 	box-shadow: 0 28px 70px rgba(2,6,23,0.7);
 }
 
-.roadmap-card h5 {
+html[data-theme='spacex'] .future-journey .roadmap-card h5,
+html[data-theme='jarvis'] .future-journey .roadmap-card h5,
+.html-theme-dark .future-journey .roadmap-card h5 {
 	color: #dffcff;
 	font-size: 1.05rem;
 	margin-bottom: 0.35rem;
 }
 
-.roadmap-card p {
+html[data-theme='spacex'] .future-journey .roadmap-card p,
+html[data-theme='jarvis'] .future-journey .roadmap-card p,
+.html-theme-dark .future-journey .roadmap-card p {
 	color: rgba(223,252,255,0.88);
 	font-size: 0.95rem;
 	line-height: 1.6;
 }
 
-.roadmap-card .roadmap-theme-badge {
+html[data-theme='spacex'] .future-journey .roadmap-card .roadmap-theme-badge,
+html[data-theme='jarvis'] .future-journey .roadmap-card .roadmap-theme-badge,
+.html-theme-dark .future-journey .roadmap-card .roadmap-theme-badge {
 	background: rgba(255,255,255,0.03);
 	color: #cffafe;
 	border-color: rgba(148,163,184,0.06);
@@ -108,11 +119,11 @@
 
 
 	.future-card {
-		border: 1px solid rgba(13, 110, 253, 0.12);
-		background: rgba(255, 255, 255, 0.96);
+		border: 1px solid rgba(255,255,255,0.04);
+		background: linear-gradient(180deg, rgba(6,10,18,0.8), rgba(8,12,20,0.92));
 		border-radius: 1rem;
 		padding: 1rem;
-		box-shadow: 0 14px 32px rgba(15, 23, 42, 0.07);
+		box-shadow: 0 14px 42px rgba(2,6,23,0.6);
 	}
 
 	.future-chip {
@@ -123,46 +134,46 @@
 		font-size: 0.72rem;
 		font-weight: 700;
 		border-radius: 999px;
-		border: 1px solid rgba(13, 110, 253, 0.16);
-		background: rgba(13, 110, 253, 0.08);
-		color: #0b4ea2;
+		border: 1px solid rgba(255,255,255,0.04);
+		background: rgba(255,255,255,0.02);
+		color: #cffafe;
 	}
 
 	.future-nav-btn {
-		border: 1px solid rgba(13, 110, 253, 0.16);
-		background: #fff;
-		color: #274b6d;
+		border: 1px solid rgba(255,255,255,0.04);
+		background: rgba(255,255,255,0.02);
+		color: #dffcff;
 		border-radius: 0.75rem;
 		padding: 0.45rem 0.8rem;
 		font-size: 0.82rem;
 		font-weight: 600;
-		transition: all 0.2s ease;
+		transition: all 0.18s ease;
 	}
 
 	.future-nav-btn:hover {
-		border-color: rgba(13, 110, 253, 0.32);
-		background: rgba(13, 110, 253, 0.05);
+		border-color: rgba(34,211,238,0.12);
+		background: rgba(34,211,238,0.04);
 	}
 
 	.future-nav-btn.active {
-		border-color: rgba(13, 110, 253, 0.38);
-		background: linear-gradient(180deg, rgba(13, 110, 253, 0.12), rgba(13, 110, 253, 0.06));
-		color: #0b4ea2;
+		border-color: rgba(34,211,238,0.18);
+		background: linear-gradient(180deg, rgba(34,211,238,0.08), rgba(34,211,238,0.04));
+		color: #022530;
 	}
 
 	.future-input {
 		width: 100%;
-		border: 1px solid rgba(13, 110, 253, 0.16);
-		background: #fff;
+		border: 1px solid rgba(255,255,255,0.04);
+		background: rgba(255,255,255,0.02);
 		border-radius: 0.7rem;
 		padding: 0.58rem 0.72rem;
-		color: #0b1f33;
+		color: #e6f7ff;
 	}
 
 	.future-input:focus {
 		outline: none;
-		border-color: rgba(13, 110, 253, 0.42);
-		box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.12);
+		border-color: rgba(34,211,238,0.28);
+		box-shadow: 0 0 0 3px rgba(34,211,238,0.06);
 	}
 
 	.journey-list-item {
