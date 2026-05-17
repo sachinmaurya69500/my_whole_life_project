@@ -25,7 +25,10 @@
 
 	function closeAtlas() {
 		jarvisPanel.setAttribute('aria-hidden', 'true');
+		// Hide visually and stop holo animation
+		jarvisPanel.classList.add('hidden');
 		stopHolo();
+		try { jarvisInput && jarvisInput.blur(); } catch (e) {}
 	}
 
 	launcher.addEventListener('click', (e) => {
