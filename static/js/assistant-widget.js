@@ -16,6 +16,8 @@
 
 	function openAtlas() {
 		jarvisPanel.classList.remove('hidden');
+		jarvisPanel.classList.add('jarvis-open');
+		try { launcher && launcher.setAttribute('aria-expanded', 'true'); } catch(e) {}
 		jarvisPanel.setAttribute('aria-hidden', 'false');
 		document.documentElement.setAttribute('data-theme', localStorage.getItem('swm-theme') || document.documentElement.getAttribute('data-theme') || 'dark');
 		jarvisInput.focus();
@@ -25,8 +27,9 @@
 
 	function closeAtlas() {
 		jarvisPanel.setAttribute('aria-hidden', 'true');
-		// Hide visually and stop holo animation
+		jarvisPanel.classList.remove('jarvis-open');
 		jarvisPanel.classList.add('hidden');
+		try { launcher && launcher.setAttribute('aria-expanded', 'false'); } catch(e) {}
 		stopHolo();
 		try { jarvisInput && jarvisInput.blur(); } catch (e) {}
 	}
