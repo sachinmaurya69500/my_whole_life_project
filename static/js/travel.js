@@ -1,6 +1,8 @@
 (async function(){
     const list = document.getElementById('expensesList');
-    const formWrap = document.getElementById('expenseFormWrap');
+    const modal = document.getElementById('expenseModal');
+    const backdrop = document.getElementById('expenseBackdrop');
+    const closeBtn = document.getElementById('closeExpenseModalBtn');
     const form = document.getElementById('expenseForm');
     const newBtn = document.getElementById('newExpenseBtn');
     const cancelBtn = document.getElementById('cancelExpenseBtn');
@@ -11,6 +13,7 @@
     const expenseCurrencyInput = document.getElementById('expenseCurrency');
     const expenseVendorInput = document.getElementById('expenseVendor');
     const expenseNotesInput = document.getElementById('expenseNotes');
+    const expenseModalTitle = document.getElementById('expenseModalTitle');
 
     function renderExpense(e, index = 0) {
         const notes = e.notes ? `<div class="text-xs text-slate-300 mt-2">${e.notes}</div>` : '';
@@ -32,8 +35,20 @@
             list.querySelectorAll('.del-btn').forEach(b=>b.addEventListener('click', onDelete));
         }catch(err){ console.error(err); }
     }
-    function showForm(){ formWrap.classList.remove('hidden'); }
-    function hideForm(){ formWrap.classList.add('hidden'); form.reset(); expenseIdInput.value=''; }
+    function showForm(){
+        if (!modal) return;
+        modal.classList.remove('hidden');
+        modal.setAttribute('aria-hidden', 'false');
+    }
+    function hideForm(){
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+        form.reset();
+        expenseIdInput.value='';
+        if (expenseModalTitle) expenseModalTitle.textContent = 'Add Expense';
+    }
 
     function fillForm(expense) {
         expenseIdInput.value = expense._id || '';
@@ -47,6 +62,14 @@
 
     newBtn.addEventListener('click', ()=>{ showForm(); });
     cancelBtn.addEventListener('click', hideForm);
+    if (closeBtn) closeBtn.addEventListener('click', hideForm);
+    if (backdrop) backdrop.addEventListener('click', hideForm);
+
+    document.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
+            hideForm();
+        }
+    });
 
     async function onEdit(e){
         const id = e.currentTarget.dataset.id;
@@ -55,6 +78,7 @@
             const expense = data.find(item => item._id === id);
             if(!expense) return;
             fillForm(expense);
+            if (expenseModalTitle) expenseModalTitle.textContent = 'Edit Expense';
             showForm();
         }catch(err){ console.error(err); showToast(err.message || 'Edit failed', 'error'); }
     }

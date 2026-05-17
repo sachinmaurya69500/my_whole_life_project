@@ -10,12 +10,12 @@
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" referrerpolicy="no-referrer" />
 	<link rel="stylesheet" href="{{ url_for('static', filename='css/my_research_site.css') }}" />
 </head>
-<body class="scienceopen-inspired" data-initial-section="{{ research_section or 'home' }}">
+	<body class="scienceopen-inspired" data-initial-section="{{ research_section or 'home' }}">
 	<div class="site-shell">
 		<header class="site-header">
 			<a href="/home" class="site-pill"><i class="fa-solid fa-arrow-left"></i>Main App</a>
 			<div class="site-brand">
-				<span class="site-kicker">Independent Portal</span>
+				<span class="site-kicker">Independent Research Portal</span>
 				<h1>MY RESEARCH</h1>
 			</div>
 			<button id="openAddSiteModalBtn" class="site-cta"><i class="fa-solid fa-plus"></i>Add Source</button>
@@ -29,10 +29,22 @@
 
 		<main class="site-main">
 			<section id="portalHomeSection" class="portal-section">
+				<section class="portal-banner">
+					<div>
+						<p class="portal-banner-kicker">Global Research Desk</p>
+						<h2>Curate sources, highlights, and references with an institutional editorial feel.</h2>
+					</div>
+					<div class="portal-banner-aside">
+						<span>Research Board</span>
+						<span>Home Highlights</span>
+						<span>About Items</span>
+					</div>
+				</section>
+
 				<section class="hero-card">
-					<p class="hero-kicker">Research Studio</p>
-					<h2>Build your own curated research universe.</h2>
-					<p class="hero-sub">A focused editorial-style workspace for organizing references, journals, tools, and idea sources.</p>
+					<p class="hero-kicker">United Nations inspired layout</p>
+					<h2>Build a calm, credible research workspace.</h2>
+					<p class="hero-sub">A structured, policy-style portal for organizing references, journals, tools, and source intelligence.</p>
 				</section>
 
 				<section class="stats-grid">
@@ -102,9 +114,9 @@
 			<section id="portalAboutSection" class="portal-section hidden">
 				<article class="about-card">
 					<h3>About MY RESEARCH</h3>
-					<p>This portal is intentionally isolated from the main app shell. It has its own layout, typography, structure, and interactions while still connected to your tracked-source data.</p>
+					<p>This portal is intentionally isolated from the main app shell. It uses a more formal, briefing-style presentation while still connected to your tracked-source data.</p>
 					<ul>
-						<li>Independent website style and navigation</li>
+						<li>Diplomatic blue-and-white visual system</li>
 						<li>Editorial card-based homepage</li>
 						<li>Full tracked-source CRUD board</li>
 					</ul>
