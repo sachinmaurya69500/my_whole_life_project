@@ -2522,6 +2522,39 @@ def create_expense():
 	return jsonify(expense_to_json(created)), 201
 
 
+@app.route('/api/expenses/<expense_id>', methods=['PUT'])
+@login_required
+def update_expense(expense_id):
+	obj_id = to_object_id(expense_id)
+	if not obj_id:
+		return jsonify({'error': 'Invalid id'}), 400
+	data = request.get_json(silent=True) or {}
+	update = {}
+	if 'date' in data:
+		update['date'] = parse_iso_or_none(data.get('date') or '') or utc_now()
+	if 'type' in data:
+		update['type'] = (data.get('type') or '').strip()
+	if 'amount' in data:
+		try:
+			update['amount'] = float(data.get('amount') or 0)
+		except Exception:
+			return jsonify({'error': 'Invalid amount'}), 400
+	if 'currency' in data:
+		update['currency'] = (data.get('currency') or 'USD').strip()
+	if 'vendor' in data:
+		update['vendor'] = (data.get('vendor') or '').strip()
+	if 'notes' in data:
+		update['notes'] = (data.get('notes') or '').strip()
+	if not update:
+		return jsonify({'error': 'No valid fields provided'}), 400
+	update['updated_at'] = utc_now()
+	expenses_col.update_one({'_id': obj_id}, {'$set': update})
+	updated = expenses_col.find_one({'_id': obj_id})
+	if not updated:
+		return jsonify({'error': 'Expense not found'}), 404
+	return jsonify(expense_to_json(updated))
+
+
 @app.route('/api/expenses/<expense_id>', methods=['DELETE'])
 @login_required
 def delete_expense(expense_id):
