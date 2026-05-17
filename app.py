@@ -732,6 +732,10 @@ def login_action():
 	password = payload.get("password") or ""
 	configured_email = normalize_email(os.getenv("APP_EMAIL", ""))
 	configured_password = os.getenv("APP_PASSWORD", "")
+	locked_email = normalize_email(session.get("login_locked_email", ""))
+	locked_attempts = int(session.get("login_failed_attempts", 0) or 0)
+	if locked_attempts >= 2 and locked_email and locked_email == email:
+		return jsonify({"error": "Login closed after 2 failed attempts"}), 423
 
 	if not email or not password:
 		return jsonify({"error": "Email and password are required"}), 400
@@ -769,11 +773,22 @@ def login_action():
 			user = users_col.find_one({"_id": user["_id"]})
 			stored_hash = user.get("password_hash", "") if user else ""
 		else:
+			if locked_email and locked_email != email:
+				session.pop("login_failed_attempts", None)
+				session.pop("login_locked_email", None)
+				locked_attempts = 0
+			locked_email = ""
 			return jsonify({"error": "Invalid email or password"}), 401
 
 	if not stored_hash or not check_password_hash(stored_hash, password):
+		session["login_failed_attempts"] = locked_attempts + 1
+		session["login_locked_email"] = email
+		if session["login_failed_attempts"] >= 2:
+			return jsonify({"error": "Login closed after 2 failed attempts"}), 423
 		return jsonify({"error": "Invalid email or password"}), 401
 
+	session.pop("login_failed_attempts", None)
+	session.pop("login_locked_email", None)
 	users_col.update_one({"_id": user["_id"]}, {"$set": {"updated_at": utc_now()}})
 
 	session.permanent = True

@@ -37,6 +37,25 @@
 <script>
     const form = document.getElementById('loginForm');
     const errorEl = document.getElementById('loginError');
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    function closeLoginPage(message) {
+        errorEl.textContent = message || 'Login closed after too many failed attempts.';
+        errorEl.classList.remove('hidden');
+        form.querySelectorAll('input, button').forEach((el) => {
+            el.disabled = true;
+        });
+
+        try {
+            window.close();
+        } catch (_err) {}
+
+        setTimeout(() => {
+            if (!window.closed) {
+                window.location.replace('about:blank');
+            }
+        }, 250);
+    }
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -54,11 +73,21 @@
                 body: JSON.stringify(payload)
             });
             const data = await res.json();
+
+            if (res.status === 423) {
+                closeLoginPage(data.error || 'Login closed after 2 failed attempts');
+                return;
+            }
+
             if (!res.ok) {
                 throw new Error(data.error || 'Login failed');
             }
             window.location.href = '/home';
         } catch (err) {
+            if (String(err.message || '').includes('Login closed after 2 failed attempts')) {
+                closeLoginPage(err.message);
+                return;
+            }
             errorEl.textContent = err.message;
             errorEl.classList.remove('hidden');
         }
