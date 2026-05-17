@@ -72,6 +72,9 @@
 				<p class="spacex-page-subtitle">Track, manage, and improve your workflows with a launch-window mindset.</p>
 			</div>
 			<div class="spacex-header-actions">
+				<button id="menuToggle" class="md:hidden h-10 w-10 rounded-lg border border-slate-700 hover:bg-slate-800 transition">
+					<i class="fa-solid fa-bars"></i>
+				</button>
 				<img id="topProfileImage" src="{{ url_for('static', filename='img/profile-placeholder.svg') }}" alt="Top Profile Avatar" class="h-10 w-10 rounded-full object-cover border border-slate-700 bg-slate-900" />
 				<button id="openAddModalBtn" class="btn btn-primary px-3 md:px-4 py-2 font-semibold text-sm md:text-base">
 					<i class="fa-solid fa-plus mr-2"></i>Add Workflow

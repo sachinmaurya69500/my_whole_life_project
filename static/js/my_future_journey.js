@@ -134,9 +134,16 @@
 
 		const renderCard = (item) => `
 			<article class="roadmap-card theme-${escapeHtml(item.theme || 'aurora')}" data-id="${item._id}" data-bg-url="${escapeHtml(item.background_image_url || '')}" draggable="true" tabindex="0">
-				<span class="roadmap-theme-badge">${escapeHtml(item.theme || 'aurora')}</span>
+				<div class="roadmap-card-header">
+					<span class="roadmap-theme-badge">${escapeHtml(item.theme || 'aurora')}</span>
+					<span class="future-chip">${escapeHtml(item.status || 'Planned')}</span>
+				</div>
 				<h5>${escapeHtml(item.title)}</h5>
 				<p>${escapeHtml(item.description || '')}</p>
+				<div class="roadmap-card-meta">
+					<span>${escapeHtml(item.horizon || 'Near-term')}</span>
+					<span>${escapeHtml(item.background_image_url ? 'Background image' : 'No image')}</span>
+				</div>
 				<div class="roadmap-actions">
 					<button class="btn btn-secondary edit-roadmap-btn" data-id="${item._id}">Edit</button>
 					<button class="btn btn-secondary delete-roadmap-btn" data-id="${item._id}">Delete</button>
@@ -145,9 +152,9 @@
 
 		const columnsHtml = `
 			<div class="roadmap-columns-inner">
-				<div class="roadmap-column-block">${near.map(renderCard).join('')}</div>
-				<div class="roadmap-column-block">${mid.map(renderCard).join('')}</div>
-				<div class="roadmap-column-block">${long.map(renderCard).join('')}</div>
+				<div class="roadmap-column-block"><h4 class="roadmap-column-title">Near-term</h4>${near.map(renderCard).join('')}</div>
+				<div class="roadmap-column-block"><h4 class="roadmap-column-title">Mid-term</h4>${mid.map(renderCard).join('')}</div>
+				<div class="roadmap-column-block"><h4 class="roadmap-column-title">Long-term</h4>${long.map(renderCard).join('')}</div>
 			</div>`;
 
 		let columnsContainer = el.roadmapList.querySelector('#roadmapColumns');
